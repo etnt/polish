@@ -1,0 +1,49 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1" />
+    <title>[[[page:title()]]]</title>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.1/jquery.min.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.0/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/js/jquery.fancybox-1.3.1.pack.js"></script>
+    <script src='/nitrogen/livevalidation.js' type='text/javascript' charset='utf-8'></script>
+    <script src='/nitrogen/nitrogen.js' type='text/javascript' charset='utf-8'></script>
+    <script src='/js/polish.js' type='text/javascript' charset='utf-8'></script>
+    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/smoothness/jquery-ui.css" type="text/css" media="screen" charset="utf-8" />
+    <link rel="stylesheet" href="/nitrogen/nitrogen.css" type="text/css" media="screen" charset="utf-8" />
+    <link rel="stylesheet" href="/css/jquery.fancybox-1.3.1.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="/css/polish.css" type="text/css" media="screen" charset="utf-8" />
+  </head>
+  <body>
+    [[[page:layout()]]]
+
+    <div id="search_box" style="display:none">
+      <form id="search_form" method="get" action="">
+	<p>
+	  <label for="search_string">Search for</label><br/>
+	  <input type="text" id="search_string" name="search_string" size="30" /><br/>
+	  <div id="keyvalue">
+	    <label for="search_string">in </label>
+	    <input type="checkbox" id="key" name="key" value="true" checked="true"/><a>Key</a>
+	    <input type="checkbox" id="untranslated" name="untranslated" value="true" checked="true"/><a id="untranstext">Untranslated</a><br/>
+	    <input type="checkbox" id="value" name="value" value="true"/><a>Translation</a>
+	    <input type="checkbox" id="translated" name="translated" value="true"/><a id="transtext">Translated</a>
+	  </div>
+	  <div id="transuntrans">
+	    <input type="hidden" value="search" name="action" />
+	    <input type="submit" class="button" value="Search" />
+	  </div>
+	</p>
+      </form>
+    </div>
+    <div style="display:none">
+      <div id="stats">
+	[[[page:gen_stats()]]]
+      </div>
+    </div>
+
+    <script>
+      [[[script]]]
+    </script>
+  </body>
+</html>

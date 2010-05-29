@@ -1,0 +1,48 @@
+{application, polish, 
+ [
+  {description,  "polish - Web app. for managing PO-file translations."},
+
+  % The Module and Args used to start this application.
+  {mod, { polish_app, []} },
+
+  % All modules used by the application.
+  {modules,
+   [polish_app
+    ,polish_sup
+    ,polish_deps
+    ,polish_common
+    ,polish_server
+    ,polish_inets
+    ,polish_po
+    ,polish_utils
+    ,polish_web_index
+    ,polish_web_login
+    ,polish_web_logout
+    ,polish_web_auth
+   ]},
+
+  % configuration parameters similar to those in the config file specified on the command line
+  {env, [{ip, "0.0.0.0"}
+         ,{hostname, "localhost"}
+         ,{port, 8282}	
+	 ,{doc_root, "./www"}
+         % Assumes: ${po_lang_dir}/custom/${LC}/gettext.po
+	 ,{po_lang_dir, "./../../lib/site/priv/lang"}
+	 ,{nolog, false}
+	 ,{errlog_type, error}
+    	 ,{error_logger_mf_file, "./logs/polish"}
+    	 ,{error_logger_mf_maxbytes, 500000}
+    	 ,{error_logger_mf_maxfiles, 5}
+	 ,{acl, ["http://etnt.myopenid.com/"
+                 ,"http://jordi-chacon.myopenid.com/"
+		 ,"http://nicolae.myopenid.com/"
+		 ,"http://JessicaC.myopenid.com/"
+                ]}
+         ,{users,[
+	 {"http://etnt.myopenid.com/", [{name, "Torbjorn Tornkvist"},{email, "tobbe@klarna.com"}]},
+         {"http://nicolae.myopenid.com/", [{name, "Nicolae Paladi"},{email, "nicolae@klarna.com"}]},
+         {"http://JessicaC.myopenid.com/", [{name, "Jessica Czujka"},{email, "jessica.czujka@klarna.com"}]},
+	 {"http://jordi-chacon.myopenid.com/", [{name, "Jordi Chacon"},{email, "jordi.chacon@klarna.com"}]}
+         ]}			  
+   ]}
+ ]}.

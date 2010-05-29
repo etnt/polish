@@ -1,0 +1,246 @@
+/***** CSS RESET *****/
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outline:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+
+/***** GRID *****/
+div.header {
+    margin: 0px;
+    padding: 0px;
+    margin-bottom: 1.0em;
+}
+
+.grid {
+    font-size: 1em; /* 13px */
+    line-height: 2em; /* 26px */
+    margin: 1em 0em;
+}
+
+.pad_right {
+    padding-right: 20px;
+}
+
+.grid_12 {
+    margin: 0;
+}
+
+
+/***** LOGIN *****/
+#login_body {
+    background: #C4C4C4 url(/images/login-page-bg.jpg) no-repeat 50% 0%;
+}
+
+#login-form { 
+    width: 406px; 
+    margin: 171px auto 0; 
+}
+	
+#login-form legend { 
+    display: none; 
+}
+
+#login-form fieldset { 
+    border: 0; 
+}
+	
+#login-form label { 
+    background: url(/images/openid.png) no-repeat 100% 0%;
+    width: 80px; 
+    text-align: right; 
+    float: left; 
+    margin: 0 10px 0 0; 
+    padding: 9px 35px 0 0; 
+    font-size: 16px; 
+}
+	
+#login-form input { 
+    width: 220px; 
+    display: block; 
+    padding: 4px; 
+    margin: 0 0 10px 0; 
+    font-size: 18px;
+    color: #3a3a3a; 
+    font-family: Georgia, serif;
+}
+
+#login-form .button {
+    margin: -15px 0 0 256px;
+    width: 100px;
+}
+
+
+/***** STYLE *****/
+body { 
+    font-family: "Lucida Grande","Segoe UI","Trebuchet MS",Tahoma,Helvetica,Arial,sans-serif; 
+    font-size: 13px;
+    line-height: 1.5385em;
+    color: #222;
+}
+
+
+
+/***** MENU *****/
+.menu { 
+    color: #888;
+    background-color: #dfe2ea;
+    text-align: center;
+    font-size: 18px;
+    line-height: 12px;
+    padding: 15px;
+}
+
+.menu a {
+    text-decoration: none;
+    color: #888;
+    padding: 3px 0px;
+    margin: 0px 10px;
+}
+
+.menu a:HOVER {
+    color: #000000;
+    text-decoration: none;
+}
+
+.menu a.selected {
+    color: #000;
+    background-color: #dfe2ea;
+    border-bottom: solid 3px #FC2752;
+}
+
+h1 {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+
+/***** ENTRIES TABLE *****/
+table {
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+    font-size: 12px;
+    margin: 20px auto 20px auto;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+table th {
+    font-size: 14px;
+    font-weight: normal;
+    padding: 10px 8px;
+    border-bottom: 2px solid #ddca00;
+}
+
+table td {
+    border-bottom: 1px dashed #ccba00;
+    padding: 6px 8px;
+}
+
+td.msgid {
+    width: 50%;
+    vertical-align: middle;
+}
+
+td.msgval {
+    width: 50%;
+}
+
+.label {
+    font-weight: normal;
+    font-size: 14px;
+}
+
+table .button {
+    margin:0 7px 0 0;
+}
+
+p .button {
+    margin: 10px 0 0 0;
+    float: right;
+}
+
+.button {
+    float:left;
+    margin-left: 15px; 
+    margin-top: 10px;
+    background-color:#f5f5f5;
+    border:1px solid #dedede;
+    border-top:1px solid #eee;
+    border-left:1px solid #eee;
+    font-family:"Lucida Grande", Tahoma, Arial, Verdana, sans-serif;
+    line-height:130%;
+    text-decoration:none;
+    font-weight:bold;
+    padding: 5px 15px;
+    color:#565656;
+}
+
+.button:hover {
+    background-color:#dff4ff;
+    border:1px solid #c2e1ef;
+    color:#336699;
+}
+
+.error {
+    color: red;
+}
+
+
+/***** POP UP BOXES *****/
+#fancybox-inner {
+    padding: 10px;
+}
+#fancybox-outer {
+    padding: 10px;
+    border-style: solid;
+    border-color: #aaaaaa;
+    border-width: 5px;
+    border-radius: 10px;
+    -moz-border-radius: 10px;
+    -khtml-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    background-color: #f8ffff;
+}
+
+#search_form {
+    font-size: 20px;
+}
+#keyvalue {
+    margin: 10px 0px 0px 0px;
+}
+#key {
+    margin: 0 8px 0 10px;
+}
+#keyvalue a {
+    margin: 0 -5px 0 0;
+}
+#value {
+    margin: 10px 8px 0 33px;
+}
+
+#transuntrans {
+    margin: 10px 0px 0px 0px;
+}
+#search_string {
+    border: 1px solid #444444;
+    margin: 4px 0 5px 0;
+    padding: 4px;
+    font-size: 18px;
+}
+
+#untranslated, #translated {
+    border: 1px solid #444444;
+    margin-right: 8px;
+}
+#untranslated {
+    margin-left: 108px;
+}
+#translated {
+    margin-left: 40px;
+}
+
+#search_form .button {
+    margin-top: 10px;
+    float: right;
+}
+
+.stats {
+    font-size: 20px;
+}
