@@ -315,7 +315,7 @@ do_load_always_translated_keys(State, LC, File) ->
 do_mark_as_always_translated(State, LC, Key) ->
     ets:insert(always_translated, {{LC, Key}, true}),
     LCa = atom_to_list(LC),
-    {ok,Fd} = polish:meta_filename(LCa), [append]),
+    {ok,Fd} = file:open(polish:meta_filename(LCa), [append]),
     Str = "{always_translated, \"" ++ Key ++ "\"}.\n",
     file:write(Fd, Str),
     {State, ok}.
