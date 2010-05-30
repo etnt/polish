@@ -304,21 +304,30 @@ do_delete_old_locked_keys(State) ->
     {State, ok}.
 
 do_load_always_translated_keys(State, LC, File) ->
-    {ok, List} = file:consult(File),
-    lists:foreach(
-      fun({always_translated, V}) -> 
-	      ets:insert(always_translated, {{LC, V}, true});
-	 ({_, _}) -> ok
-      end, List),	      
-    {State, ok}.
+    case file:consult(File) of
+        {ok, List} ->
+            lists:foreach(
+              fun({always_translated, V}) -> 
+                      ets:insert(always_translated, {{LC, V}, true});
+                 ({_, _}) -> ok
+              end, List),	      
+            {State, ok};
+        _ ->
+            {State, ok}
+    end.
 
 do_mark_as_always_translated(State, LC, Key) ->
     ets:insert(always_translated, {{LC, Key}, true}),
     LCa = atom_to_list(LC),
-    {ok,Fd} = file:open(polish:meta_filename(LCa), [append]),
-    Str = "{always_translated, \"" ++ Key ++ "\"}.\n",
-    file:write(Fd, Str),
-    {State, ok}.
+    case file:open(polish:meta_filename(LCa), [append]) of
+        {ok,Fd}  ->
+            Str = "{always_translated, \"" ++ Key ++ "\"}.\n",
+            file:write(Fd, Str),
+            {State, ok};
+        _ ->
+            {State, ok}
+    end.
+                
 
 do_is_always_translated(State, LC, Key) ->
     Res = case ets:lookup(always_translated, {LC, Key}) of
