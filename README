@@ -1,20 +1,7 @@
-REQUIREMENTS
-------------
-Get Nitrogen and EOpenId:
-
- mkdir $HOME/git
- cd $HOME/git
- git clone http://github.com/rklophaus/nitrogen.git
- git clone http://github.com/etnt/eopenid.git
-
-Build the above code by running make in their resp. top dir.
-
 
 SETUP
 ----
-In the polish directory, first edit the paths in the 'dep.inc' file.
-
-Then run:
+In the polish directory, run:
 
  make init
 
