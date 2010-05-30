@@ -1,14 +1,8 @@
 NAME=polish
-POLISH_PATH=__polish_path__
-BRANCH_PATH=$POLISH_PATH/../..
+POLISH_PATH=.
 EOPENID_EBIN=$POLISH_PATH/dep/eopenid/ebin
 ELOGGER_EBIN=$POLISH_PATH/dep/elogger/ebin
 NITROGEN_TOP_DIR=${POLISH_PATH}/dep/nitrogen
 NITROGEN_EBIN=$NITROGEN_TOP_DIR/apps/nitrogen/ebin
 SIMPLE_BRIDGE_EBIN=$NITROGEN_TOP_DIR/apps/simple_bridge/ebin
 NPROCREG_EBIN=$NITROGEN_TOP_DIR/apps/nprocreg/ebin
-GETTEXT_EBIN=$BRANCH_PATH/lib/gettext/ebin
-REDBUG_EBIN=$BRANCH_PATH/lib/eper/ebin
-YAWS_EBIN=$BRANCH_PATH/lib/yaws/ebin
-CRONE_EBIN=$BRANCH_PATH/lib/kred/ebin
-MSC_EBIN=$BRANCH_PATH/lib/msc/ebin

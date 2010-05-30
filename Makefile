@@ -5,10 +5,6 @@ all:
 	erl -make
 
 init:
-	-sed -i 's?__polish_path__?'`pwd`'?' dep.inc
-	$(MAKE) continue
-
-continue:
 	-mkdir ebin
 	-mkdir dep
 	-mkdir logs
@@ -27,4 +23,7 @@ continue:
 
 clean:
 	rm -rf ./ebin/*.beam
+
+init_clean: clean
+	rm -rf ebin dep logs www/nitrogen
 

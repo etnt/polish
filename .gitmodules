@@ -1,5 +1,5 @@
-[submodule "dep/nitrogena"]
-	path = dep/nitrogena
+[submodule "dep/nitrogen"]
+	path = dep/nitrogen
 	url = http://github.com/jordi-chacon/nitrogen.git
 [submodule "dep/elogger"]
 	path = dep/elogger
