@@ -6,6 +6,8 @@
 -export([setup_user_info/0
          , hostname/0
          , default_port/0
+         , gnow/0
+         , date/0
          , i2l/1
         ]).
 
@@ -21,6 +23,14 @@ setup_user_info() ->
     [L|_] = [L || {U,L} <- Users, U == User],
     wf:session(name,  proplists:get_value(name,L)),
     wf:session(email, proplists:get_value(email,L)).
+
+
+gnow() ->
+    calendar:datetime_to_gregorian_seconds(calendar:local_time()).
+
+date() ->
+    erlang:date().
+
 
 hostname() ->
     {ok,Host} = inet:gethostname(),
