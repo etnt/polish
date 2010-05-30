@@ -1,5 +1,5 @@
 NAME=polish
-POLISH_PATH=.
+POLISH_PATH=__polish_path__
 BRANCH_PATH=$POLISH_PATH/../..
 EOPENID_EBIN=$POLISH_PATH/dep/eopenid/ebin
 ELOGGER_EBIN=$POLISH_PATH/dep/elogger/ebin
