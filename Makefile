@@ -15,9 +15,10 @@ init:
 	-(cd dep/elogger; make)
 	-(cd dep/eopenid; make)
 	-(cd dep/gettext; make)
-	-(cd www/nitrogen; ln -s $(NITROGEN_TOP_DIR)/apps/nitrogen/www/nitrogen.css .)
-	-(cd www/nitrogen; ln -s $(NITROGEN_TOP_DIR)/apps/nitrogen/www/nitrogen.js .)
-	-(cd www/nitrogen; ln -s $(NITROGEN_TOP_DIR)/apps/nitrogen/www/livevalidation.js .)
+	-(cd dep/trane; make)
+	-(cd www/nitrogen; ln -s ../../dep/nitrogen/apps/nitrogen/www/nitrogen.css .)
+	-(cd www/nitrogen; ln -s ../../dep/nitrogen/apps/nitrogen/www/nitrogen.js .)
+	-(cd www/nitrogen; ln -s ../../dep/nitrogen/apps/nitrogen/www/livevalidation.js .)
 	-chmod +x ./start.sh
 	cp src/polish.app.src ebin/polish.app 
 	$(MAKE) all
