@@ -1,0 +1,9 @@
+[submodule "dep/nitrogena"]
+	path = dep/nitrogena
+	url = http://github.com/jordi-chacon/nitrogen.git
+[submodule "dep/elogger"]
+	path = dep/elogger
+	url = http://github.com/etnt/elogger.git
+[submodule "dep/eopenid"]
+	path = dep/eopenid
+	url = http://github.com/etnt/eopenid.git

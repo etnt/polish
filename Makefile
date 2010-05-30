@@ -13,9 +13,8 @@ continue:
 	-mkdir dep
 	-mkdir logs
 	-mkdir -p www/nitrogen
-	-git clone http://github.com/jordi-chacon/nitrogen.git dep/nitrogen
-	-git clone http://github.com/etnt/elogger.git dep/elogger
-	-git clone http://github.com/etnt/eopenid.git dep/eopenid
+	-git submodule init
+	-git submodule update
 	-(cd dep/nitrogen; make compile)
 	-(cd dep/elogger; make)
 	-(cd dep/eopenid; make)
