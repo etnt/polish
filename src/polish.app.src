@@ -26,23 +26,30 @@
          ,{hostname, "localhost"}
          ,{port, 8282}	
 	 ,{doc_root, "./www"}
+
          % Assumes: ${po_lang_dir}/custom/${LC}/gettext.po
-	 ,{po_lang_dir, "./../../lib/site/priv/lang"}
+	 ,{po_lang_dir, "/xxx/yyy/priv/lang"}
+
+         % Log handling
 	 ,{nolog, false}
 	 ,{errlog_type, error}
     	 ,{error_logger_mf_file, "./logs/polish"}
     	 ,{error_logger_mf_maxbytes, 500000}
     	 ,{error_logger_mf_maxfiles, 5}
+
+         % The 'acl' list defines who is allowed to do translations.
 	 ,{acl, ["http://etnt.myopenid.com/"
                  ,"http://jordi-chacon.myopenid.com/"
-		 ,"http://nicolae.myopenid.com/"
-		 ,"http://JessicaC.myopenid.com/"
                 ]}
-         ,{users,[
-	 {"http://etnt.myopenid.com/", [{name, "Torbjorn Tornkvist"},{email, "tobbe@klarna.com"}]},
-         {"http://nicolae.myopenid.com/", [{name, "Nicolae Paladi"},{email, "nicolae@klarna.com"}]},
-         {"http://JessicaC.myopenid.com/", [{name, "Jessica Czujka"},{email, "jessica.czujka@klarna.com"}]},
-	 {"http://jordi-chacon.myopenid.com/", [{name, "Jordi Chacon"},{email, "jordi.chacon@klarna.com"}]}
-         ]}			  
-   ]}
+
+         % The 'users' list connects the OpenID with a Name and Email.
+         ,{users,[{"http://etnt.myopenid.com/", 
+                   [{name, "Torbjorn Tornkvist"},
+                    {email, "tobbe@klarna.com"}]}
+
+                  , {"http://jordi-chacon.myopenid.com/", 
+                     [{name, "Jordi Chacon"},
+                      {email, "jordi.chacon@klarna.com"}]}
+                 ]}
+        ]}
  ]}.
