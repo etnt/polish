@@ -14,6 +14,7 @@ init:
 	-(cd dep/nitrogen; make compile)
 	-(cd dep/elogger; make)
 	-(cd dep/eopenid; make)
+	-(cd dep/gettext; make)
 	-(cd www/nitrogen; ln -s $(NITROGEN_TOP_DIR)/apps/nitrogen/www/nitrogen.css .)
 	-(cd www/nitrogen; ln -s $(NITROGEN_TOP_DIR)/apps/nitrogen/www/nitrogen.js .)
 	-(cd www/nitrogen; ln -s $(NITROGEN_TOP_DIR)/apps/nitrogen/www/livevalidation.js .)

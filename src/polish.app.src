@@ -19,6 +19,7 @@
     ,polish_web_login
     ,polish_web_logout
     ,polish_web_auth
+    ,crone
    ]},
 
   % configuration parameters similar to those in the config file specified on the command line

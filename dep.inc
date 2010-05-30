@@ -2,6 +2,7 @@ NAME=polish
 POLISH_PATH=.
 EOPENID_EBIN=$POLISH_PATH/dep/eopenid/ebin
 ELOGGER_EBIN=$POLISH_PATH/dep/elogger/ebin
+GETTEXT_EBIN=$POLISH_PATH/dep/gettext/ebin
 NITROGEN_TOP_DIR=${POLISH_PATH}/dep/nitrogen
 NITROGEN_EBIN=$NITROGEN_TOP_DIR/apps/nitrogen/ebin
 SIMPLE_BRIDGE_EBIN=$NITROGEN_TOP_DIR/apps/simple_bridge/ebin

@@ -7,3 +7,6 @@
 [submodule "dep/eopenid"]
 	path = dep/eopenid
 	url = http://github.com/etnt/eopenid.git
+[submodule "dep/gettext"]
+	path = dep/gettext
+	url = git@github.com:etnt/gettext.git
