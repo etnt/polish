@@ -242,16 +242,18 @@ read_po_file(LC) ->
     [_|T] = gettext:parse_po(mk_po_filename(LC)),
     T.
 
-take([_|T], 1, N, LC, S)      -> take(T, N, LC, S);
-take([_|T], Offset, N, LC, S) -> take(T, Offset - 1, N, LC, S);
-take([], _, _, _, _)          -> [].
+take([], _, _, _, _)      -> [];
+take(T, 1, N, LC, S)      -> take(T, N, LC, S);
+take(T, Offset, N, LC, S) -> take(T, Offset - 1, N, LC, S).
 
 take([{K,V} = H|T], N, LC, Search) when N > 0 -> 
-    case polish_server:is_translated(K, LC) orelse
-	polish_server:is_key_locked(K, LC) orelse
-	polish_server:is_always_translated(LC, K) of
-	true                            -> take(T, N, LC, Search);
-	false when Search =:= no_search -> [H|take(T, N-1, LC, Search)];
+    case (polish_server:is_translated(K, LC) orelse
+          polish_server:is_key_locked(K, LC) orelse
+          polish_server:is_always_translated(LC, K)) of
+	true                            -> 
+            take(T, N, LC, Search);
+	false when Search =:= no_search -> 
+            [H|take(T, N-1, LC, Search)];
 	false ->
 	    case match_entry({K, V}, Search) of
 		nomatch -> take(T, N, LC, Search);
@@ -268,7 +270,7 @@ get_offset() ->
     end.
 
 mk_po_filename(LC) ->
-    Dir = polish_deps:get_env(po_lang_dir, "/tmp/lang"),
+    Dir = polish:po_lang_dir(),
     filename:join([Dir,"custom",LC,"gettext.po"]).
 
 match_entry({K, _V}, {Str, {key, true}, {value, false}}) ->

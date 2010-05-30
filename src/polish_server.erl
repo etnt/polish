@@ -38,6 +38,7 @@ write(KVs, LC) when is_atom(LC) ->
     Email = polish_utils:translator_email(),
     gen_server:call(?MODULE, {write, wf:session(name), Name, Email, KVs, LC}).
 
+is_translated(Key, LC) when is_list(LC) -> is_translated(Key, list_to_atom(LC));
 is_translated(Key, LC) when is_atom(LC) ->
     gen_server:call(?MODULE, {is_translated, Key, LC}).
 
@@ -56,6 +57,7 @@ lock_keys(KVs, LC) when is_atom(LC) ->
 unlock_user_keys() ->
     gen_server:call(?MODULE, {unlock_user_keys, list_to_atom(wf:user())}).
 
+is_key_locked(Key, LC) when is_list(LC) -> is_key_locked(Key, list_to_atom(LC));
 is_key_locked(Key, LC) when is_atom(LC) ->
     gen_server:call(?MODULE, {is_key_locked, Key, LC, list_to_atom(wf:user())}).
 

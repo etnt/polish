@@ -8,6 +8,8 @@
 
 -export([start/2, stop/1]).
 
+-import(polish, [all_custom_lcs/0, meta_filename/1]).
+
 -include("polish.hrl").
 
 start(_, _) ->
@@ -23,15 +25,11 @@ stop(_) ->
     ok.
 
 load_always_translated_keys() ->
-    LCdirs = os:cmd("(cd "++polish:po_lang_dir()++"; ls custom)"),
-    case string:tokens(LCdirs, "\n") of
-        []  -> ok;
-        LCs -> load_always_translated_keys(LCs)
-    end.
+    load_always_translated_keys(all_custom_lcs()).
     
 load_always_translated_keys([H|T]) ->
     polish_server:load_always_translated_keys(list_to_atom(H), 
-                                              polish:meta_filename(H)),
+                                              meta_filename(H)),
     load_always_translated_keys(T);
 load_always_translated_keys([]) ->
     ok.

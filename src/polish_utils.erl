@@ -12,12 +12,8 @@
         ]).
 
 
-get_language_name("nl") -> dutch;
-get_language_name("nb") -> norwegian;
-get_language_name("da") -> dannish;
-get_language_name("de") -> german;
-get_language_name("fi") -> finnish;
-get_language_name(undefined) -> "".
+get_language_name(undefined) -> "";
+get_language_name(LC)        -> gettext_iso639:lc2lang(LC).
 
 get_country_name("nl") -> "Netherlands";
 get_country_name("nb") -> "Norway";

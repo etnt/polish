@@ -7,12 +7,14 @@
          , po_lang_dir/0
          , gettext_dir/0
          , meta_filename/1
+         , all_custom_lcs/0
          , hostname/0
          , default_port/0
          , gnow/0
          , date/0
          , time/0
          , i2l/1
+         , l2a/1
         ]).
 
 -import(polish_deps,[get_env/2]).
@@ -27,7 +29,9 @@ gettext_dir() -> po_lang_dir()++"/..".
 meta_filename(LC) ->
     polish:po_lang_dir()++"/custom/"++LC++"/gettext.po.meta".
 
-    
+all_custom_lcs() ->
+    LCdirs = os:cmd("(cd "++po_lang_dir()++"; ls custom)"),
+    string:tokens(LCdirs, "\n").
 
 default_port() -> 8080.
           
@@ -58,5 +62,10 @@ hostname() ->
 
 i2l(I) when is_integer(I) -> integer_to_list(I);
 i2l(L) when is_list(L)    -> L.
+
+l2a(L) when is_list(L) -> list_to_atom(L);
+l2a(A) when is_atom(A) -> A.
+
+
     
 
