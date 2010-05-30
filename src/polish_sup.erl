@@ -47,9 +47,12 @@ upgrade() ->
 %% @doc supervisor callback.
 init([]) ->
     PolishServer = worker(polish_server),
-    GettextServer = worker(gettext_server),
     CronServer = worker(polish_cron_server),
     Elogger = worker(elogger),
+
+    GettextServer = {gettext_server,{gettext_server,start_link,[polish]},
+                     permanent,5000,worker,[gettext_server]},
+
     {ok, {{one_for_one, 10, 10}, 
           [PolishServer, GettextServer, CronServer, Elogger
           ]}}.
