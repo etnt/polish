@@ -55,7 +55,10 @@ lock_keys(KVs, LC) when is_atom(LC) ->
     gen_server:call(?MODULE, {lock_keys, KVs, LC, list_to_atom(wf:user())}).
 
 unlock_user_keys() ->
-    gen_server:call(?MODULE, {unlock_user_keys, list_to_atom(wf:user())}).
+    case wf:user() of
+	undefined -> ok;
+	U -> gen_server:call(?MODULE, {unlock_user_keys, list_to_atom(U)})
+    end.
 
 is_key_locked(Key, LC) when is_list(LC) -> is_key_locked(Key, list_to_atom(LC));
 is_key_locked(Key, LC) when is_atom(LC) ->

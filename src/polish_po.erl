@@ -174,6 +174,9 @@ get_line(Str) ->
 %%% End of string reached.
 get_line([], _Sep, _N, _End, Acc) ->
     {lists:reverse(Acc), []};
+%%% Weird header_info sometimes
+get_line(header_info, _Sep, _N, _End, _Acc) ->
+    {"", []};
 %%% Eat characters.
 get_line([H|T], Sep, N, End, Acc) when N < End ->
     get_line(T, Sep, N+1, End, [H|Acc]);
