@@ -308,3 +308,16 @@ p .button {
 .stats {
     font-size: 20px;
 }
+
+#help h2 {
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+
+#help p {
+    margin-top:10px;
+}
+
+#help p span {
+    font-weight: bold;
+}
