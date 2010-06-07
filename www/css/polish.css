@@ -79,31 +79,95 @@ body {
 
 
 /***** MENU *****/
-.menu { 
-    color: #888;
+.menu {
+    clear: both;
+    float: left;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    z-index: 1000;
+    position: relative;
     background-color: #dfe2ea;
-    text-align: center;
+    color: #888;
     font-size: 18px;
     line-height: 12px;
-    padding: 15px;
 }
 
-.menu a {
+.menu ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    float: right;
+    position: relative;
+    right: 50%;
+}
+
+.menu ul li {
+    margin: 0 0 0 1px;
+    padding: 0;
+    float: left;
+    position: relative;
+    left: 50%;
+    top: 1px;
+}
+
+.menu ul li a {
+    display: block;
+    margin: 0;
+    padding: .6em .5em .4em;
+    font-size: 1em;
+    line-height: 1em;
     text-decoration: none;
     color: #888;
-    padding: 3px 0px;
-    margin: 0px 10px;
 }
 
-.menu a:HOVER {
-    color: #000000;
-    text-decoration: none;
-}
-
-.menu a.selected {
+.menu ul li a:hover, .menu ul li:hover a {
     color: #000;
+}
+
+.menu ul ul {
+    display: none;
+    position: absolute;
+    top: 1.7em;
+    left: 0;
+    right: auto;
     background-color: #dfe2ea;
-    border-bottom: solid 3px #FC2752;
+    -webkit-border-bottom-right-radius: 10px;
+    -webkit-border-bottom-left-radius: 10px;
+    -moz-border-radius-bottomright: 10px;
+    -moz-border-radius-bottomleft: 10px;
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    box-shadow: 2px 2px 6px #bbb;
+    -moz-box-shadow: 2px 2px 6px #bbb;
+    -webkit-box-shadow: 2px 2px 6px #bbb;
+}
+
+.menu ul ul li {
+    left: auto;
+    margin: 0;
+    clear: left;
+    width: 100%;
+}
+
+.menu ul ul li a, .menu ul li:hover ul li a {
+    font-size: .8em;
+    line-height: 1.4em;
+    color: #888;
+    padding: 1px 12px 5px 12px;
+}
+
+.menu ul ul li a:hover,.menu ul li:hover ul li a:hover {
+    color: #000;
+}
+
+.menu ul ul.last {
+    left: auto;
+    right: 0;
+}
+
+.menu ul li:hover ul {
+    display: block;
 }
 
 h1 {
