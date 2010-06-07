@@ -9,7 +9,7 @@
 	url = http://github.com/etnt/eopenid.git
 [submodule "dep/gettext"]
 	path = dep/gettext
-	url = git@github.com:etnt/gettext.git
+	url = http://github.com/etnt/gettext.git
 [submodule "dep/trane"]
 	path = dep/trane
 	url = http://github.com/massemanet/trane.git
