@@ -1,20 +1,19 @@
-
 SETUP
 ----
-In the polish directory, run:
-
+To set up and initialize Polish run:
  make init
 
-To compile the source code of the polish application:
-
+To compile the source code of the polish application run:
  make
 
-Now, change the config settings in ebin/polish.app before starting
-the system as:
-
+Now, you are ready to start Polish by running:
  ./start.sh
 
 
-
-
-
+ADDING TRANSLATORS
+----
+To add translators to Polish first they need an openid account (they can get one in www.myopenid.com).
+Once they have an openid, you need to add them in the src/polish.app.src file so that they can log in.
+Open that file and add the translator information both in the 'acl' tuple and in
+the 'users' tuple following the pattern existing for the already existing translators.
+When you are done, you need to do the whole setup process again explained above.
