@@ -1,19 +1,55 @@
 SETUP
 ----
-To set up and initialize Polish run:
+- Change hostname: Open the src/polish.app.src and replace the hostname value which is by default
+"hostname" with your IP (for example "17.10.100.14"). This is necessary for some redirects that happen
+after the login, to avoid being redirected to "localhost".
+
+- Change po_lang_dir: Again in the src/polish.app.src file, you need to replace "/xxx/yyy/priv/lang"
+with the path to the directory which contains the languages information. That directory should 
+have the next structure: ./custom/${LC}/gettext.po
+
+- Make sure you have a 'polish_users' file. (explained below)
+
+- Make sure you have a gettext.po.meta file per each language (explained below).
+
+- To set up and initialize Polish run:
  make init
 
-To compile the source code of the polish application run:
+- To compile the source code of the polish application run:
  make
 
-Now, you are ready to start Polish by running:
+- Now, you are ready to start Polish by running:
  ./start.sh
+
 
 
 ADDING TRANSLATORS
 ----
 To add translators to Polish first they need an openid account (they can get one in www.myopenid.com).
-Once they have an openid, you need to add them in the src/polish.app.src file so that they can log in.
-Open that file and add the translator information both in the 'acl' tuple and in
-the 'users' tuple following the pattern existing for the already existing translators.
-When you are done, you need to do the whole setup process again explained above.
+Once they have an openid, you need to add them in the 'polish_users' file that should be placed
+in the po_lang_dir specified in polish.app.src: ${po_lang_dir}/polish_users
+An example of the content of this file may be:
+
+% The 'acl' list defines who is allowed to do translations.
+{acl, ["http://etnt.myopenid.com/"
+      ,"http://jordi-chacon.myopenid.com/"
+      ]}.
+
+% The 'users' list connects the OpenID with a Name and Email.
+{users,[{"http://etnt.myopenid.com/", [{name, "Torbjorn Tornkvist"},{email, "tobbe@klarna.com"}]},
+        {"http://jordi-chacon.myopenid.com/", [{name, "Jordi Chacon"},{email, "jordi.chacon@klarna.com"}]}
+        ]}.
+
+If you need to add a translator, you need to add him/her to both 'acl' and 'users' lists 
+following the pattern in the example.
+
+
+
+GETTEXT.PO.META
+----
+For each language that you want to translate with polish, you need to add a gettext.po.meta file.
+For example, if you have a ${po_lang_dir}/custom/en/gettext.po file for the English language, 
+you will need to create a ${po_lang_dir}/custom/en/gettext.po.meta empty file.
+The purpose of this file is to store the sentences whose translations look exactly the same as 
+in the default language. When a translator marks a sentence as 'Always translated', it will
+be added in the meta file of that language and it will not appear again as untranslated.

@@ -29,7 +29,7 @@
 	 ,{doc_root, "./www"}
 
          % Assumes: ${po_lang_dir}/custom/${LC}/gettext.po
-	 ,{po_lang_dir, "/home/jordi/development/trunk/lib/site/priv/lang/"}
+	 ,{po_lang_dir, "/xxx/yyy/priv/lang/"}
 
          % Log handling
 	 ,{nolog, false}
