@@ -6,7 +6,7 @@
 
 -define(AUTH(FunCall), 
         case {wf:session(authenticated),
-              lists:member(wf:user(), polish_deps:get_env(acl,[]))} of
+              lists:member(wf:user(), polish:get_acl())} of
             {true,true} -> polish:setup_user_info(), FunCall;
             _           -> wf:redirect("/login")
         end).

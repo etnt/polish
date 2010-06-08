@@ -37,20 +37,5 @@
     	 ,{error_logger_mf_file, "./logs/polish"}
     	 ,{error_logger_mf_maxbytes, 500000}
     	 ,{error_logger_mf_maxfiles, 5}
-
-         % The 'acl' list defines who is allowed to do translations.
-	 ,{acl, ["http://etnt.myopenid.com/"
-                 ,"http://jordi-chacon.myopenid.com/"
-                ]}
-
-         % The 'users' list connects the OpenID with a Name and Email.
-         ,{users,[{"http://etnt.myopenid.com/", 
-                   [{name, "Torbjorn Tornkvist"},
-                    {email, "tobbe@klarna.com"}]}
-
-                  , {"http://jordi-chacon.myopenid.com/", 
-                     [{name, "Jordi Chacon"},
-                      {email, "jordi.chacon@klarna.com"}]}
-                 ]}
         ]}
  ]}.
