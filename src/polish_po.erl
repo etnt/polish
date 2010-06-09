@@ -115,9 +115,10 @@ sort_po_files([]) ->
 
 %% FIXME insert the proper user info into the header...
 write_header(Fd, LC, Name, Email) ->
+    OrgName = polish_deps:get_env(org_name, "org_name"),
     io:format(Fd,
-	      "# Klarna PO file for "++get_language_name(LC)++"\n"
-	      "# Copyright (C) "++year2str()++" Klarna AB Sweden\n"
+	      "# "++OrgName++" PO file for "++get_language_name(LC)++"\n"
+	      "# Copyright (C) "++year2str()++" "++OrgName++"\n"
 	      "#\n"
 	      "msgid \"\"\n"
 	      "msgstr \"\"\n"
