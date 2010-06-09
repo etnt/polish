@@ -4,7 +4,6 @@
 -module(polish_utils).
 
 -export([get_language_name/1
-	 , get_country_name/1
          , year2str/0
          , translator_name/0
          , translator_email/0
@@ -14,14 +13,6 @@
 
 get_language_name(undefined) -> "";
 get_language_name(LC)        -> gettext_iso639:lc2lang(LC).
-
-get_country_name("nl") -> "Netherlands";
-get_country_name("nb") -> "Norway";
-get_country_name("da") -> "Denmark";
-get_country_name("de") -> "Germany";
-get_country_name("fi") -> "Finland";
-get_country_name(undefined) -> "".
-
 
 year2str() ->
     {Y,_,_} = date(),

@@ -9,11 +9,12 @@
 	 , get_stats/1
 	 , check_correctness/2
 	 , update_po_files/1
+	 , sort_po_files/1
         ]).
 
 -import(polish_utils,
-        [get_country_name/1
-         , year2str/0
+        [get_language_name/1
+	 , year2str/0
          , rfc3339/0
         ]).
 
@@ -99,7 +100,13 @@ check_correctness(Key, Val) ->
 
 update_po_files(CustomLCs) ->
     DefaultPo = read_po_file(default),
-    update_po_files(DefaultPo, CustomLcs).
+    update_po_files(DefaultPo, CustomLCs).
+
+sort_po_files([LC|CustomLCs]) ->
+    sort_po_file(LC),
+    sort_po_files(CustomLCs);
+sort_po_files([]) ->
+    ok.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -109,7 +116,7 @@ update_po_files(CustomLCs) ->
 %% FIXME insert the proper user info into the header...
 write_header(Fd, LC, Name, Email) ->
     io:format(Fd,
-	      "# Klarna PO file for the "++get_country_name(LC)++"\n"
+	      "# Klarna PO file for "++get_language_name(LC)++"\n"
 	      "# Copyright (C) "++year2str()++" Klarna AB Sweden\n"
 	      "#\n"
 	      "msgid \"\"\n"
@@ -267,8 +274,14 @@ get_offset() ->
     end.
 
 read_po_file(LC) ->
-    [_|T] = gettext:parse_po(mk_po_filename(LC)),
-    T.	    
+    try 
+	case gettext:parse_po(mk_po_filename(LC)) of
+	    []    -> [];
+	    [_|T] -> T
+	end
+    catch
+	error:{badmatch, {error, enoent}} -> []
+    end.	    
 
 mk_po_filename(LC) ->
     Dir = polish:po_lang_dir(),
@@ -359,3 +372,8 @@ add_new_delete_old_keys_test_() ->
     ?_assertEqual([{"7", "77"}, {"ab", "ac"}, {"ac", "acc"}, 
 		   {"b", "bus"}, {"c", "cc"}, {"zz", "z"}],
 		  add_new_delete_old_keys(PoToWash5, DefPo5))].
+
+sort_po_file(LC) ->
+    LCPo = read_po_file(LC),
+    SortedPo = lists:sort(fun({K1, _V1}, {K2, _V2}) -> K1 < K2 end, LCPo),
+    write_po_file(LC, SortedPo, "Polish tool", "polish@polish.org").
