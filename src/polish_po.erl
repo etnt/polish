@@ -8,6 +8,7 @@
          , write_po_file/4
 	 , get_stats/1
 	 , check_correctness/2
+	 , update_po_files/1
         ]).
 
 -import(polish_utils,
@@ -15,6 +16,8 @@
          , year2str/0
          , rfc3339/0
         ]).
+
+-include_lib("eunit/include/eunit.hrl").
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -94,14 +97,9 @@ check_correctness(Key, Val) ->
 		  gettext_validate_bad_punct, gettext_validate_bad_ws],
     run_validators(F, Key, Val, Validators).
 
-run_validators(_F, _Key, _Val, []) ->
-    ok;
-run_validators(F, Key, Val, [Validator|T]) ->
-    case F(Validator, Key, Val) of
-	ok                -> run_validators(F, Key, Val, T);
-	{error, _Msg} = E -> E
-    end.
-	    
+update_po_files(CustomLCs) ->
+    DefaultPo = read_po_file(default),
+    update_po_files(DefaultPo, CustomLcs).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -241,10 +239,6 @@ get_entries_to_edit(LC) ->
 get_entries_to_edit(LC, F) ->
     [{Key,Val} || {Key,Val} <- read_po_file(LC), F(Key, Val)].
 
-read_po_file(LC) ->
-    [_|T] = gettext:parse_po(mk_po_filename(LC)),
-    T.
-
 take([], _, _, _, _)      -> [];
 take(T, 1, N, LC, S)      -> take(T, N, LC, S);
 take(T, Offset, N, LC, S) -> take(T, Offset - 1, N, LC, S).
@@ -272,9 +266,21 @@ get_offset() ->
 	V         -> V
     end.
 
+read_po_file(LC) ->
+    [_|T] = gettext:parse_po(mk_po_filename(LC)),
+    T.	    
+
 mk_po_filename(LC) ->
     Dir = polish:po_lang_dir(),
-    filename:join([Dir,"custom",LC,"gettext.po"]).
+    CustomDefaultDir = get_custom_or_default_dir(LC),
+    LangDir = get_lang_dir(LC),
+    filename:join([Dir, CustomDefaultDir, LangDir,"gettext.po"]).
+
+get_custom_or_default_dir(default) -> "default";
+get_custom_or_default_dir(_LC)     -> "custom".
+
+get_lang_dir(default) -> polish_deps:get_env(default_lang, "en");
+get_lang_dir(LC)      -> LC.
 
 match_entry({K, _V}, {Str, {key, true}, {value, false}}) ->
     run_re(K, Str);
@@ -297,3 +303,59 @@ run_re(V, RegExp) ->
 	_       -> match
     end.
 
+run_validators(_F, _Key, _Val, []) ->
+    ok;
+run_validators(F, Key, Val, [Validator|T]) ->
+    case F(Validator, Key, Val) of
+	ok                -> run_validators(F, Key, Val, T);
+	{error, _Msg} = E -> E
+    end.
+
+update_po_files(DefaultPo, [LC|T]) ->
+    LCPo = read_po_file(LC),
+    wash_po_file(LCPo, DefaultPo, LC),
+    update_po_files(DefaultPo, T);
+update_po_files(_DefaultPo, []) ->
+    ok.
+
+wash_po_file(PoToWash, DefaultPo, LC) ->
+    PoToWash1 = add_new_delete_old_keys(PoToWash, DefaultPo),
+    write_po_file(LC, PoToWash1, "Polish tool", "polish@polish.org").
+    
+add_new_delete_old_keys(PoToWash, DefPo) ->
+    add_new_delete_old_keys(PoToWash, DefPo, []).
+add_new_delete_old_keys([{K, _V1} = KV|PoToWash], [{K, _V2}|DefPo], Acc) ->
+    add_new_delete_old_keys(PoToWash, DefPo, [KV|Acc]);
+add_new_delete_old_keys([{K1, _V1}|_]=PoToWash, [{K2, _V2} = KV|DefPo], Acc) when K1 > K2 ->
+    add_new_delete_old_keys(PoToWash, DefPo, [KV|Acc]);
+add_new_delete_old_keys([{_K, _V}|PoToWash], DefPo, Acc) ->
+    add_new_delete_old_keys(PoToWash, DefPo, Acc);
+add_new_delete_old_keys([], [KV|DefPo], Acc) ->
+    add_new_delete_old_keys([], DefPo, [KV|Acc]);
+add_new_delete_old_keys(_, [], Acc) ->
+    lists:reverse(Acc).
+
+add_new_delete_old_keys_test_() ->
+    PoToWash = [{"a", "aa"}, {"b", "bb"}],
+    DefPo = [{"a", "aa"}, {"b", "bb"}],
+    PoToWash2 = [{"a", "aa"}, {"b", "bb"}],
+    DefPo2 = [{"a", "aa"}, {"b", "bb"}, {"c", "cc"}],
+    PoToWash3 = [{"a", "aa"}, {"ab", "lol"}, {"b", "bb"}],
+    DefPo3 = [{"a", "aa"}, {"b", "bb"}, {"c", "cc"}],
+    PoToWash4 = [{"a", "a"}, {"ab", "ac"}, {"abc", "lol"}, 
+		 {"b", "bus"}, {"d", "dd"}],
+    DefPo4 = [{"ab", "aa"}, {"b", "bb"}, {"c", "cc"}],
+    PoToWash5 = [{"a", "a"}, {"ab", "ac"}, {"abc", "lol"}, 
+		 {"b", "bus"}, {"d", "dd"}],
+    DefPo5 = [{"7", "77"}, {"ab", "aa"}, {"ac", "acc"}, {"b", "bb"}, 
+	      {"c", "cc"}, {"zz", "z"}],
+    [?_assertEqual([{"a", "aa"}, {"b", "bb"}], add_new_delete_old_keys(PoToWash, DefPo)),
+    ?_assertEqual([{"a", "aa"}, {"b", "bb"}, {"c", "cc"}], 
+		  add_new_delete_old_keys(PoToWash2, DefPo2)),
+    ?_assertEqual([{"a", "aa"}, {"b", "bb"}, {"c", "cc"}], 
+		  add_new_delete_old_keys(PoToWash3, DefPo3)),
+    ?_assertEqual([{"ab", "ac"}, {"b", "bus"}, {"c", "cc"}], 
+		  add_new_delete_old_keys(PoToWash4, DefPo4)),
+    ?_assertEqual([{"7", "77"}, {"ab", "ac"}, {"ac", "acc"}, 
+		   {"b", "bus"}, {"c", "cc"}, {"zz", "z"}],
+		  add_new_delete_old_keys(PoToWash5, DefPo5))].

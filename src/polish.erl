@@ -8,6 +8,7 @@
          , gettext_dir/0
          , meta_filename/1
          , all_custom_lcs/0
+	 , update_po_files/0
          , hostname/0
          , default_port/0
          , gnow/0
@@ -32,6 +33,10 @@ meta_filename(LC) ->
 all_custom_lcs() ->
     LCdirs = os:cmd("(cd "++po_lang_dir()++"; ls custom)"),
     string:tokens(LCdirs, "\n").
+
+update_po_files() ->
+    CustomLCs = all_custom_lcs(),
+    polish_po:update_po_files(CustomLCs).
 
 default_port() -> 8080.
           
