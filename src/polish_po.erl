@@ -327,14 +327,41 @@ run_validators(F, Key, Val, [Validator|T]) ->
 
 update_po_files(DefaultPo, [LC|T]) ->
     LCPo = read_po_file(LC),
+    check_no_duplicates_and_sorted(LCPo, LC),
     wash_po_file(LCPo, DefaultPo, LC),
     update_po_files(DefaultPo, T);
 update_po_files(_DefaultPo, []) ->
     ok.
 
+check_no_duplicates_and_sorted([], _LC) ->
+    ok;
+check_no_duplicates_and_sorted([{K,_V}|KVs], LC) ->
+    check_no_duplicates_and_sorted(KVs, K, LC).
+check_no_duplicates_and_sorted([{K,_V}|KVs], PrevK, LC) ->
+    case K > PrevK of
+	true  -> 
+	    check_no_duplicates_and_sorted(KVs, K, LC);
+	false when K =:= PrevK -> 
+	    ErrMsg = io_lib:format("Duplicated key found in ~s language: ~s", 
+				   [LC, K]),
+	    erlang:error(lists:flatten(ErrMsg));
+	false ->
+	    ErrMsg = io_lib:format("Unsorted key found in ~s language: ~s~n"
+				   "Please execute polish:sort_po_files() first.", 
+				   [LC, K]),
+	    erlang:error(lists:flatten(ErrMsg))
+    end;
+check_no_duplicates_and_sorted([], _PrevK, _LC) ->
+    ok.
+	    
+
+
 wash_po_file(PoToWash, DefaultPo, LC) ->
     PoToWash1 = add_new_delete_old_keys(PoToWash, DefaultPo),
-    write_po_file(LC, PoToWash1, "Polish tool", "polish@polish.org").
+    case PoToWash =:= PoToWash1 of
+	false -> write_po_file(LC, PoToWash1, "Polish tool", "polish@polish.org");
+	true  -> ok
+    end.
     
 add_new_delete_old_keys(PoToWash, DefPo) ->
     add_new_delete_old_keys(PoToWash, DefPo, []).
