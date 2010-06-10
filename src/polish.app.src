@@ -29,7 +29,7 @@
 	 ,{doc_root, "./www"}
 
          % Assumes: ${po_lang_dir}/custom/${LC}/gettext.po
-	 ,{po_lang_dir, "/home/jordi/development/trunk/lib/site/priv/lang/"}
+	 ,{po_lang_dir, "/xxx/yyy/priv/lang/"}
 	 ,{default_lang, "sv"}
 	 ,{org_name, "Klarna AB Sweden"}
 
@@ -39,20 +39,5 @@
     	 ,{error_logger_mf_file, "./logs/polish"}
     	 ,{error_logger_mf_maxbytes, 500000}
     	 ,{error_logger_mf_maxfiles, 5}
-
-         % The 'acl' list defines who is allowed to do translations.
-	 ,{acl, ["http://etnt.myopenid.com/"
-                 ,"http://jordi-chacon.myopenid.com/"
-                ]}
-
-         % The 'users' list connects the OpenID with a Name and Email.
-         ,{users,[{"http://etnt.myopenid.com/", 
-                   [{name, "Torbjorn Tornkvist"},
-                    {email, "tobbe@klarna.com"}]}
-
-                  , {"http://jordi-chacon.myopenid.com/", 
-                     [{name, "Jordi Chacon"},
-                      {email, "jordi.chacon@klarna.com"}]}
-                 ]}
         ]}
  ]}.

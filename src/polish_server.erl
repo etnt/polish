@@ -332,7 +332,6 @@ do_mark_as_always_translated(State, LC, Key) ->
         _ ->
             {State, ok}
     end.
-                
 
 do_is_always_translated(State, LC, Key) ->
     Res = case ets:lookup(always_translated, {LC, Key}) of
