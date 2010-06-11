@@ -8,7 +8,7 @@ after the login, to avoid being redirected to "localhost".
 with the path to the directory which contains the languages information. That directory should 
 have the next structure: ./custom/${LC}/gettext.po
 
-- Make sure you have a 'polish_users' file. (explained below)
+- Make sure you have a 'polish.meta' file. (explained below)
 
 - Make sure you have a gettext.po.meta file per each language (explained below).
 
@@ -21,27 +21,43 @@ have the next structure: ./custom/${LC}/gettext.po
 - Now, you are ready to start Polish by running:
  ./start.sh
 
+- Wash po files
 
 
-ADDING TRANSLATORS
+POLISH.META
 ----
-To add translators to Polish first they need an openid account (they can get one in www.myopenid.com).
-Once they have an openid, you need to add them in the 'polish_users' file that should be placed
-in the po_lang_dir specified in polish.app.src: ${po_lang_dir}/polish_users
-An example of the content of this file may be:
+The purpose of the polish.meta file is to store information regarding your project. Specifically, it
+should contain:
+- List of users allowed to do translations: acl
+- Information of each of those users: users
+- Your default language code following iso639: default_lang
+- Your organisation name: org_name
+
+It is mandatory to have the polish.meta file and it should be placed in the po_lang_dir 
+directory specified in polish.app.src: ${po_lang_dir}/polish.meta
+An example of the content of this file is presented next:
+
 
 % The 'acl' list defines who is allowed to do translations.
 {acl, ["http://etnt.myopenid.com/"
       ,"http://jordi-chacon.myopenid.com/"
       ]}.
-
 % The 'users' list connects the OpenID with a Name and Email.
 {users,[{"http://etnt.myopenid.com/", [{name, "Torbjorn Tornkvist"},{email, "tobbe@klarna.com"}]},
         {"http://jordi-chacon.myopenid.com/", [{name, "Jordi Chacon"},{email, "jordi.chacon@klarna.com"}]}
         ]}.
+{default_lang, "sv"}.
+{org_name, "Klarna AB Sweden"}.
 
-If you need to add a translator, you need to add him/her to both 'acl' and 'users' lists 
-following the pattern in the example.
+
+
+
+ADDING TRANSLATORS
+----
+To add translators to Polish first they need an openid account (they can get one in www.myopenid.com).
+Once they have an openid, you need to add them in the 'polish.meta'. Specifically, you need to 
+add him/her to both 'acl' and 'users' fields following the pattern in the previous example.
+
 
 
 
