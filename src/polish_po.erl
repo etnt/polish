@@ -115,7 +115,7 @@ sort_po_files([]) ->
 
 %% FIXME insert the proper user info into the header...
 write_header(Fd, LC, Name, Email) ->
-    OrgName = polish_deps:get_env(org_name, "org_name"),
+    OrgName = polish:get_org_name(),
     io:format(Fd,
 	      "# "++OrgName++" PO file for "++get_language_name(LC)++"\n"
 	      "# Copyright (C) "++year2str()++" "++OrgName++"\n"
@@ -293,7 +293,7 @@ mk_po_filename(LC) ->
 get_custom_or_default_dir(default) -> "default";
 get_custom_or_default_dir(_LC)     -> "custom".
 
-get_lang_dir(default) -> polish_deps:get_env(default_lang, "en");
+get_lang_dir(default) -> polish:get_default_lang();
 get_lang_dir(LC)      -> LC.
 
 match_entry({K, _V}, {Str, {key, true}, {value, false}}) ->

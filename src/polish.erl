@@ -6,6 +6,8 @@
 -export([setup_user_info/0
          , po_lang_dir/0
 	 , get_acl/0
+	 , get_default_lang/0
+	 , get_org_name/0
          , gettext_dir/0
          , meta_filename/1
          , all_custom_lcs/0
@@ -54,18 +56,24 @@ setup_user_info() ->
     wf:session(email, proplists:get_value(email,L)).
 
 get_users() ->
-    get_from_users_file(users).
+    get_from_meta_file(users).
 
 get_acl() ->
-    get_from_users_file(acl).
+    get_from_meta_file(acl).
 
-get_from_users_file(Field) ->
+get_default_lang() ->
+    get_from_meta_file(default_lang).
+
+get_org_name() ->
+    get_from_meta_file(org_name).    
+
+get_from_meta_file(Field) ->
     PoDir = get_env(po_lang_dir, "/tmp"),
-    case file:consult(PoDir ++ "/polish_users") of
+    case file:consult(PoDir ++ "/polish.meta") of
 	{ok, List} ->
  	    case proplists:get_value(Field, List) of
 		undefined -> [];
-		UsersList -> UsersList
+		Data      -> Data
 	    end;
 	_ ->
 	    []

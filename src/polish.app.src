@@ -30,8 +30,6 @@
 
          % Assumes: ${po_lang_dir}/custom/${LC}/gettext.po
 	 ,{po_lang_dir, "/xxx/yyy/priv/lang/"}
-	 ,{default_lang, "sv"}
-	 ,{org_name, "Klarna AB Sweden"}
 
          % Log handling
 	 ,{nolog, false}
