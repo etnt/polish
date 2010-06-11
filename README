@@ -1,4 +1,12 @@
-SETUP
+FIRST-TIME SETUP
+----
+- Make sure you have a 'polish.meta' file. (see POLISH.META section)
+
+- Make sure you have a gettext.po.meta file per each language (see GETTEXT.PO.META section).
+
+
+
+SETUP AFTER CLONE
 ----
 - Change hostname: Open the src/polish.app.src and replace the hostname value which is by default
 "hostname" with your IP (for example "17.10.100.14"). This is necessary for some redirects that happen
@@ -7,10 +15,6 @@ after the login, to avoid being redirected to "localhost".
 - Change po_lang_dir: Again in the src/polish.app.src file, you need to replace "/xxx/yyy/priv/lang"
 with the path to the directory which contains the languages information. That directory should 
 have the next structure: ./custom/${LC}/gettext.po
-
-- Make sure you have a 'polish.meta' file. (explained below)
-
-- Make sure you have a gettext.po.meta file per each language (explained below).
 
 - To set up and initialize Polish run:
  make init
@@ -21,7 +25,9 @@ have the next structure: ./custom/${LC}/gettext.po
 - Now, you are ready to start Polish by running:
  ./start.sh
 
-- Wash po files
+- Wash po files (see POLISH FLOW section).
+
+
 
 
 POLISH.META
@@ -69,3 +75,10 @@ you will need to create a ${po_lang_dir}/custom/en/gettext.po.meta empty file.
 The purpose of this file is to store the sentences whose translations look exactly the same as 
 in the default language. When a translator marks a sentence as 'Always translated', it will
 be added in the meta file of that language and it will not appear again as untranslated.
+
+
+
+
+POLISH FLOW
+----
+
