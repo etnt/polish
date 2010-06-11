@@ -326,12 +326,27 @@ run_validators(F, Key, Val, [Validator|T]) ->
     end.
 
 update_po_files(DefaultPo, [LC|T]) ->
-    LCPo = read_po_file(LC),
-    check_no_duplicates_and_sorted(LCPo, LC),
-    wash_po_file(LCPo, DefaultPo, LC),
-    update_po_files(DefaultPo, T);
+    case read_and_check_po_file(LC) of
+	{error, _Msg} = Err -> 
+	    Err;
+	LCPo ->
+	    wash_po_file(LCPo, DefaultPo, LC),
+	    update_po_files(DefaultPo, T)
+    end;
 update_po_files(_DefaultPo, []) ->
     ok.
+
+read_and_check_po_file(LC) ->
+    LCPo = read_po_file(LC),
+    case check_no_duplicates_and_sorted(LCPo, LC) of
+	unsorted ->
+	    sort_po_file(LC),
+	    read_and_check_po_file(LC);
+	{error, _Msg} = Err ->
+	    Err;
+	ok ->
+	    LCPo
+    end.    
 
 check_no_duplicates_and_sorted([], _LC) ->
     ok;
@@ -342,19 +357,16 @@ check_no_duplicates_and_sorted([{K,_V}|KVs], PrevK, LC) ->
 	true  -> 
 	    check_no_duplicates_and_sorted(KVs, K, LC);
 	false when K =:= PrevK -> 
-	    ErrMsg = io_lib:format("Duplicated key found in ~s language: ~s", 
-				   [LC, K]),
-	    erlang:error(lists:flatten(ErrMsg));
+	    {error, io_lib:format("ERROR: Duplicated key found in ~s language."
+				   "Run polish:get_duplicated_keys(~s) "
+				   ", remove all the duplicated keys and"
+				   " run polish:update_po_files() again.",
+				   [LC, LC])};
 	false ->
-	    ErrMsg = io_lib:format("Unsorted key found in ~s language: ~s~n"
-				   "Please execute polish:sort_po_files() first.", 
-				   [LC, K]),
-	    erlang:error(lists:flatten(ErrMsg))
+	    unsorted
     end;
 check_no_duplicates_and_sorted([], _PrevK, _LC) ->
     ok.
-	    
-
 
 wash_po_file(PoToWash, DefaultPo, LC) ->
     PoToWash1 = add_new_delete_old_keys(PoToWash, DefaultPo),
@@ -378,5 +390,5 @@ add_new_delete_old_keys(_, [], Acc) ->
 
 sort_po_file(LC) ->
     LCPo = read_po_file(LC),
-    SortedPo = lists:sort(fun({K1, _V1}, {K2, _V2}) -> K1 < K2 end, LCPo),
+    SortedPo = lists:keysort(1, LCPo),
     write_po_file(LC, SortedPo, "Polish tool", "polish@polish.org").
