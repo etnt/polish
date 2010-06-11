@@ -99,6 +99,9 @@ check_correctness(Key, Val) ->
     run_validators(F, Key, Val, Validators).
 
 update_po_files(CustomLCs) ->
+    %% sort default po file because it may not be completely sorted even
+    %% after a make run_gettext. Strings that contain backslashes have problems.
+    sort_po_file(default),
     DefaultPo = read_po_file(default),
     update_po_files(DefaultPo, CustomLCs).
 
