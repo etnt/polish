@@ -394,4 +394,7 @@ add_new_delete_old_keys(_, [], Acc) ->
 sort_po_file(LC) ->
     LCPo = read_po_file(LC),
     SortedPo = lists:keysort(1, LCPo),
-    write_po_file(LC, SortedPo, "Polish tool", "polish@polish.org").
+    case SortedPo =:= LCPo of
+	true  -> ok;
+	false -> write_po_file(LC, SortedPo, "Polish tool", "polish@polish.org")
+    end.
