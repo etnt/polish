@@ -330,8 +330,8 @@ run_validators(F, Key, Val, [Validator|T]) ->
 
 update_po_files(DefaultPo, [LC|T]) ->
     case read_and_check_po_file(LC) of
-	{error, _Msg} = Err -> 
-	    Err;
+	{duplicated, _D} = Duplicated -> 
+	    Duplicated;
 	LCPo ->
 	    wash_po_file(LCPo, DefaultPo, LC),
 	    update_po_files(DefaultPo, T)
@@ -345,8 +345,10 @@ read_and_check_po_file(LC) ->
 	unsorted ->
 	    sort_po_file(LC),
 	    read_and_check_po_file(LC);
-	{error, _Msg} = Err ->
-	    Err;
+	{duplicated, D} = Duplicated ->
+	    error_logger:info_msg(polish:i2l(length(D))++" duplicated keys "
+				  "in "++LC++".~n~n"),
+	    Duplicated;
 	ok ->
 	    LCPo
     end.    
@@ -354,27 +356,27 @@ read_and_check_po_file(LC) ->
 check_no_duplicates_and_sorted([], _LC) ->
     ok;
 check_no_duplicates_and_sorted([{K,_V}|KVs], LC) ->
-    check_no_duplicates_and_sorted(KVs, K, LC).
-check_no_duplicates_and_sorted([{K,_V}|KVs], PrevK, LC) ->
+    check_no_duplicates_and_sorted(KVs, K, LC, []).
+check_no_duplicates_and_sorted([{K,_V}|KVs], PrevK, LC, Duplicated) ->
     case K > PrevK of
 	true  -> 
-	    check_no_duplicates_and_sorted(KVs, K, LC);
+	    check_no_duplicates_and_sorted(KVs, K, LC, Duplicated);
 	false when K =:= PrevK -> 
-	    {error, io_lib:format("ERROR: Duplicated key found in ~s language."
-				   "Run polish:get_duplicated_keys(~s) "
-				   ", remove all the duplicated keys and"
-				   " run polish:update_po_files() again.",
-				   [LC, LC])};
+	    check_no_duplicates_and_sorted(KVs, K, LC, [K|Duplicated]);
 	false ->
 	    unsorted
     end;
-check_no_duplicates_and_sorted([], _PrevK, _LC) ->
-    ok.
+check_no_duplicates_and_sorted([], _PrevK, _LC, []) ->
+    ok;
+check_no_duplicates_and_sorted([], _PrevK, _LC, Duplicated) ->
+    {duplicated, Duplicated}.
 
 wash_po_file(PoToWash, DefaultPo, LC) ->
     PoToWash1 = add_new_delete_old_keys(PoToWash, DefaultPo),
     case PoToWash =:= PoToWash1 of
-	false -> write_po_file(LC, PoToWash1, "Polish tool", "polish@polish.org");
+	false -> 
+	    error_logger:info_msg("Updating "++LC++"...~n"),
+	    write_po_file(LC, PoToWash1, "Polish tool", "polish@polish.org");
 	true  -> ok
     end.
     
@@ -396,5 +398,12 @@ sort_po_file(LC) ->
     SortedPo = lists:keysort(1, LCPo),
     case SortedPo =:= LCPo of
 	true  -> ok;
-	false -> write_po_file(LC, SortedPo, "Polish tool", "polish@polish.org")
+	false ->
+	    LC1 = case is_atom(LC) of
+		      true -> atom_to_list(LC);
+		      false -> LC
+		  end,
+	    error_logger:info_msg(LC1++" po file not sorted. Sorting."),
+	    write_po_file(LC, SortedPo, "Polish tool", "polish@polish.org")
     end.
+
