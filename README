@@ -13,6 +13,7 @@ CONTENTS
 
 1. FIRST-TIME SETUP
 ----
+This section explains how to include Polish in your project so that you can use it.
 Basically, you need to make sure you have a correct 'lang' directory structure.
 It should have a structure like the one in the following example:
 
@@ -33,7 +34,6 @@ sv
 
 ./default/sv:
 gettext.po 
-
 
 
 1.1 POLISH.META
@@ -61,7 +61,6 @@ the example with the one from your project):
         ]}.
 {default_lang, "sv"}.
 {org_name, "Klarna AB Sweden"}.
-
 
 
 1.2 GETTEXT.PO.META
@@ -98,7 +97,6 @@ with the path to your 'lang' directory (see section 1).
 - Wash po files (see next sections).
 
 
-
 2.1 FIRST-TIME POLISH FLOW
 ----
 For Polish to work as expected, all your po files should be consistent. This means
@@ -117,7 +115,6 @@ When the update_po_files functions finishes with an ok, the po files are consist
 can start using Polish.
 
 
-
 2.2 NORMAL POLISH FLOW
 ----
 Every time you add a new TXT or similar macro to your code, you are supposed to:
@@ -127,6 +124,7 @@ Every time you add a new TXT or similar macro to your code, you are supposed to:
   new keys into the custom po files
 - Ask the translators to translate the new sentences. Once they do that, a new version of the
   po file will be stored on your local machine and you can add that new version to the repository.
+
 
 
 
