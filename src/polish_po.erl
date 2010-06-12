@@ -163,17 +163,16 @@ write_pretty(Str, Fd) ->
 
 write_string(Str, Fd) ->
     file:write(Fd, "\""),
-    file:write(Fd, massage(Str, [])),
+    file:write(Fd, escape_chars(Str)),
     file:write(Fd, "\"\n").
 
-massage([$\"|T], Acc) ->
-    massage(T, [$\",$\\|Acc]);
-massage([$\\|T], Acc) ->
-    massage(T, [$\\,$\\|Acc]);
-massage([H|T], Acc) ->
-    massage(T, [H|Acc]);
-massage([], Acc) ->
-    lists:reverse(Acc).
+escape_chars(Str) ->
+    F = fun($", Acc)  -> [$\\,$"|Acc];
+           ($\\, Acc) -> [$\\,$\\|Acc];
+           ($\n, Acc) -> [$\\,$n|Acc];
+	   (C, Acc)   -> [C|Acc] 
+	end,
+    lists:foldr(F, [], Str).
 
 %%% Split the string into substrings, 
 %%% aligned around a specific column.
