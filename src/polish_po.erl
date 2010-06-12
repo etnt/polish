@@ -10,6 +10,7 @@
 	 , check_correctness/2
 	 , update_po_files/1
 	 , sort_po_files/1
+	 , get_status_po_files/1
         ]).
 
 -export([add_new_delete_old_keys/2]).
@@ -110,6 +111,10 @@ sort_po_files([LC|CustomLCs]) ->
     sort_po_files(CustomLCs);
 sort_po_files([]) ->
     ok.
+
+get_status_po_files(LCs) ->
+    DefaultPo = read_po_file(default),
+    get_status_po_files(LCs, DefaultPo).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -406,3 +411,91 @@ sort_po_file(LC) ->
 	    write_po_file(LC, SortedPo, "Polish tool", "polish@polish.org")
     end.
 
+is_sorted(KVs, LC) ->
+    {_,Res} = lists:foldl(fun({K,_}, {PrevK, Acc}) ->
+				  case K > PrevK of
+				      true  -> {K, Acc};
+				      false -> {K, false}
+				  end
+			  end, {"", true}, KVs),
+    case Res of
+	true  -> io:format("~p is sorted~n", [get_lang_dir(LC)]);
+	false -> io:format("~p is NOT sorted~n", [get_lang_dir(LC)])
+    end,
+    Res.
+
+get_status_po_files(LCs, DefaultPo) ->
+    LCs2 = [default|LCs],
+    ResSorted = check_sorted(LCs2),
+    ResLength = check_same_length(LCs2),
+    ResKeys = check_same_keys(LCs, DefaultPo),
+    ResDuplicated = check_duplicated_keys(LCs2),
+    [{sorted, ResSorted}, {length, ResLength}, {same_keys_as_default, ResKeys},
+     {not_duplicated_keys, ResDuplicated}].
+
+check_sorted(LCs) ->
+    check_sorted(LCs, []).
+check_sorted([LC|LCs], Acc) ->
+    Res = is_sorted(read_po_file(LC), LC),
+    check_sorted(LCs, [{LC,Res}|Acc]);
+check_sorted([], Acc) ->
+    io:format("~n~n"),
+    lists:reverse(Acc).
+
+check_same_length(LCs) ->
+    check_same_length(LCs, []).
+check_same_length([LC|LCs], Acc) ->
+    Length = length(read_po_file(LC)),
+    io:format("~p length: ~p~n", [get_lang_dir(LC), Length]),
+    check_same_length(LCs, [{LC,Length}|Acc]);
+check_same_length([], Acc) ->
+    io:format("~n~n"),
+    lists:reverse(Acc).
+
+check_same_keys(LCs, DefaultPo) ->
+    check_same_keys(LCs, DefaultPo, []).
+check_same_keys([LC|LCs], DefaultPo, Acc) ->
+    LCPo = read_po_file(LC),
+    case check_same_keys_lc(LCPo, DefaultPo) of
+	true -> 
+	    io:format("~p has same keys as default~n", [get_lang_dir(LC)]),
+	    check_same_keys(LCs, DefaultPo, [{LC, true}|Acc]);
+	false ->
+	    io:format("~p has NOT same keys as default~n", [get_lang_dir(LC)]),
+	    check_same_keys(LCs, DefaultPo, [{LC, false}|Acc])
+    end;
+check_same_keys([], _DefaultPo, Acc) ->
+    io:format("~n~n"),
+    lists:reverse(Acc).
+    
+check_same_keys_lc([{K, _}|LCPo], [{K, _}|DefaultPo]) ->
+    check_same_keys_lc(LCPo, DefaultPo);
+check_same_keys_lc([], []) ->
+    true;
+check_same_keys_lc(_, _) ->
+    false.
+
+check_duplicated_keys(LCs) ->
+    check_duplicated_keys(LCs, []).
+check_duplicated_keys([LC|LCs], Acc) ->
+    [{FirstK, _}|LCPo] = read_po_file(LC),
+    case check_duplicated_keys_lc(LCPo, FirstK) of
+	ok -> 
+	    io:format("~p does not have duplicated keys~n", [get_lang_dir(LC)]),
+	    check_duplicated_keys(LCs, [{LC, true}|Acc]);
+	duplicated ->
+	    io:format("~p has duplicated keys~n", [get_lang_dir(LC)]),
+	    check_duplicated_keys(LCs, [{LC, false}|Acc])
+    end;
+check_duplicated_keys([], Acc) ->
+    io:format("~n~n"),
+    lists:reverse(Acc).
+
+check_duplicated_keys_lc([{K,_}|LCPo], PrevK) ->
+    case PrevK > K of
+	true  -> duplicated;
+	false -> check_duplicated_keys_lc(LCPo, K)
+    end;
+check_duplicated_keys_lc([], _) ->
+    ok.
+	    

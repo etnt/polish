@@ -104,7 +104,10 @@ that all po files should have the exact same keys, they should be sorted alphabe
 and they should not contain duplicated keys. Polish helps you to achieve this state:
 - Execute 'make run_gettext' to update the default po file
 - Start polish './start'
-- From the erlang shell, execute 'polish:update_po_files()'
+- From the erlang shell, execute 'polish:get_status_po_files()' to see what is the status
+  of the po files regarding their consistency.
+- From the erlang shell, execute 'polish:update_po_files()' to wash/update them
+- Execute again 'polish:get_status_po_files()' and the status of the po files should be perfect now.
 
 This last step does all the magic. It sorts all the po files alphabetically and adds the new keys
 and remove the unused ones from all the po files. The new po files are stored in their directories
@@ -122,6 +125,7 @@ Every time you add a new TXT or similar macro to your code, you are supposed to:
 - Start polish './start'
 - From the erlang shell, execute 'polish:update_po_files()' to automatically add the 
   new keys into the custom po files
+- Execute 'polish:get_status_po_files()' to check that the status of the po files is correct.
 - Ask the translators to translate the new sentences. Once they do that, a new version of the
   po file will be stored on your local machine and you can add that new version to the repository.
 

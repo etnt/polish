@@ -13,6 +13,7 @@
          , all_custom_lcs/0
 	 , update_po_files/0
 	 , sort_po_files/0
+	 , get_status_po_files/0
          , hostname/0
          , default_port/0
          , gnow/0
@@ -45,6 +46,10 @@ update_po_files() ->
 sort_po_files() ->
     CustomLCs = all_custom_lcs(),
     polish_po:sort_po_files(CustomLCs).
+
+get_status_po_files() ->
+    CustomLCs = all_custom_lcs(),
+    polish_po:get_status_po_files(CustomLCs).
 
 default_port() -> 8080.
           
