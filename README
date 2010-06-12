@@ -1,47 +1,54 @@
-FIRST-TIME SETUP
+CONTENTS
 ----
-- Make sure you have a 'polish.meta' file. (see POLISH.META section)
+1 - First-time setup
+  1.1 - polish.meta
+  1.2 - gettext.po.meta
+2 - Setup after clone
+  2.1 - first-time flow
+  2.2 - normal flow
+3 - Miscellaneus
+  3.1 - adding translators
 
-- Make sure you have a gettext.po.meta file per each language (see GETTEXT.PO.META section).
 
 
-
-SETUP AFTER CLONE
+1. FIRST-TIME SETUP
 ----
-- Change hostname: Open the src/polish.app.src and replace the hostname value which is by default
-"hostname" with your IP (for example "17.10.100.14"). This is necessary for some redirects that happen
-after the login, to avoid being redirected to "localhost".
+Basically, you need to make sure you have a correct 'lang' directory structure.
+It should have a structure like the one in the following example:
 
-- Change po_lang_dir: Again in the src/polish.app.src file, you need to replace "/xxx/yyy/priv/lang"
-with the path to the directory which contains the languages information. That directory should 
-have the next structure: ./custom/${LC}/gettext.po
+.:
+custom  default  polish.meta
 
-- To set up and initialize Polish run:
- make init
+./custom:
+de  en
 
-- To compile the source code of the polish application run:
- make
+./custom/de:
+gettext.po gettext.po.meta
 
-- Now, you are ready to start Polish by running:
- ./start.sh
+./custom/en:
+gettext.po gettext.po.meta
 
-- Wash po files (see POLISH FLOW section).
+./default:
+sv
+
+./default/sv:
+gettext.po 
 
 
 
-
-POLISH.META
+1.1 POLISH.META
 ----
-The purpose of the polish.meta file is to store information regarding your project. Specifically, it
+The purpose of the 'polish.meta' file is to store information regarding your project. Specifically, it
 should contain:
 - List of users allowed to do translations: acl
 - Information of each of those users: users
 - Your default language code following iso639: default_lang
 - Your organisation name: org_name
 
-It is mandatory to have the polish.meta file and it should be placed in the po_lang_dir 
-directory specified in polish.app.src: ${po_lang_dir}/polish.meta
-An example of the content of this file is presented next:
+It is mandatory to have the 'polish.meta' file and it should be placed in the 'lang'
+directory specified in polish.app.src: ${lang}/polish.meta (see section 2).
+An example of the content of this file is presented next (you should replace the data in 
+the example with the one from your project):
 
 
 % The 'acl' list defines who is allowed to do translations.
@@ -57,21 +64,11 @@ An example of the content of this file is presented next:
 
 
 
-
-ADDING TRANSLATORS
+1.2 GETTEXT.PO.META
 ----
-To add translators to Polish first they need an openid account (they can get one in www.myopenid.com).
-Once they have an openid, you need to add them in the 'polish.meta'. Specifically, you need to 
-add him/her to both 'acl' and 'users' fields following the pattern in the previous example.
-
-
-
-
-GETTEXT.PO.META
-----
-For each language that you want to translate with polish, you need to add a gettext.po.meta file.
-For example, if you have a ${po_lang_dir}/custom/en/gettext.po file for the English language, 
-you will need to create a ${po_lang_dir}/custom/en/gettext.po.meta empty file.
+For each language that you want to translate with Polish, you need to add a 'gettext.po.meta' file.
+For example, if you have a ${lang}/custom/en/gettext.po file for the English language, 
+you will need to create a ${lang}/custom/en/gettext.po.meta empty file.
 The purpose of this file is to store the sentences whose translations look exactly the same as 
 in the default language. When a translator marks a sentence as 'Always translated', it will
 be added in the meta file of that language and it will not appear again as untranslated.
@@ -79,6 +76,66 @@ be added in the meta file of that language and it will not appear again as untra
 
 
 
-POLISH FLOW
+
+2. SETUP AFTER CLONE
+----
+- Change hostname: Open the src/polish.app.src and replace the hostname value which is by default
+"hostname" with your IP (for example "17.10.100.14"). This is necessary for some redirects that happen
+after the login, to avoid being redirected to "localhost".
+
+- Change po_lang_dir: Again in the src/polish.app.src file, you need to replace "/xxx/yyy/priv/lang"
+with the path to your 'lang' directory (see section 1).
+
+- To set up and initialize Polish run:
+ make init
+
+- To compile the source code of the polish application run:
+ make
+
+- Now, you are ready to start Polish by running:
+ ./start.sh
+
+- Wash po files (see next sections).
+
+
+
+2.1 FIRST-TIME POLISH FLOW
+----
+For Polish to work as expected, all your po files should be consistent. This means
+that all po files should have the exact same keys, they should be sorted alphabetically by the keys 
+and they should not contain duplicated keys. Polish helps you to achieve this state:
+- Execute 'make run_gettext' to update the default po file
+- Start polish './start'
+- From the erlang shell, execute 'polish:update_po_files()'
+
+This last step does all the magic. It sorts all the po files alphabetically and adds the new keys
+and remove the unused ones from all the po files. The new po files are stored in their directories
+and backups of the previous versions are also saved. It also detects duplicated keys but obviously
+it cannot solve them. Instead it prompts an error specifying which keys are duplicated for a 
+specific language and you are supposed to go to the po file and remove those duplicates by hand.
+When the update_po_files functions finishes with an ok, the po files are consistent and translators
+can start using Polish.
+
+
+
+2.2 NORMAL POLISH FLOW
+----
+Every time you add a new TXT or similar macro to your code, you are supposed to:
+- Execute 'make run_gettext' to update the default po file
+- Start polish './start'
+- From the erlang shell, execute 'polish:update_po_files()' to automatically add the 
+  new keys into the custom po files
+- Ask the translators to translate the new sentences. Once they do that, a new version of the
+  po file will be stored on your local machine and you can add that new version to the repository.
+
+
+
+3. MISCELLANEUS
 ----
 
+
+3.1 ADDING TRANSLATORS
+----
+To add translators to Polish first they need an openid account (they can get one in www.myopenid.com).
+Once they have an openid, you need to add them in the 'polish.meta'. Specifically, you need to 
+add him/her to both 'acl' and 'users' fields following the pattern shown in section 1.1.
