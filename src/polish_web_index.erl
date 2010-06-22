@@ -79,7 +79,7 @@ maybe_update_lang(LC) ->
 %% However, we do want to escape '<', so some massage is needed.
 mk_body([]) ->
     #literal{text="Select a language"};
-mk_body({_Action, []}) ->
+mk_body({Action, []}) when Action /= changes ->
     #literal{text="No entries found matching the criteria"};
 mk_body({Action, Entries}) ->
     [#table{rows = [#tablerow { cells =[#tablecell { text=m(Key) ,
