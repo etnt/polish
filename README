@@ -78,23 +78,25 @@ be added in the meta file of that language and it will not appear again as untra
 
 2. SETUP AFTER CLONE
 ----
-- Change hostname: Open the src/polish.app.src and replace the hostname value which is by default
-"hostname" with your IP (for example "17.10.100.14"). This is necessary for some redirects that happen
-after the login, to avoid being redirected to "localhost".
-
-- Change po_lang_dir: Again in the src/polish.app.src file, you need to replace "/xxx/yyy/priv/lang"
-with the path to your 'lang' directory (see section 1).
-
 - To set up and initialize Polish run:
  make init
 
-- To compile the source code of the polish application run:
- make
+- Change hostname: Open the ebin/polish.app file and replace the hostname value which is by default
+"localhost" with your own Hostname. This is necessary for some redirects that happen after the OpenID
+login, to avoid being redirected to "localhost".
+
+- Change po_lang_dir: Again in the ebin/polish.app file, you need to replace "/xxx/yyy/priv/lang"
+with the path to your 'lang' directory (see section 1).
 
 - Now, you are ready to start Polish by running:
  ./start.sh
 
 - Wash po files (see next sections).
+
+
+(optional)
+- To re-compile the source code of the polish application run:
+ make
 
 
 2.1 FIRST-TIME POLISH FLOW
