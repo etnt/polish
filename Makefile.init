@@ -1,0 +1,31 @@
+include vsn.mk
+
+MODULES_SRC := $(wildcard src/*.erl)
+MODULES     := $(MODULES_SRC:src/%.erl=%.erl)
+APP_SOURCES := $(wildcard src/*.app.src)
+APP_OBJECTS := $(APP_SOURCES:src/%.app.src=ebin/%.app)
+
+APPSCRIPT = '$$vsn=shift; $$mods=""; while(@ARGV){ $$_=shift; s/^([A-Z].*)$$/\'\''$$1\'\''/; $$mods.=", " if $$mods; $$mods .= $$_; } while(<>) { s/%VSN%/$$vsn/; s/%MODULES%/$$mods/; print; }'
+
+init: setup $(APP_OBJECTS)
+
+setup:
+	-mkdir ebin
+	-mkdir dep
+	-mkdir logs
+	-mkdir -p www/nitrogen
+	-git submodule init
+	-git submodule update
+	-(cd dep/nitrogen; make compile)
+	-(cd dep/elogger; make)
+	-(cd dep/eopenid; make)
+	-(cd dep/gettext; make)
+	-(cd dep/trane; make)
+	-(cd www/nitrogen; ln -s ../../dep/nitrogen/apps/nitrogen/www/nitrogen.css .)
+	-(cd www/nitrogen; ln -s ../../dep/nitrogen/apps/nitrogen/www/nitrogen.js .)
+	-(cd www/nitrogen; ln -s ../../dep/nitrogen/apps/nitrogen/www/livevalidation.js .)
+	-chmod +x ./start.sh
+
+ebin/%.app: src/%.app.src vsn.mk
+	echo $(MODULES) 
+	perl -e $(APPSCRIPT) "$(POLISH_VSN)" $(MODULES) < $< > $@

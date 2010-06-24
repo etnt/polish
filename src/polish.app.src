@@ -1,26 +1,14 @@
 {application, polish, 
  [
   {description,  "polish - Web app. for managing PO-file translations."},
+  {vsn, "%VSN%"},
 
   % The Module and Args used to start this application.
   {mod, { polish_app, []} },
 
   % All modules used by the application.
   {modules,
-   [polish_app
-    ,polish_sup
-    ,polish_deps
-    ,polish_common
-    ,polish_server
-    ,polish_inets
-    ,polish_po
-    ,polish_utils
-    ,polish_web_index
-    ,polish_web_login
-    ,polish_web_logout
-    ,polish_web_auth
-    ,crone
-   ]},
+   [%MODULES%]},
 
   % configuration parameters similar to those in the config file specified on the command line
   {env, [{ip, "0.0.0.0"}
@@ -30,6 +18,9 @@
 
          % Assumes: ${po_lang_dir}/custom/${LC}/gettext.po
 	 ,{po_lang_dir, "/xxx/yyy/priv/lang/"}
+
+	 % Wash all PO files automagically when starting.
+	 ,{auto_wash, true}
 
          % Log handling
 	 ,{nolog, false}

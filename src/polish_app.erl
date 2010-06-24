@@ -1,5 +1,5 @@
 %% @author Torbjorn Tornkvist tobbe@klarna.com
-%% @copyright YYYY Torbjorn Tornkvist.
+%% @copyright 2010 Torbjorn Tornkvist, Jordi Chacon
 
 %% @doc Callbacks for the polish application.
 
@@ -16,6 +16,7 @@ start(_, _) ->
     eopenid:start(),
     Res = polish_sup:start_link(),
     load_always_translated_keys(),
+    maybe_auto_wash(),
     {ok,_Pid} = polish_inets:start_link(), % ends up under the inets supervisors
     Res.
     
@@ -34,3 +35,9 @@ load_always_translated_keys([H|T]) ->
 load_always_translated_keys([]) ->
     ok.
 
+maybe_auto_wash() ->
+    case polish:auto_wash() of
+        true  -> polish:update_po_files();
+        false -> false
+    end.
+            

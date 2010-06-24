@@ -5,6 +5,7 @@
 
 -export([setup_user_info/0
          , po_lang_dir/0
+         , auto_wash/0
 	 , get_acl/0
 	 , get_default_lang/0
 	 , get_org_name/0
@@ -28,6 +29,7 @@
 -include("polish.hrl").
 -include_lib("nitrogen/include/wf.hrl").
            
+auto_wash() -> get_env(auto_wash, false).
 
 po_lang_dir() -> get_env(po_lang_dir, "/tmp").
 gettext_dir() -> po_lang_dir()++"/..".
