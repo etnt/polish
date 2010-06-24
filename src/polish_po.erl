@@ -15,6 +15,8 @@
 
 -export([add_new_delete_old_keys/2]).
 
+-import(polish, [a2l/1]).
+
 -import(polish_utils,
         [get_language_name/1
 	 , year2str/0
@@ -381,7 +383,9 @@ wash_po_file(PoToWash, DefaultPo, LC) ->
 	false -> 
 	    error_logger:info_msg("Updating "++LC++"...~n"),
 	    write_po_file(LC, PoToWash1, "Polish tool", "polish@polish.org");
-	true  -> ok
+	true  ->
+            error_logger:info_msg("Nothing to update for "++LC++"...~n"),
+            ok
     end.
     
 add_new_delete_old_keys(PoToWash, DefPo) ->
@@ -401,13 +405,11 @@ sort_po_file(LC) ->
     LCPo = read_po_file(LC),
     SortedPo = lists:keysort(1, LCPo),
     case SortedPo =:= LCPo of
-	true  -> ok;
+	true  ->
+            error_logger:info_msg(a2l(LC)++" po file already sorted!"),
+            ok;
 	false ->
-	    LC1 = case is_atom(LC) of
-		      true -> atom_to_list(LC);
-		      false -> LC
-		  end,
-	    error_logger:info_msg(LC1++" po file not sorted. Sorting."),
+	    error_logger:info_msg(a2l(LC)++" po file not sorted. Sorting..."),
 	    write_po_file(LC, SortedPo, "Polish tool", "polish@polish.org")
     end.
 

@@ -22,6 +22,7 @@
          , time/0
          , i2l/1
          , l2a/1
+         , a2l/1
         ]).
 
 -import(polish_deps,[get_env/2]).
@@ -108,6 +109,10 @@ i2l(L) when is_list(L)    -> L.
 
 l2a(L) when is_list(L) -> list_to_atom(L);
 l2a(A) when is_atom(A) -> A.
+
+a2l(A) when is_atom(A) -> atom_to_list(A);
+a2l(L) when is_list(L) -> L.
+
 
 
     
