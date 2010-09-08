@@ -116,7 +116,7 @@ generate_buttons(translate) ->
 	       end,
     Previous ++ Next;
 generate_buttons(changes) ->
-    #button{text = "Write", class = "button",
+    #button{text = "Submit", class = "button",
 	    postback = write}.
 
 gen_stats() ->
@@ -131,13 +131,13 @@ gen_stats() ->
 		   [] -> [#value{text = "Nobody"}];
 		   _  -> Editors2
 	       end,
-    [ #label{text = "Total keys: "},
+    [ #label{text = "Total phrases: "},
       #value{text = integer_to_list(Total)},
       #br{},
       #label{text = "Untranslated: "},
       #value{text = integer_to_list(Untrans)},
       #br{},
-      #label{text = "Translated but not exported: "},
+      #label{text = "Unsubmitted translations: "},
       #value{text = integer_to_list(Trans)},
       #br{},
       #label{text = "Currently translating: "}] ++ Editors3.

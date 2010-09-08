@@ -33,7 +33,7 @@ $(document).ready(function() {
 
 	var position = $("table").position();
 	$(".button").each(function(i) {
-	  if($(this).val() == "Next" || $(this).val() == "Write") {
+	  if($(this).val() == "Next" || $(this).val() == "Submit") {
             $(this).css('margin-left', 0);
             $(this).css('position', 'relative');
             $(this).css('left', position.left+'px');
