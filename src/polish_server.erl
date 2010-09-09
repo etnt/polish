@@ -276,34 +276,34 @@ do_get_translated_by_country(State, LC) ->
 
 do_lock_keys(State, KVs, LC, User) ->
     Res = lists:foldl(
-	    fun({Key,_} = KV, Acc) ->
+	    fun({Key, Val} = KV, Acc) ->
 		    case do_is_key_locked(State, Key, LC, User) of
 			{State, true}  -> Acc;
 			{State, false} ->
 			    {Mega, Sec, _} = erlang:now(),
 			    Time = Mega * 100000 + Sec,
-			    ets:insert(locked_keys, {{Key, LC}, {User, Time}}),
+			    ets:insert(locked_keys, {{Key, LC}, {User, Time}, Val}),
 			    [KV | Acc]
 		    end
 	    end, [], KVs),
     {State, Res}.
 
 do_unlock_user_keys(State, User) ->
-    [ets:delete(locked_keys, K) || {K, {U, _T}} <- ets:tab2list(locked_keys), 
+    [ets:delete(locked_keys, K) || {K, {U, _T}, _Val} <- ets:tab2list(locked_keys), 
 				   U =:= User],
     {State, result}.
 
 do_is_key_locked(State, Key, LC, User) ->
     Res = case ets:lookup(locked_keys, {Key, LC}) of
 	      []         -> false;
-	      [{_K, {U, _T}}]  -> User =/= U
+	      [{_K, {U, _T}, _Val}]  -> User =/= U
 	  end,
     {State, Res}.
 
 do_delete_old_locked_keys(State) ->
     {Mega, Sec, _} = erlang:now(),
     Time = Mega * 100000 + Sec - 60*30,
-    R = ets:select(locked_keys, [{{{'$1', '$2'}, {'_','$3'}}, 
+    R = ets:select(locked_keys, [{{{'$1', '$2'}, {'_','$3'}, '_'}, 
 				  [{'<', '$3', Time}], [{{'$1', '$2'}}]}]),
     [ets:delete(locked_keys, K) || K <- R],
     {State, ok}.
