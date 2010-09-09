@@ -4,6 +4,7 @@
 -module(polish_po).
 
 -export([get_entries/1
+	 , get_entry/2
 	 , write/0
          , write_po_file/4
 	 , get_stats/1
@@ -41,6 +42,9 @@ get_entries({LC, {search, Str, {Trans, UnTrans, K, V}}}) ->
     {translate, polish_server:lock_keys(Entries, LCat)};
 get_entries({LC, changes}) ->
     {changes, polish_server:get_changes(list_to_atom(LC))}.
+
+get_entry(Key, Info) ->
+    lists:keyfind(Key, 1, get_entries(Info)).
 
 write() ->
     LC = wf:session(lang),
