@@ -178,7 +178,7 @@ inplace_textarea_ok_event(Key, Val0) ->
 	    polish_server:insert([{Key,Val}], list_to_atom(wf:session(lang))),
 	    wf:redirect("");
 	{error, Msg} ->
-	    {error, Msg, Val}
+	    {error, Msg, Val0}
     end.
 
 %% Restore a trimmed string's original leading and trailing whitespace
