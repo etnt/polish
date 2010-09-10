@@ -31,12 +31,16 @@ $(document).ready(function() {
 		'speedOut'	:       200,
 	});
 
-	var position = $("table").position();
 	$(".button").each(function(i) {
 	  if($(this).val() == "Next" || $(this).val() == "Submit") {
             $(this).css('margin-left', 0);
             $(this).css('position', 'relative');
-            $(this).css('left', position.left+'px');
+            $(this).css('float', 'right');
+          }
+	  else if($(this).val() == "Previous") {
+            $(this).css('margin-left', 0);
+            $(this).css('position', 'relative');
+            $(this).css('float', 'left');
           }
 	});
 });
