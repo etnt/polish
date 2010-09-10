@@ -131,7 +131,7 @@ gen_stats() ->
 		   [] -> [#value{text = "Nobody"}];
 		   _  -> Editors2
 	       end,
-    [ #label{text = "Total phrases: "},
+    [ #label{text = "Number of keys: "},
       #value{text = integer_to_list(Total)},
       #br{},
       #label{text = "Untranslated: "},
