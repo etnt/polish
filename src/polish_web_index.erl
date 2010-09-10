@@ -171,7 +171,7 @@ gen_stats() ->
 inplace_textarea_ok_event(Key, Val0) ->
     {Lang, _Action} = get_lang_and_action(),
     Orig = polish_server:locked_key_orig(list_to_atom(Lang), Key),
-    Val = to_latin1(restore_whitespace(Orig, Val0)),
+    Val = to_latin1(restore_whitespace(Orig, trim_whitespace(Val0))),
     case polish_po:check_correctness(Key, Val) of
 	ok ->
 	    polish_server:unlock_user_keys(),
