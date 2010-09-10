@@ -82,8 +82,9 @@ mk_body([]) ->
 mk_body({Action, []}) when Action /= changes ->
     #literal{text="No entries found matching the criteria"};
 mk_body({Action, Entries}) ->
-    [#table{rows = [ build_row(Key, trim_whitespace(Val)) || {Key,Val} <- Entries]},
-     generate_buttons(Action)].
+    TableHeader = [#tableheader{text = "Key"}, #tableheader{text = "Translation"}],
+    Rows = [build_row(Key, trim_whitespace(Val)) || {Key,Val} <- Entries],
+    [#table{rows = TableHeader ++ Rows}, generate_buttons(Action)].
 
 s(K,"", S2)          -> ibox(K,"__empty__", S2);
 s(K,header_info, S2) -> ibox(K,"__empty__", S2);
@@ -139,7 +140,7 @@ generate_buttons(translate) ->
 	       end,
     Previous ++ Next;
 generate_buttons(changes) ->
-    #button{text = "Write", class = "button",
+    #button{text = "Submit", class = "button",
 	    postback = write}.
 
 gen_stats() ->
@@ -154,13 +155,13 @@ gen_stats() ->
 		   [] -> [#value{text = "Nobody"}];
 		   _  -> Editors2
 	       end,
-    [ #label{text = "Total keys: "},
+    [ #label{text = "Number of keys: "},
       #value{text = integer_to_list(Total)},
       #br{},
       #label{text = "Untranslated: "},
       #value{text = integer_to_list(Untrans)},
       #br{},
-      #label{text = "Translated but not exported: "},
+      #label{text = "Unsubmitted translations: "},
       #value{text = integer_to_list(Trans)},
       #br{},
       #label{text = "Currently translating: "}] ++ Editors3.
@@ -177,7 +178,7 @@ inplace_textarea_ok_event(Key, Val0) ->
 	    polish_server:insert([{Key,Val}], list_to_atom(wf:session(lang))),
 	    wf:redirect("");
 	{error, Msg} ->
-	    {error, Msg, Val}
+	    {error, Msg, Val0}
     end.
 
 %% Restore a trimmed string's original leading and trailing whitespace
