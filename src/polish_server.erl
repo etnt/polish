@@ -19,6 +19,7 @@
 	 , load_always_translated_keys/2
 	 , mark_as_always_translated/2
 	 , is_always_translated/2
+	 , locked_key_orig/2
         ]).
 
 %% gen_server callbacks
@@ -75,6 +76,9 @@ mark_as_always_translated(LC, Key) ->
 
 is_always_translated(LC, Key) ->
     gen_server:call(?MODULE, {is_always_translated, LC, Key}).
+
+locked_key_orig(LC, Key) ->
+    gen_server:call(?MODULE, {locked_key_orig, LC, Key}).
     
 
 %%--------------------------------------------------------------------
@@ -168,6 +172,10 @@ handle_call({mark_as_always_translated, LC, Key}, _From, State) ->
 
 handle_call({is_always_translated, LC, Key}, _From, State) ->
     {NewState, Reply} = do_is_always_translated(State, LC, Key),
+    {reply, Reply, NewState};
+
+handle_call({locked_key_orig, LC, Key}, _From, State) ->
+    {NewState, Reply} = do_locked_key_orig(State, LC, Key),
     {reply, Reply, NewState};
 
 handle_call(_Request, _From, State) ->
@@ -339,6 +347,10 @@ do_is_always_translated(State, LC, Key) ->
 	      _  -> true
     end,
     {State, Res}.
+
+do_locked_key_orig(State, LC, Key)->
+    [{_, _, OrigTxt}] = ets:lookup(locked_keys, {Key, LC}),
+    {State, OrigTxt}.
 
 build_info_log(LC, User, L) ->
     LCa = atom_to_list(LC),

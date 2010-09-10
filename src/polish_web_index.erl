@@ -16,8 +16,6 @@
 	 event/1
 	]).
 
-
-
 main() ->
      ?AUTH(mainA()).
 
@@ -170,7 +168,8 @@ gen_stats() ->
 
 %% Save translation
 inplace_textarea_ok_event(Key, Val0) ->
-    Orig = polish_po:get_entry(Key, get_lang_and_action()),
+    {Lang, _Action} = get_lang_and_action(),
+    Orig = polish_server:locked_key_orig(list_to_atom(Lang), Key),
     Val = to_latin1(restore_whitespace(Orig, Val0)),
     case polish_po:check_correctness(Key, Val) of
 	ok ->
