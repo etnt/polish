@@ -183,6 +183,12 @@ table {
     margin: 20px auto 20px auto;
     border-collapse: collapse;
     text-align: left;
+    clear: both;
+    float: left;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    position: relative;
 }
 
 table th {
@@ -220,6 +226,10 @@ p .button {
     float: right;
 }
 
+#next_button {
+    float: right;
+}
+
 .button {
     float:left;
     margin-left: 15px; 
@@ -235,6 +245,12 @@ p .button {
     padding: 5px 15px;
     color:#565656;
 }
+
+
+#prev_button {
+    float: left;
+}
+
 
 .button:hover {
     background-color:#dff4ff;
