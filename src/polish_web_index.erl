@@ -100,7 +100,7 @@ m([$<|T]) -> [$&,$l,$t,$;|m(T)];
 m([H|T])  -> [H|m(T)];
 m([])     -> [].
 
-build_row(Key, Val)->
+build_row(Key, Val) ->
     #tablerow { cells = [#tablecell { text = m(Key),
 				     class = "msgid",
 				     html_encode = false },
@@ -109,10 +109,17 @@ build_row(Key, Val)->
 				      class = "msgval"}]}.
 
 %% @spec trim_whitespace(Input::string()) -> Result
+%%   Result = string()
+%% @doc Trims whitespace at start and end of a string.
+trim_whitespace(Input) ->
+    {_Leading, Txt, _Trailing} = split_whitespace(Input),
+    Txt.
+
+%% @spec split_whitespace(Input::string()) -> Result
 %%   Result = {Leading, Text, Trailing}
 %%   Leading, Text, Trailing = string()
 %% @doc Trims whitespace at start and end of a string.
-trim_whitespace(Input) ->
+split_whitespace(Input) ->
    {match, [_, Leading, Text, Trailing]} = 
     re:run(Input, "^([\\s]*)(.*?)([\\s]*)$", [{capture, all, list}, dotall]),
    {Leading, Text, Trailing}.
@@ -178,7 +185,7 @@ inplace_textarea_ok_event(Key, Val0) ->
 %% from the key
 restore_whitespace(Orig, Trimmed) ->
     {Leading, _, Trailing} = 
-	trim_whitespace(Orig),
+	split_whitespace(Orig),
     lists:append(Leading, lists:append(Trimmed, Trailing)).    
 
 restore_whitespace_test() ->
