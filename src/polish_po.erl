@@ -262,7 +262,7 @@ get_entries_to_edit(LC, F) ->
 
 take([], _, _, _, _)      -> [];
 take(T, 1, N, LC, S)      -> take(T, N, LC, S);
-take(T, Offset, N, LC, S) -> take(T, Offset - 1, N, LC, S).
+take([_H|T], Offset, N, LC, S) -> take(T, Offset - 1, N, LC, S).
 
 take([{K,V} = H|T], N, LC, Search) when N > 0 -> 
     case (polish_server:is_translated(K, LC) orelse
