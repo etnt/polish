@@ -82,13 +82,15 @@ mk_body([]) ->
 mk_body({Action, []}) when Action /= changes ->
     #literal{text="No entries found matching the criteria"};
 mk_body({Action, Entries}) ->
-    [#table{rows = [#tablerow { cells =[#tablecell { text=m(Key) ,
+    [#table{rows = [#tablerow { cells = [ #tableheader { text = "Key" },
+					  #tableheader { text = "Translation" }]} |
+					  [#tablerow { cells =[#tablecell { text=m(Key) ,
                                                     class="msgid",
                                                     html_encode=false },
                                        #tablecell { body=s(Key,Val, Val) ,
                                                     html_encode=false ,
                                                     class="msgval" }]}
-                   || {Key,Val} <- Entries]},
+                   || {Key,Val} <- Entries]]},
      generate_buttons(Action)].
 
 s(K,"", S2)          -> ibox(K,"__empty__", S2);
