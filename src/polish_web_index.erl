@@ -5,6 +5,8 @@
 
 -include("polish.hrl").
 
+-include_lib("eunit/include/eunit.hrl").
+
 -export([main/0,
          title/0,
          layout/0,
@@ -13,8 +15,6 @@
          inplace_textarea_mark_translated_event/1,
 	 event/1
 	]).
-
-
 
 main() ->
      ?AUTH(mainA()).
@@ -82,16 +82,9 @@ mk_body([]) ->
 mk_body({Action, []}) when Action /= changes ->
     #literal{text="No entries found matching the criteria"};
 mk_body({Action, Entries}) ->
-    [#table{rows = [#tablerow { cells = [ #tableheader { text = "Key" },
-					  #tableheader { text = "Translation" }]} |
-					  [#tablerow { cells =[#tablecell { text=m(Key) ,
-                                                    class="msgid",
-                                                    html_encode=false },
-                                       #tablecell { body=s(Key,Val, Val) ,
-                                                    html_encode=false ,
-                                                    class="msgval" }]}
-                   || {Key,Val} <- Entries]]},
-     generate_buttons(Action)].
+    TableHeader = [#tableheader{text = "Key"}, #tableheader{text = "Translation"}],
+    Rows = [build_row(Key, trim_whitespace(Val)) || {Key,Val} <- Entries],
+    [#table{rows = TableHeader ++ Rows}, generate_buttons(Action)].
 
 s(K,"", S2)          -> ibox(K,"__empty__", S2);
 s(K,header_info, S2) -> ibox(K,"__empty__", S2);
@@ -105,6 +98,35 @@ m(header_info) -> "";
 m([$<|T]) -> [$&,$l,$t,$;|m(T)];
 m([H|T])  -> [H|m(T)];
 m([])     -> [].
+
+build_row(Key, Val) ->
+    #tablerow { cells = [#tablecell { text = m(Key),
+				     class = "msgid",
+				     html_encode = false },
+			 #tablecell { body = s(Key, Val, Val),
+				      html_encode = false,
+				      class = "msgval"}]}.
+
+%% @spec trim_whitespace(Input::string()) -> Result
+%%   Result = string()
+%% @doc Trims whitespace at start and end of a string.
+trim_whitespace(Input) ->
+    {_Leading, Txt, _Trailing} = split_whitespace(Input),
+    Txt.
+
+%% @spec split_whitespace(Input::string()) -> Result
+%%   Result = {Leading, Text, Trailing}
+%%   Leading, Text, Trailing = string()
+%% @doc Trims whitespace at start and end of a string.
+split_whitespace(Input) ->
+   {match, [_, Leading, Text, Trailing]} = 
+    re:run(Input, "^([\\s]*)(.*?)([\\s]*)$", [{capture, all, list}, dotall]),
+   {Leading, Text, Trailing}.
+   
+trim_whitespace_test()->
+    ?assertEqual({"   \t\n\r  ","hej\ng","  "}, trim_whitespace("   \t\n\r  hej\ng  ")). 
+    
+     
 
 generate_buttons(translate) ->
     Next = [#button{text = "Next", id = "next_button",
@@ -147,15 +169,30 @@ gen_stats() ->
 
 %% Save translation
 inplace_textarea_ok_event(Key, Val0) ->
-    Val = to_latin1(Val0),
+    {Lang, _Action} = get_lang_and_action(),
+    Orig = polish_server:locked_key_orig(list_to_atom(Lang), Key),
+    Val = to_latin1(restore_whitespace(Orig, trim_whitespace(Val0))),
     case polish_po:check_correctness(Key, Val) of
 	ok ->
 	    polish_server:unlock_user_keys(),
 	    polish_server:insert([{Key,Val}], list_to_atom(wf:session(lang))),
 	    wf:redirect("");
 	{error, Msg} ->
-	    {error, Msg, Val}
+	    {error, Msg, Val0}
     end.
+
+%% Restore a trimmed string's original leading and trailing whitespace
+%% from the key
+restore_whitespace(Orig, Trimmed) ->
+    {Leading, _, Trailing} = 
+	split_whitespace(Orig),
+    lists:append(Leading, lists:append(Trimmed, Trailing)).    
+
+restore_whitespace_test() ->
+    Orig = "  \ngreat\t  ",
+    {_, Text, _} = trim_whitespace(Orig),
+    ?assertEqual(Orig, restore_whitespace(Orig, Text)).
+    
 
 %% Mark as always translated
 inplace_textarea_mark_translated_event(Key) ->
