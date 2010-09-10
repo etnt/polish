@@ -321,3 +321,11 @@ p .button {
 #help p span {
     font-weight: bold;
 }
+
+ /****** Notifications ******/
+.notification {
+    padding-left: 5px;
+    border: 1px solid #e34d4d;
+    color: #e34d4d;
+    float: center;
+}

@@ -29,16 +29,18 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 get_entries({undefined, _}) ->
     [];
-get_entries({LC, po_file}) ->
+get_entries({LC, Action}) when Action =:= po_file; 
+			       Action =:= save;
+			       Action =:= always_translate->
     KVs = get_entries_to_edit(LC),
     LCat = list_to_atom(LC),
     Entries = take(KVs, get_offset() + 20, 20, LCat, no_search),
-    {translate, polish_server:lock_keys(Entries, LCat)};
+    {Action, polish_server:lock_keys(Entries, LCat)};
 get_entries({LC, {search, Str, {Trans, UnTrans, K, V}}}) ->
     KVs = get_entries_to_edit(LC, Trans, UnTrans),
     LCat = list_to_atom(LC),
     Entries = take(KVs, get_offset() + 20, 20, LCat, {Str, K, V}),
-    {translate, polish_server:lock_keys(Entries, LCat)};
+    {search, polish_server:lock_keys(Entries, LCat)};
 get_entries({LC, changes}) ->
     {changes, polish_server:get_changes(list_to_atom(LC))}.
 

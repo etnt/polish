@@ -42,8 +42,10 @@ get_lang_and_action() ->
     LC = maybe_reset_session(),
     Action = 
 	case wf:qs("action") of
-	    ["search"]       -> get_search_request();
-	    ["show_changes"] -> changes;
+	    ["search"]            -> get_search_request();
+	    ["show_changes"]      -> changes;
+	    ["save"]              -> save;
+	    ["always_translate"] -> always_translate;
 	    _                -> po_file
     end,
     {LC, Action}.
@@ -82,7 +84,8 @@ mk_body([]) ->
 mk_body({Action, []}) when Action /= changes ->
     #literal{text="No entries found matching the criteria"};
 mk_body({Action, Entries}) ->
-    [#table{rows = [#tablerow { cells = [ #tableheader { text = "Key" },
+    [maybe_show_notification(Action),
+     #table{rows = [#tablerow { cells = [ #tableheader { text = "Key" },
 					  #tableheader { text = "Translation" }]} |
 					  [#tablerow { cells =[#tablecell { text=m(Key) ,
                                                     class="msgid",
@@ -92,6 +95,16 @@ mk_body({Action, Entries}) ->
                                                     class="msgval" }]}
                    || {Key,Val} <- Entries]]},
      generate_buttons(Action)].
+
+maybe_show_notification(Action) ->
+    case Action of
+	save -> 
+	    #label { text = "Your translation has been saved.", class="notification"};
+	always_translate -> 
+	    #label { text = "Your selection hasa been marked as always translated.",
+		     class="notification"};
+	_    -> []
+    end.
 
 s(K,"", S2)          -> ibox(K,"__empty__", S2);
 s(K,header_info, S2) -> ibox(K,"__empty__", S2);
@@ -152,7 +165,7 @@ inplace_textarea_ok_event(Key, Val0) ->
 	ok ->
 	    polish_server:unlock_user_keys(),
 	    polish_server:insert([{Key,Val}], list_to_atom(wf:session(lang))),
-	    wf:redirect("");
+	    wf:redirect("?action=save");
 	{error, Msg} ->
 	    {error, Msg, Val}
     end.
@@ -161,7 +174,7 @@ inplace_textarea_ok_event(Key, Val0) ->
 inplace_textarea_mark_translated_event(Key) ->
     LCa = list_to_atom(wf:session(lang)),
     polish_server:mark_as_always_translated(LCa, Key),
-    wf:redirect("").
+    wf:redirect("?action=always_translate").
 
 %% The stupid browser persist to send utf-8 characters...
 to_latin1(Str) ->
