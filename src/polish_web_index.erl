@@ -45,7 +45,7 @@ get_lang_and_action() ->
 	    ["search"]       -> get_search_request();
 	    ["show_changes"] -> changes;
 	    _                -> po_file
-    end,
+	end,
     {LC, Action}.
 
 get_search_request() ->
@@ -54,13 +54,22 @@ get_search_request() ->
     Trans = get_checkbox_from_qs("translated"),
     Key = get_checkbox_from_qs("key"),
     Value = get_checkbox_from_qs("value"),
+    MatchType = get_radiobutton_from_qs(match_type, "match_type"),
     {search, Str, {{translated, Trans}, {untranslated, Untrans},
-		   {key, Key}, {value, Value}}}.
+		   {key, Key}, {value, Value}, {match_type, MatchType}}}.
 
 get_checkbox_from_qs(K) ->
     case wf:qs(K) of
 	[] -> false;
 	_  -> true
+    end.
+
+get_radiobutton_from_qs(match_type, K) ->
+    case wf:qs(K) of
+	["match_any_word"] ->
+	    match_any_word;
+	["match_exact_phrase"] ->
+	    match_exact_phrase
     end.
     
 maybe_reset_session() ->

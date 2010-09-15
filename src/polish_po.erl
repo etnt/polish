@@ -34,11 +34,11 @@ get_entries({LC, po_file}) ->
     LCat = list_to_atom(LC),
     Entries = take(KVs, get_offset() + 20, 20, LCat, no_search),
     {translate, polish_server:lock_keys(Entries, LCat)};
-get_entries({LC, {search, Str, {Trans, UnTrans, K, V}}}) ->
+get_entries({LC, {search, Str, {Trans, UnTrans, K, V, MatchType}}}) ->
     KVs = get_entries_to_edit(LC, Trans, UnTrans),
     LCat = list_to_atom(LC),
-    Entries = take(KVs, get_offset() + 20, 20, LCat, {Str, K, V}),
-    {translate, polish_server:lock_keys(Entries, LCat)};
+    Entries = take(KVs, get_offset() + 20, 20, LCat, {Str, K, V, MatchType}),
+    {search, polish_server:lock_keys(Entries, LCat)};
 get_entries({LC, changes}) ->
     {changes, polish_server:get_changes(list_to_atom(LC))}.
 
@@ -305,6 +305,20 @@ get_custom_or_default_dir(_LC)     -> "custom".
 get_lang_dir(default) -> polish:get_default_lang();
 get_lang_dir(LC)      -> LC.
 
+match_entry(KV, {Str, Key, Val, {match_type, match_any_word}}) ->
+    match_entry(KV, {Str, Key, Val});
+match_entry({K, _V}, {Str, {key, true}, {value, false}, {match_type, match_exact_phrase}}) ->
+    run_literal(K, Str);
+match_entry({_K, V}, {Str, {key, false}, {value, true}, {match_type, match_exact_phrase}}) ->
+    run_literal(V, Str);
+match_entry({K, V}, {Str, {key, true}, {value, true}, {match_type, match_exact_phrase}}) ->
+    case run_literal(K, Str) of
+	nomatch -> run_literal(V, Str);
+	_       -> match
+    end;
+match_entry({_K, _V}, {_Str, {key, false}, {value, false}, {match_type, match_exact_phrase}}) ->
+    nomatch;
+
 match_entry({K, _V}, {Str, {key, true}, {value, false}}) ->
     run_re(K, Str);
 match_entry({_K, V}, {Str, {key, false}, {value, true}}) ->
@@ -316,6 +330,12 @@ match_entry({K, V}, {Str, {key, true}, {value, true}}) ->
     end;
 match_entry({_K, _V}, {_Str, {key, false}, {value, false}}) ->
     nomatch.
+
+run_literal(S1, S2) ->
+    case S1 == S2 of
+	true  -> match;
+	false -> nomatch
+    end.
 
 %% When the translation is empty (as in "") the V is header_info. Weird...
 run_re(header_info, _RegExp) ->
