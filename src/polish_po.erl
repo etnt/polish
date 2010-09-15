@@ -327,11 +327,22 @@ match_entry({_K, _V}, {_Str, {key, false}, {value, false}}) ->
 %% When the translation is empty (as in "") the V is header_info. Weird...
 run_re(header_info, _RegExp) ->
     nomatch;
-run_re(V, RegExp) ->
+run_re(V, RegExp0) ->
+    RegExp = escape_regexp(RegExp0),
     case re:run(V, RegExp) of
 	nomatch -> nomatch;
 	_       -> match
     end.
+
+escape_regexp(RegExp) ->
+    escape_regexp(RegExp, []).
+escape_regexp([$$ | RegExp], Acc) -> escape_regexp(RegExp, [$$,$\\ | Acc]);
+escape_regexp([$? | RegExp], Acc) -> escape_regexp(RegExp, [$?,$\\ | Acc]);
+escape_regexp([$* | RegExp], Acc) -> escape_regexp(RegExp, [$*,$\\ | Acc]);
+escape_regexp([$( | RegExp], Acc) -> escape_regexp(RegExp, [$(,$\\ | Acc]);
+escape_regexp([$) | RegExp], Acc) -> escape_regexp(RegExp, [$),$\\ | Acc]);
+escape_regexp([Char | RegExp], Acc) -> escape_regexp(RegExp, [Char | Acc]);
+escape_regexp([], Acc) -> lists:reverse(Acc).    
 
 run_validators(_F, _Key, _Val, []) ->
     ok;
