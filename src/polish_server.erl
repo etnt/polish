@@ -349,8 +349,10 @@ do_is_always_translated(State, LC, Key) ->
     {State, Res}.
 
 do_locked_key_orig(State, LC, Key)->
-    [{_, _, OrigTxt}] = ets:lookup(locked_keys, {Key, LC}),
-    {State, OrigTxt}.
+    case ets:lookup(locked_keys, {Key, LC}) of
+	[{_, _, OrigTxt}] -> {State, OrigTxt};
+        []                -> []
+    end.
 
 build_info_log(LC, User, L) ->
     LCa = atom_to_list(LC),

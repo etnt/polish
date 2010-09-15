@@ -168,8 +168,8 @@ gen_stats() ->
 
 %% Save translation
 inplace_textarea_ok_event(Key, Val0) ->
-    {Lang, _Action} = get_lang_and_action(),
-    Orig = polish_server:locked_key_orig(list_to_atom(Lang), Key),
+    {Lang, Action} = get_lang_and_action(),
+    Orig = get_original(list_to_atom(Lang), Key, Action),
     Val = to_latin1(polish_utils:restore_whitespace(Orig, polish_utils:trim_whitespace(Val0))),
     case polish_po:check_correctness(Key, Val) of
 	ok ->
@@ -204,3 +204,10 @@ event(write) ->
     polish_po:write(),
     LC = wf:session(lang),
     wf:redirect("?action=submit&po="++LC).
+
+get_original(Lang, Key, changes) ->
+    Saved = polish_server:get_changes(Lang),
+    {Key, Orig} = lists:keyfind(Key, 1, Saved),
+    Orig;
+get_original(Lang, Key, _Action) ->
+    polish_server:locked_key_orig(Lang, Key).
