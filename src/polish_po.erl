@@ -32,7 +32,8 @@ get_entries({undefined, _}) ->
     [];
 get_entries({LC, Action}) when Action =:= po_file; 
 			       Action =:= save;
-			       Action =:= always_translate->
+			       Action =:= always_translate;
+			       Action =:= submit ->
     KVs = get_entries_to_edit(LC),
     LCat = list_to_atom(LC),
     Entries = take(KVs, get_offset() + 20, 20, LCat, no_search),

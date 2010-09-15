@@ -5,8 +5,6 @@
 
 -include("polish.hrl").
 
--include_lib("eunit/include/eunit.hrl").
-
 -export([main/0,
          title/0,
          layout/0,
@@ -45,8 +43,9 @@ get_lang_and_action() ->
 	    ["search"]            -> get_search_request();
 	    ["show_changes"]      -> changes;
 	    ["save"]              -> save;
-	    ["always_translate"] -> always_translate;
-	    _                -> po_file
+	    ["always_translate"]  -> always_translate;
+	    ["submit"]            -> submit;
+	    _                     -> po_file
     end,
     {LC, Action}.
 
@@ -85,15 +84,18 @@ mk_body({Action, []}) when Action /= changes ->
     #literal{text="No entries found matching the criteria"};
 mk_body({Action, Entries}) ->
     TableHeader = [#tableheader{text = "Key"}, #tableheader{text = "Translation"}],
-    Rows = [build_row(Key, trim_whitespace(Val)) || {Key,Val} <- Entries],
+    Rows = [build_row(Key, polish_utils:trim_whitespace(Val)) || {Key,Val} <- Entries],
     [maybe_show_notification(Action), #table{rows = TableHeader ++ Rows}, generate_buttons(Action)].
 
 maybe_show_notification(Action) ->
     case Action of
 	save -> 
-	    #label { text = "Your translation has been saved.", class="notification"};
+	    #label { text = "Your translation has been saved for submission.", class="notification"};
 	always_translate -> 
 	    #label { text = "Your selection hasa been marked as always translated.",
+		     class="notification"};
+	submit ->
+	    #label { text = "Your translations have been submitted.",
 		     class="notification"};
 	_    -> []
     end.
@@ -118,29 +120,14 @@ build_row(Key, Val) ->
 			 #tablecell { body = s(Key, Val, Val),
 				      html_encode = false,
 				      class = "msgval"}]}.
-
-%% @spec trim_whitespace(Input::string()) -> Result
-%%   Result = string()
-%% @doc Trims whitespace at start and end of a string.
-trim_whitespace(Input) ->
-    {_Leading, Txt, _Trailing} = split_whitespace(Input),
-    Txt.
-
-%% @spec split_whitespace(Input::string()) -> Result
-%%   Result = {Leading, Text, Trailing}
-%%   Leading, Text, Trailing = string()
-%% @doc Trims whitespace at start and end of a string.
-split_whitespace(Input) ->
-   {match, [_, Leading, Text, Trailing]} = 
-    re:run(Input, "^([\\s]*)(.*?)([\\s]*)$", [{capture, all, list}, dotall]),
-   {Leading, Text, Trailing}.
-   
-trim_whitespace_test()->
-    ?assertEqual({"   \t\n\r  ","hej\ng","  "}, trim_whitespace("   \t\n\r  hej\ng  ")). 
     
      
 
-generate_buttons(translate) ->
+generate_buttons(Action) when Action =:= po_file;
+			      Action =:= save;
+			      Action =:= always_translate;
+			      Action =:= search;
+			      Action =:= submit ->
     Next = [#button{text = "Next", id = "next_button",
 		   postback = next_entries}],
     Previous = case wf:session(offset) of
@@ -183,7 +170,7 @@ gen_stats() ->
 inplace_textarea_ok_event(Key, Val0) ->
     {Lang, _Action} = get_lang_and_action(),
     Orig = polish_server:locked_key_orig(list_to_atom(Lang), Key),
-    Val = to_latin1(restore_whitespace(Orig, trim_whitespace(Val0))),
+    Val = to_latin1(polish_utils:restore_whitespace(Orig, polish_utils:trim_whitespace(Val0))),
     case polish_po:check_correctness(Key, Val) of
 	ok ->
 	    polish_server:unlock_user_keys(),
@@ -191,20 +178,7 @@ inplace_textarea_ok_event(Key, Val0) ->
 	    wf:redirect("?action=save");
 	{error, Msg} ->
 	    {error, Msg, Val0}
-    end.
-
-%% Restore a trimmed string's original leading and trailing whitespace
-%% from the key
-restore_whitespace(Orig, Trimmed) ->
-    {Leading, _, Trailing} = 
-	split_whitespace(Orig),
-    lists:append(Leading, lists:append(Trimmed, Trailing)).    
-
-restore_whitespace_test() ->
-    Orig = "  \ngreat\t  ",
-    {_, Text, _} = trim_whitespace(Orig),
-    ?assertEqual(Orig, restore_whitespace(Orig, Text)).
-    
+    end.   
 
 %% Mark as always translated
 inplace_textarea_mark_translated_event(Key) ->
@@ -229,4 +203,4 @@ event(previous_entries) ->
 event(write) ->
     polish_po:write(),
     LC = wf:session(lang),
-    wf:redirect("?po="++LC).
+    wf:redirect("?action=submit&po="++LC).
