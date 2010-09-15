@@ -4,6 +4,7 @@
 -module(polish_po).
 
 -export([get_entries/1
+	 , get_entry/2
 	 , write/0
          , write_po_file/4
 	 , get_stats/1
@@ -43,6 +44,9 @@ get_entries({LC, {search, Str, {Trans, UnTrans, K, V}}}) ->
     {search, polish_server:lock_keys(Entries, LCat)};
 get_entries({LC, changes}) ->
     {changes, polish_server:get_changes(list_to_atom(LC))}.
+
+get_entry(Key, Info) ->
+    lists:keyfind(Key, 1, get_entries(Info)).
 
 write() ->
     LC = wf:session(lang),
@@ -260,7 +264,7 @@ get_entries_to_edit(LC, F) ->
 
 take([], _, _, _, _)      -> [];
 take(T, 1, N, LC, S)      -> take(T, N, LC, S);
-take(T, Offset, N, LC, S) -> take(T, Offset - 1, N, LC, S).
+take([_H|T], Offset, N, LC, S) -> take(T, Offset - 1, N, LC, S).
 
 take([{K,V} = H|T], N, LC, Search) when N > 0 -> 
     case (polish_server:is_translated(K, LC) orelse
