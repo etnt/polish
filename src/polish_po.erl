@@ -38,7 +38,7 @@ get_entries({LC, {search, Str, {Trans, UnTrans, K, V, MatchType}}}) ->
     KVs = get_entries_to_edit(LC, Trans, UnTrans),
     LCat = list_to_atom(LC),
     Entries = take(KVs, get_offset() + 20, 20, LCat, {Str, K, V, MatchType}),
-    {search, polish_server:lock_keys(Entries, LCat)};
+    {translate, polish_server:lock_keys(Entries, LCat)};
 get_entries({LC, changes}) ->
     {changes, polish_server:get_changes(list_to_atom(LC))}.
 
