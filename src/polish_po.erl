@@ -4,6 +4,7 @@
 -module(polish_po).
 
 -export([get_entries/1
+	 , get_entry/2
 	 , write/0
          , write_po_file/4
 	 , get_stats/1
@@ -29,18 +30,25 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 get_entries({undefined, _}) ->
     [];
-get_entries({LC, po_file}) ->
+get_entries({LC, Action}) when Action =:= po_file; 
+			       Action =:= save;
+			       Action =:= always_translate;
+			       Action =:= submit ->
     KVs = get_entries_to_edit(LC),
     LCat = list_to_atom(LC),
     Entries = take(KVs, get_offset() + 20, 20, LCat, no_search),
     {Action, polish_server:lock_keys(Entries, LCat)};
-get_entries({LC, {search, Str, {Trans, UnTrans, K, V, MatchType}}}) ->
+get_entries({LC, {Action, Str, {Trans, UnTrans, K, V, MatchType}}}) 
+  when Action =:= search; Action =:= save_search ->
     KVs = get_entries_to_edit(LC, Trans, UnTrans),
     LCat = list_to_atom(LC),
     Entries = take(KVs, get_offset() + 20, 20, LCat, {Str, K, V, MatchType}),
-    {search, polish_server:lock_keys(Entries, LCat)};
+    {Action, polish_server:lock_keys(Entries, LCat)};
 get_entries({LC, changes}) ->
     {changes, polish_server:get_changes(list_to_atom(LC))}.
+
+get_entry(Key, Info) ->
+    lists:keyfind(Key, 1, get_entries(Info)).
 
 write() ->
     LC = wf:session(lang),
@@ -258,7 +266,7 @@ get_entries_to_edit(LC, F) ->
 
 take([], _, _, _, _)      -> [];
 take(T, 1, N, LC, S)      -> take(T, N, LC, S);
-take(T, Offset, N, LC, S) -> take(T, Offset - 1, N, LC, S).
+take([_H|T], Offset, N, LC, S) -> take(T, Offset - 1, N, LC, S).
 
 take([{K,V} = H|T], N, LC, Search) when N > 0 -> 
     case (polish_server:is_translated(K, LC) orelse
@@ -342,11 +350,22 @@ run_literal(S1, S2) ->
 %% When the translation is empty (as in "") the V is header_info. Weird...
 run_re(header_info, _RegExp) ->
     nomatch;
-run_re(V, RegExp) ->
+run_re(V, RegExp0) ->
+    RegExp = escape_regexp(RegExp0),
     case re:run(V, RegExp) of
 	nomatch -> nomatch;
 	_       -> match
     end.
+
+escape_regexp(RegExp) ->
+    escape_regexp(RegExp, []).
+escape_regexp([$$ | RegExp], Acc) -> escape_regexp(RegExp, [$$,$\\ | Acc]);
+escape_regexp([$? | RegExp], Acc) -> escape_regexp(RegExp, [$?,$\\ | Acc]);
+escape_regexp([$* | RegExp], Acc) -> escape_regexp(RegExp, [$*,$\\ | Acc]);
+escape_regexp([$( | RegExp], Acc) -> escape_regexp(RegExp, [$(,$\\ | Acc]);
+escape_regexp([$) | RegExp], Acc) -> escape_regexp(RegExp, [$),$\\ | Acc]);
+escape_regexp([Char | RegExp], Acc) -> escape_regexp(RegExp, [Char | Acc]);
+escape_regexp([], Acc) -> lists:reverse(Acc).    
 
 run_validators(_F, _Key, _Val, []) ->
     ok;

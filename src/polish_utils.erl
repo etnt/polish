@@ -3,11 +3,16 @@
 
 -module(polish_utils).
 
+-include_lib("eunit/include/eunit.hrl").
+
 -export([get_language_name/1
          , year2str/0
          , translator_name/0
          , translator_email/0
          , rfc3339/0
+	 , trim_whitespace/1
+	 , split_whitespace/1
+	 , restore_whitespace/2
         ]).
 
 
@@ -47,3 +52,33 @@ zone(Hr, Min) when Hr < 0; Min < 0 ->
 zone(Hr, Min) when Hr >= 0, Min >= 0 ->
     io_lib:format("+~2..0w~2..0w", [Hr, Min]).
 
+%% @spec trim_whitespace(Input::string()) -> Result
+%%   Result = string()
+%% @doc Trims whitespace at start and end of a string.
+trim_whitespace(Input) ->
+    {_Leading, Txt, _Trailing} = split_whitespace(Input),
+    Txt.
+
+%% @spec split_whitespace(Input::string()) -> Result
+%%   Result = {Leading, Text, Trailing}
+%%   Leading, Text, Trailing = string()
+%% @doc Trims whitespace at start and end of a string.
+split_whitespace(Input) ->
+   {match, [_, Leading, Text, Trailing]} = 
+    re:run(Input, "^([\\s]*)(.*?)([\\s]*)$", [{capture, all, list}, dotall]),
+   {Leading, Text, Trailing}.
+   
+trim_whitespace_test()->
+    ?assertEqual({"   \t\n\r  ","hej\ng","  "}, trim_whitespace("   \t\n\r  hej\ng  ")). 
+
+%% Restore a trimmed string's original leading and trailing whitespace
+%% from the key
+restore_whitespace(Orig, Trimmed) ->
+    {Leading, _, Trailing} = 
+	split_whitespace(Orig),
+    lists:append(Leading, lists:append(Trimmed, Trailing)).    
+
+restore_whitespace_test() ->
+    Orig = "  \ngreat\t  ",
+    {_, Text, _} = trim_whitespace(Orig),
+    ?assertEqual(Orig, restore_whitespace(Orig, Text)).

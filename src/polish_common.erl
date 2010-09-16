@@ -30,7 +30,7 @@ header(Selected) ->
         #listitem{ body=[#link { class=statsbutton, url='#stats', text="Status"}]},
         #listitem{ body=[#link { id=write, url='/?action=show_changes', text="Submit translations"}]},
         #listitem{ body=[#link { class=statsbutton, url='#help', text="Help"}]},
-        #listitem{ body=[#link { id=write, url='/logout', text="Logout"}]}]}
+        #listitem{ body=[#link { id=logout, url='/logout', text="Logout"}]}]}
     ]}.
 
 build_dropdown_menu(Selected0) ->

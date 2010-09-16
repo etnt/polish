@@ -14,8 +14,6 @@
 	 event/1
 	]).
 
-
-
 main() ->
      ?AUTH(mainA()).
 
@@ -42,22 +40,24 @@ get_lang_and_action() ->
     LC = maybe_reset_session(),
     Action = 
 	case wf:qs("action") of
-	    ["search"]            -> get_search_request();
+	    ["search"]            -> get_search_request(search);
+	    ["save_search"]       -> get_search_request(save_search);
 	    ["show_changes"]      -> changes;
 	    ["save"]              -> save;
 	    ["always_translate"]  -> always_translate;
+	    ["submit"]            -> submit;
 	    _                     -> po_file
     end,
     {LC, Action}.
 
-get_search_request() ->
+get_search_request(Action) ->
     [Str] = wf:qs("search_string"),
     Untrans = get_checkbox_from_qs("untranslated"),
     Trans = get_checkbox_from_qs("translated"),
     Key = get_checkbox_from_qs("key"),
     Value = get_checkbox_from_qs("value"),
     MatchType = get_radiobutton_from_qs(match_type, "match_type"),
-    {search, Str, {{translated, Trans}, {untranslated, Untrans},
+    {Action, Str, {{translated, Trans}, {untranslated, Untrans},
 		   {key, Key}, {value, Value}, {match_type, MatchType}}}.
 
 get_checkbox_from_qs(K) ->
@@ -93,16 +93,22 @@ mk_body([]) ->
 mk_body({Action, []}) when Action /= changes ->
     #literal{text="No entries found matching the criteria"};
 mk_body({Action, Entries}) ->
-    [#table{rows = [#tablerow { cells = [ #tableheader { text = "Key" },
-					  #tableheader { text = "Translation" }]} |
-					  [#tablerow { cells =[#tablecell { text=m(Key) ,
-                                                    class="msgid",
-                                                    html_encode=false },
-                                       #tablecell { body=s(Key,Val, Val) ,
-                                                    html_encode=false ,
-                                                    class="msgval" }]}
-                   || {Key,Val} <- Entries]]},
-     generate_buttons(Action)].
+    TableHeader = [#tableheader{text = "Key"}, #tableheader{text = "Translation"}],
+    Rows = [build_row(Key, polish_utils:trim_whitespace(Val)) || {Key,Val} <- Entries],
+    [maybe_show_notification(Action), #table{rows = TableHeader ++ Rows}, generate_buttons(Action)].
+
+maybe_show_notification(Action) ->
+    Text = case Action of
+	save             -> "Your translation has been saved for submission.";
+	save_search      -> "Your translation has been saved for submission.";
+	always_translate -> "Your selection has been marked as always translated.";
+	submit           -> "Your translations have been submitted.";
+	_                -> no_text
+    end,
+    case Text of
+	no_text -> [];
+	Text    -> #label{text = Text, class="notification"}
+    end.
 
 s(K,"", S2)          -> ibox(K,"__empty__", S2);
 s(K,header_info, S2) -> ibox(K,"__empty__", S2);
@@ -117,7 +123,20 @@ m([$<|T]) -> [$&,$l,$t,$;|m(T)];
 m([H|T])  -> [H|m(T)];
 m([])     -> [].
 
-generate_buttons(translate) ->
+build_row(Key, Val) ->
+    #tablerow { cells = [#tablecell { text = m(Key),
+				     class = "msgid",
+				     html_encode = false },
+			 #tablecell { body = s(Key, Val, Val),
+				      html_encode = false,
+				      class = "msgval"}]}.
+
+generate_buttons(Action) when Action =:= po_file;
+			      Action =:= save;
+			      Action =:= save_search;
+			      Action =:= always_translate;
+			      Action =:= search;
+			      Action =:= submit ->
     Next = [#button{text = "Next", id = "next_button",
 		   postback = next_entries}],
     Previous = case wf:session(offset) of
@@ -158,21 +177,24 @@ gen_stats() ->
 
 %% Save translation
 inplace_textarea_ok_event(Key, Val0) ->
-    Val = to_latin1(Val0),
+    {Lang, Action} = get_lang_and_action(),
+    Orig = get_original(list_to_atom(Lang), Key, Action),
+    Val = to_latin1(polish_utils:restore_whitespace(Orig, polish_utils:trim_whitespace(Val0))),
     case polish_po:check_correctness(Key, Val) of
 	ok ->
 	    polish_server:unlock_user_keys(),
 	    polish_server:insert([{Key,Val}], list_to_atom(wf:session(lang))),
-	    wf:redirect("");
+	    Redirect = get_redirect_url(Action),
+	    wf:redirect(Redirect);
 	{error, Msg} ->
-	    {error, Msg, Val}
+	    {error, Msg, Val0}
     end.
 
 %% Mark as always translated
 inplace_textarea_mark_translated_event(Key) ->
     LCa = list_to_atom(wf:session(lang)),
     polish_server:mark_as_always_translated(LCa, Key),
-    wf:redirect("").
+    wf:redirect("?action=always_translate").
 
 %% The stupid browser persist to send utf-8 characters...
 to_latin1(Str) ->
@@ -191,4 +213,22 @@ event(previous_entries) ->
 event(write) ->
     polish_po:write(),
     LC = wf:session(lang),
-    wf:redirect("?po="++LC).
+    wf:redirect("?action=submit&po="++LC).
+
+get_original(Lang, Key, changes) ->
+    Saved = polish_server:get_changes(Lang),
+    {Key, Orig} = lists:keyfind(Key, 1, Saved),
+    Orig;
+get_original(Lang, Key, _Action) ->
+    polish_server:locked_key_orig(Lang, Key).
+
+get_redirect_url({search, Str, {{translated, Trans}, {untranslated, Untrans},
+				     {key, Key}, {value, Value}}}) ->
+    TransS = atom_to_list(Trans),
+    UntransS = atom_to_list(Untrans),
+    KeyS = atom_to_list(Key),
+    ValueS = atom_to_list(Value),
+    "?action=save_search&search_string=" ++ Str ++ "&untranslated=" ++ UntransS ++
+	"&translated=" ++ TransS ++ "&key=" ++ KeyS ++ "&value=" ++ ValueS;
+get_redirect_url(_Action) ->
+    "?action=save".

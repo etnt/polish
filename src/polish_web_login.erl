@@ -18,16 +18,20 @@ title() ->
     "POlish - The PO file manager".
 
 body() ->
-    B = [#textbox { id = claimed_id, text="" },
-	 #panel { class = "clear"}, #br{},
-	 #button { class = "button", id = "auth", text  = "Login"}],
-    wf:wire("auth", #event { type     = click, 
-                             postback = claimed_id, 
-                             delegate = ?MODULE}),
+    Action = wf:qs("action"),
+    BadLoginMsg = get_bad_login_msg(Action),
+    B = [#textbox { class = "claimed_id", id = claimed_id, text="" },
+	 #br{},
+	 #button{class = "button", id = "auth", text = "Login", postback = claimed_id}],
     wf:wire("claimed_id", #event { type = keypress, keycode = 13,
                              postback = claimed_id, 
                              delegate = ?MODULE}),
-    B.
+    B ++ BadLoginMsg.
+
+get_bad_login_msg(["bad_login"]) ->
+    [#label{class="error_login", text="Login error"}];
+get_bad_login_msg(_) ->
+    [].
 
 event(claimed_id) ->
     try
@@ -50,9 +54,7 @@ event(claimed_id) ->
     catch      
         _:Error ->
             io:format("ERROR=~p~n",[Error]),
-            M = lists:flatten(
-                  io_lib:format("~p:~p", [Error, erlang:get_stacktrace()])),
-            wf:flash("ERROR: "++M)
+            wf:redirect("login?action=bad_login")
     end;
 event(E) ->
     io:format("E=~p~n",[E]).
