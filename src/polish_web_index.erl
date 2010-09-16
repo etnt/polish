@@ -94,8 +94,10 @@ mk_body({Action, []}) when Action /= changes ->
     #literal{text="No entries found matching the criteria"};
 mk_body({Action, Entries}) ->
     TableHeader = [#tableheader{text = "Key"}, #tableheader{text = "Translation"}],
-    Rows = [build_row(Key, polish_utils:trim_whitespace(Val)) || {Key,Val} <- Entries],
-    [maybe_show_notification(Action), #table{rows = TableHeader ++ Rows}, generate_buttons(Action)].
+    Rows = [build_row(Key, polish_utils:trim_whitespace(Val)) || 
+	       {Key,Val} <- lists:reverse(Entries)],
+    [maybe_show_notification(Action), #table{rows = TableHeader ++ Rows}, 
+     generate_buttons(Action)].
 
 maybe_show_notification(Action) ->
     Text = case Action of
