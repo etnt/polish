@@ -222,13 +222,19 @@ get_original(Lang, Key, changes) ->
 get_original(Lang, Key, _Action) ->
     polish_server:locked_key_orig(Lang, Key).
 
-get_redirect_url({search, Str, {{translated, Trans}, {untranslated, Untrans},
-				     {key, Key}, {value, Value}}}) ->
-    TransS = atom_to_list(Trans),
-    UntransS = atom_to_list(Untrans),
-    KeyS = atom_to_list(Key),
-    ValueS = atom_to_list(Value),
-    "?action=save_search&search_string=" ++ Str ++ "&untranslated=" ++ UntransS ++
-	"&translated=" ++ TransS ++ "&key=" ++ KeyS ++ "&value=" ++ ValueS;
+get_redirect_url({Action, Str0, 
+		  {{translated, Trans}, {untranslated, Untrans}, {key, Key}, 
+		   {value, Value}, {match_type, MatchType}}}) when
+      Action =:= search; Action =:= save_search ->
+    Str = string:join(string:tokens(Str0, " "), "+"),
+    F = fun(true, Arg) -> "&" ++ Arg ++ "=true";
+	   (false, _)  -> "" end,
+    TransS = F(Trans, "translated"),
+    UntransS = F(Untrans, "untranslated"),
+    KeyS = F(Key, "key"),
+    ValueS = F(Value, "value"),
+    MatchTypeS = atom_to_list(MatchType),
+    "?action=save_search&search_string=" ++ Str ++ UntransS ++ 
+	TransS ++ KeyS ++ ValueS ++ "&match_type=" ++ MatchTypeS;
 get_redirect_url(_Action) ->
     "?action=save".
