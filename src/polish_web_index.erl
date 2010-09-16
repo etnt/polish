@@ -40,7 +40,8 @@ get_lang_and_action() ->
     LC = maybe_reset_session(),
     Action = 
 	case wf:qs("action") of
-	    ["search"]            -> get_search_request();
+	    ["search"]            -> get_search_request(search);
+	    ["save_search"]        -> get_search_request(save_search);
 	    ["show_changes"]      -> changes;
 	    ["save"]              -> save;
 	    ["always_translate"]  -> always_translate;
@@ -49,13 +50,13 @@ get_lang_and_action() ->
     end,
     {LC, Action}.
 
-get_search_request() ->
+get_search_request(Action) ->
     [Str] = wf:qs("search_string"),
     Untrans = get_checkbox_from_qs("untranslated"),
     Trans = get_checkbox_from_qs("translated"),
     Key = get_checkbox_from_qs("key"),
     Value = get_checkbox_from_qs("value"),
-    {search, Str, {{translated, Trans}, {untranslated, Untrans},
+    {Action, Str, {{translated, Trans}, {untranslated, Untrans},
 		   {key, Key}, {value, Value}}}.
 
 get_checkbox_from_qs(K) ->
@@ -88,16 +89,16 @@ mk_body({Action, Entries}) ->
     [maybe_show_notification(Action), #table{rows = TableHeader ++ Rows}, generate_buttons(Action)].
 
 maybe_show_notification(Action) ->
-    case Action of
-	save -> 
-	    #label { text = "Your translation has been saved for submission.", class="notification"};
-	always_translate -> 
-	    #label { text = "Your selection hasa been marked as always translated.",
-		     class="notification"};
-	submit ->
-	    #label { text = "Your translations have been submitted.",
-		     class="notification"};
-	_    -> []
+    Text = case Action of
+	save             -> "Your translation has been saved for submission.";
+	save_search      -> "Your translation has been saved for submission.";
+	always_translate -> "Your selection has been marked as always translated.";
+	submit           -> "Your translations have been submitted.";
+	_                -> no_text
+    end,
+    case Text of
+	no_text -> [];
+	Text    -> #label{text = Text, class="notification"}
     end.
 
 s(K,"", S2)          -> ibox(K,"__empty__", S2);
@@ -120,11 +121,10 @@ build_row(Key, Val) ->
 			 #tablecell { body = s(Key, Val, Val),
 				      html_encode = false,
 				      class = "msgval"}]}.
-    
-     
 
 generate_buttons(Action) when Action =:= po_file;
 			      Action =:= save;
+			      Action =:= save_search;
 			      Action =:= always_translate;
 			      Action =:= search;
 			      Action =:= submit ->
@@ -175,10 +175,11 @@ inplace_textarea_ok_event(Key, Val0) ->
 	ok ->
 	    polish_server:unlock_user_keys(),
 	    polish_server:insert([{Key,Val}], list_to_atom(wf:session(lang))),
-	    wf:redirect("?action=save");
+	    Redirect = get_redirect_url(Action),
+	    wf:redirect(Redirect);
 	{error, Msg} ->
 	    {error, Msg, Val0}
-    end.   
+    end.
 
 %% Mark as always translated
 inplace_textarea_mark_translated_event(Key) ->
@@ -211,3 +212,14 @@ get_original(Lang, Key, changes) ->
     Orig;
 get_original(Lang, Key, _Action) ->
     polish_server:locked_key_orig(Lang, Key).
+
+get_redirect_url({search, Str, {{translated, Trans}, {untranslated, Untrans},
+				     {key, Key}, {value, Value}}}) ->
+    TransS = atom_to_list(Trans),
+    UntransS = atom_to_list(Untrans),
+    KeyS = atom_to_list(Key),
+    ValueS = atom_to_list(Value),
+    "?action=save_search&search_string=" ++ Str ++ "&untranslated=" ++ UntransS ++
+	"&translated=" ++ TransS ++ "&key=" ++ KeyS ++ "&value=" ++ ValueS;
+get_redirect_url(_Action) ->
+    "?action=save".
