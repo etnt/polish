@@ -47,4 +47,7 @@ $(document).ready(function() {
             $(this).css('float', 'left');
           }
 	});
+
+	// For login page
+	$('.claimed_id').focus();
 });

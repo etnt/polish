@@ -18,7 +18,7 @@ title() ->
     "POlish - The PO file manager".
 
 body() ->
-    B = [#textbox { id = claimed_id, text="" },
+    B = [#textbox { class = "claimed_id", id = claimed_id, text="" },
 	 #panel { class = "clear"}, #br{},
 	 #button { class = "button", id = "auth", text  = "Login"}],
     wf:wire("auth", #event { type     = click, 
