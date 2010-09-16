@@ -41,8 +41,20 @@ div.header {
 #login-form fieldset { 
     border: 0; 
 }
+
+.error_login {
+    background: url('');
+    width: 80px; 
+    text-align: right; 
+    float: right; 
+    margin: 3px 13px 0 0; 
+    padding: 0 37px 0 0; 
+    font-size: 16px;
+    font-weight: bold;
+    color: #c44;
+}
 	
-#login-form label { 
+.login_label { 
     background: url(/images/openid.png) no-repeat 100% 0%;
     width: 80px; 
     text-align: right; 

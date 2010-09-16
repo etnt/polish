@@ -41,7 +41,7 @@ get_lang_and_action() ->
     Action = 
 	case wf:qs("action") of
 	    ["search"]            -> get_search_request(search);
-	    ["save_search"]        -> get_search_request(save_search);
+	    ["save_search"]       -> get_search_request(save_search);
 	    ["show_changes"]      -> changes;
 	    ["save"]              -> save;
 	    ["always_translate"]  -> always_translate;
