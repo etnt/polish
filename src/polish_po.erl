@@ -33,12 +33,12 @@ get_entries({LC, po_file}) ->
     KVs = get_entries_to_edit(LC),
     LCat = list_to_atom(LC),
     Entries = take(KVs, get_offset() + 20, 20, LCat, no_search),
-    {translate, polish_server:lock_keys(Entries, LCat)};
+    {Action, polish_server:lock_keys(Entries, LCat)};
 get_entries({LC, {search, Str, {Trans, UnTrans, K, V, MatchType}}}) ->
     KVs = get_entries_to_edit(LC, Trans, UnTrans),
     LCat = list_to_atom(LC),
     Entries = take(KVs, get_offset() + 20, 20, LCat, {Str, K, V, MatchType}),
-    {translate, polish_server:lock_keys(Entries, LCat)};
+    {search, polish_server:lock_keys(Entries, LCat)};
 get_entries({LC, changes}) ->
     {changes, polish_server:get_changes(list_to_atom(LC))}.
 
@@ -332,7 +332,9 @@ match_entry({_K, _V}, {_Str, {key, false}, {value, false}}) ->
     nomatch.
 
 run_literal(S1, S2) ->
-    case S1 == S2 of
+    Exp = polish_utils:strip_whitespace(string:to_lower(S1)),
+    Res = polish_utils:strip_whitespace(string:to_lower(S2)),
+    case Res == Exp of
 	true  -> match;
 	false -> nomatch
     end.

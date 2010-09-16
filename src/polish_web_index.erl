@@ -42,10 +42,12 @@ get_lang_and_action() ->
     LC = maybe_reset_session(),
     Action = 
 	case wf:qs("action") of
-	    ["search"]       -> get_search_request();
-	    ["show_changes"] -> changes;
-	    _                -> po_file
-	end,
+	    ["search"]            -> get_search_request();
+	    ["show_changes"]      -> changes;
+	    ["save"]              -> save;
+	    ["always_translate"]  -> always_translate;
+	    _                     -> po_file
+    end,
     {LC, Action}.
 
 get_search_request() ->
