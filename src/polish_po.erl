@@ -324,9 +324,6 @@ match_entry({K, V}, {Str, {key, true}, {value, true}, {match_type, match_exact_p
 	nomatch -> run_literal(V, Str);
 	_       -> match
     end;
-match_entry({_K, _V}, {_Str, {key, false}, {value, false}, {match_type, match_exact_phrase}}) ->
-    nomatch;
-
 match_entry({K, _V}, {Str, {key, true}, {value, false}}) ->
     run_re(K, Str);
 match_entry({_K, V}, {Str, {key, false}, {value, true}}) ->
@@ -336,12 +333,14 @@ match_entry({K, V}, {Str, {key, true}, {value, true}}) ->
 	nomatch -> run_re(V, Str);
 	_       -> match
     end;
+match_entry({_K, _V}, {_Str, {key, false}, {value, false}, {match_type, match_exact_phrase}}) ->
+    nomatch;
 match_entry({_K, _V}, {_Str, {key, false}, {value, false}}) ->
     nomatch.
 
 run_literal(S1, S2) ->
-    Exp = polish_utils:strip_whitespace(string:to_lower(S1)),
-    Res = polish_utils:strip_whitespace(string:to_lower(S2)),
+    Exp = polish_utils:trim_whitespace(string:to_lower(S1)),
+    Res = polish_utils:trim_whitespace(string:to_lower(S2)),
     case Res == Exp of
 	true  -> match;
 	false -> nomatch
