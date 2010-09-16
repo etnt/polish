@@ -47,13 +47,8 @@ get_entries({LC, {Action, Str, {Trans, UnTrans, K, V, MatchType}}})
   when Action =:= search; Action =:= save_search ->
     KVs = get_entries_to_edit(LC, Trans, UnTrans),
     LCat = list_to_atom(LC),
-    Entries0 = take(KVs, get_offset() + 20, 21, LCat, {Str, K, V, MatchType}),
-    {Entries, MoreEntries} = 
-	case length(Entries0) of
-	    21 -> {tl(Entries0), true};
-	    _  -> {Entries0, false}
-	end,
-    {Action, polish_server:lock_keys(Entries, LCat), MoreEntries};
+    Entries = take(KVs, length(KVs), LCat, {Str, K, V, MatchType}),
+    {Action, polish_server:lock_keys(Entries, LCat), false};
 get_entries({LC, changes}) ->
     {changes, polish_server:get_changes(list_to_atom(LC)), false}.
 
