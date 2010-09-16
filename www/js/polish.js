@@ -31,6 +31,10 @@ $(document).ready(function() {
 		'speedOut'	:       200,
 	});
 
+	$('.search').click(function() {
+		$('#search_string').focus();
+	    });
+
 	$(".button").each(function(i) {
 	  if($(this).val() == "Next" || $(this).val() == "Submit") {
             $(this).css('margin-left', 0);
