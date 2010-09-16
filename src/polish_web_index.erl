@@ -90,14 +90,14 @@ maybe_update_lang(LC) ->
 %% However, we do want to escape '<', so some massage is needed.
 mk_body([]) ->
     #literal{text="Select a language"};
-mk_body({Action, []}) when Action /= changes ->
+mk_body({Action, [], _}) when Action /= changes ->
     #literal{text="No entries found matching the criteria"};
-mk_body({Action, Entries}) ->
+mk_body({Action, Entries, MoreEntries}) ->
     TableHeader = [#tableheader{text = "Key"}, #tableheader{text = "Translation"}],
     Rows = [build_row(Key, polish_utils:trim_whitespace(Val)) || 
 	       {Key,Val} <- lists:reverse(Entries)],
     [maybe_show_notification(Action), #table{rows = TableHeader ++ Rows}, 
-     generate_buttons(Action)].
+     generate_buttons(Action, MoreEntries)].
 
 maybe_show_notification(Action) ->
     Text = case Action of
@@ -133,25 +133,29 @@ build_row(Key, Val) ->
 				      html_encode = false,
 				      class = "msgval"}]}.
 
-generate_buttons(Action) when Action =:= po_file;
-			      Action =:= save;
-			      Action =:= save_search;
-			      Action =:= always_translate;
-			      Action =:= search;
-			      Action =:= submit ->
+generate_buttons(Action, true) when Action =:= po_file;
+				    Action =:= save;
+				    Action =:= save_search;
+				    Action =:= always_translate;
+				    Action =:= search;
+				    Action =:= submit ->
     Next = [#button{text = "Next", id = "next_button",
-		   postback = next_entries}],
-    Previous = case wf:session(offset) of
-		   undefined     -> [];
-		   O when O =< 0 -> [];
-		   O when O > 0  ->
-		       [#button{text = "Previous", id = "prev_button", 
-				postback =previous_entries}]
-	       end,
-    Previous ++ Next;
-generate_buttons(changes) ->
+		    postback = next_entries}],
+    maybe_generate_previous_button() ++ Next;
+generate_buttons(changes, _) ->
     #button{text = "Submit", class = "button",
-	    postback = write}.
+	    postback = write};
+generate_buttons(_Action, false) ->
+    maybe_generate_previous_button().
+
+maybe_generate_previous_button() ->
+    case wf:session(offset) of
+	undefined     -> [];
+	O when O =< 0 -> [];
+	O when O > 0  ->
+	    [#button{text = "Previous", id = "prev_button",
+		     postback =previous_entries}]
+    end.
 
 gen_stats() ->
     {LC, _A} = get_lang_and_action(),
