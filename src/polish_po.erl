@@ -383,8 +383,8 @@ update_po_files(DefaultPo, [LC|T]) ->
     case read_and_check_po_file(LC) of
 	{duplicated, _D} = Duplicated -> 
 	    Duplicated;
-	LCPo ->
-	    wash_po_file(LCPo, DefaultPo, LC),
+	{LCPo, TransUntrans} ->
+	    wash_po_file(LCPo, DefaultPo, LC, TransUntrans),
 	    update_po_files(DefaultPo, T)
     end;
 update_po_files(_DefaultPo, []) ->
@@ -392,6 +392,7 @@ update_po_files(_DefaultPo, []) ->
 
 read_and_check_po_file(LC) ->
     LCPo = read_po_file(LC),
+    TransUntrans = get_amount_translated_and_untranslated(LCPo),
     case check_no_duplicates_and_sorted(LCPo, LC) of
 	unsorted ->
 	    sort_po_file(LC),
@@ -401,8 +402,13 @@ read_and_check_po_file(LC) ->
 				  "in "++LC++".~n~n"),
 	    Duplicated;
 	ok ->
-	    LCPo
+	    {LCPo, TransUntrans}
     end.    
+
+get_amount_translated_and_untranslated(LC) ->
+    F = fun({K, K}, {Trans, Untrans})   -> {Trans, Untrans + 1};
+	   ({_K, _V}, {Trans, Untrans}) -> {Trans + 1, Untrans} end,
+    lists:foldl(F, {0, 0}, LC).
 
 check_no_duplicates_and_sorted([], _LC) ->
     ok;
@@ -422,8 +428,18 @@ check_no_duplicates_and_sorted([], _PrevK, _LC, []) ->
 check_no_duplicates_and_sorted([], _PrevK, _LC, Duplicated) ->
     {duplicated, Duplicated}.
 
-wash_po_file(PoToWash, DefaultPo, LC) ->
-    PoToWash1 = add_new_delete_old_keys(PoToWash, DefaultPo),
+wash_po_file(PoToWash, DefaultPo, LC, {OldTrans, OldUntrans}) ->
+    {PoToWash1, New, RemovedUntrans, RemovedTrans} = 
+	add_new_delete_old_keys(PoToWash, DefaultPo),
+    {NewTrans, NewUntrans} = get_amount_translated_and_untranslated(PoToWash1),
+    case NewUntrans =:= OldUntrans + New - RemovedUntrans andalso
+	NewTrans =:= OldTrans - RemovedTrans of
+	true  -> ok;
+	false -> 
+	    error_logger:error_msg("Bad washing of "++LC++". "
+				   "Po file got corrupted"),
+	    exit(error)
+    end,
     case PoToWash =:= PoToWash1 of
 	false -> 
 	    error_logger:info_msg("Updating "++LC++"...~n"),
@@ -434,17 +450,23 @@ wash_po_file(PoToWash, DefaultPo, LC) ->
     end.
     
 add_new_delete_old_keys(PoToWash, DefPo) ->
-    add_new_delete_old_keys(PoToWash, DefPo, []).
-add_new_delete_old_keys([{K, _V1} = KV|PoToWash], [{K, _V2}|DefPo], Acc) ->
-    add_new_delete_old_keys(PoToWash, DefPo, [KV|Acc]);
-add_new_delete_old_keys([{K1, _V1}|_]=PoToWash, [{K2, _V2} = KV|DefPo], Acc) when K1 > K2 ->
-    add_new_delete_old_keys(PoToWash, DefPo, [KV|Acc]);
-add_new_delete_old_keys([{_K, _V}|PoToWash], DefPo, Acc) ->
-    add_new_delete_old_keys(PoToWash, DefPo, Acc);
-add_new_delete_old_keys([], [KV|DefPo], Acc) ->
-    add_new_delete_old_keys([], DefPo, [KV|Acc]);
-add_new_delete_old_keys(_, [], Acc) ->
-    lists:reverse(Acc).
+    add_new_delete_old_keys(PoToWash, DefPo, {[], 0, 0, 0}).
+add_new_delete_old_keys([{K, _V1} = KV|PoToWash], [{K, _V2}|DefPo], 
+			{Acc, New, RU, RT}) ->
+    add_new_delete_old_keys(PoToWash, DefPo, {[KV|Acc], New, RU, RT});
+add_new_delete_old_keys([{K1, _V1}|_] = PoToWash, [{K2, _V2} = KV|DefPo], 
+			{Acc, New, RU, RT}) when K1 > K2 ->
+    add_new_delete_old_keys(PoToWash, DefPo, {[KV|Acc], New + 1, RU, RT});
+add_new_delete_old_keys([{K, K}|PoToWash], DefPo, 
+			{Acc, New, RU, RT}) ->
+    add_new_delete_old_keys(PoToWash, DefPo, {Acc, New, RU + 1, RT});
+add_new_delete_old_keys([{_K, _V}|PoToWash], DefPo, 
+			{Acc, New, RU, RT}) ->
+    add_new_delete_old_keys(PoToWash, DefPo, {Acc, New, RU, RT + 1});
+add_new_delete_old_keys([], [KV|DefPo], {Acc, New, RU, RT}) ->
+    add_new_delete_old_keys([], DefPo, {[KV|Acc], New + 1, RU, RT});
+add_new_delete_old_keys([], [], {Acc, New, RU, RT}) ->
+    {lists:reverse(Acc), New, RU, RT}.
 
 sort_po_file(LC) ->
     LCPo = read_po_file(LC),
