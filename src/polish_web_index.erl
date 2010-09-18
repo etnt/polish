@@ -224,7 +224,7 @@ get_redirect_url({Action, Str0,
 		  {{translated, Trans}, {untranslated, Untrans}, {key, Key}, 
 		   {value, Value}, {match_type, MatchType}}}) when
       Action =:= search; Action =:= save_search ->
-    Str = string:join(string:tokens(Str0, " "), "+"),
+    Str = wf:url_encode(Str0),
     F = fun(true, Arg) -> "&" ++ Arg ++ "=true";
 	   (false, _)  -> "" end,
     TransS = F(Trans, "translated"),
