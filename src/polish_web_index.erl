@@ -90,7 +90,9 @@ maybe_update_lang(LC) ->
 %% However, we do want to escape '<', so some massage is needed.
 mk_body([]) ->
     #literal{text="Select a language"};
-mk_body({Action, [], _}) when Action /= changes ->
+mk_body({changes, [], _}) ->
+    maybe_show_notification(no_changes);
+mk_body({_Action, [], _}) ->
     maybe_show_notification(no_results);
 mk_body({Action, Entries, MoreEntries}) ->
     TableHeader = [#tableheader{text = "Key"}, #tableheader{text = "Translation"}],
@@ -106,6 +108,7 @@ maybe_show_notification(Action) ->
 	       always_translate -> "Your selection has been marked as always translated.";
 	       submit           -> "Your translations have been submitted.";
 	       no_results       -> "No entries found matching the criteria.";
+	       no_changes       -> "There is nothing to submit.";
 	       bad_search       -> "Your search criteria matched too many texts. "
 				       "Please try to make it more restrictive.";
 	       _                -> no_text
