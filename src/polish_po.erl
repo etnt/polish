@@ -43,11 +43,15 @@ get_entries({LC, Action}) when Action =:= po_file;
 	    _  -> {Entries0, false}
 	end,
     {Action, polish_server:lock_keys(Entries, LCat), MoreEntries};
-get_entries({LC, {Action, Str, {Trans, UnTrans, K, V, MatchType}}}) 
-  when Action =:= search; Action =:= save_search ->
+get_entries({LC, {Action0, Str, {Trans, UnTrans, K, V, MatchType}}}) 
+  when Action0 =:= search; Action0 =:= save_search ->
     KVs = get_entries_to_edit(LC, Trans, UnTrans),
     LCat = list_to_atom(LC),
-    Entries = take(KVs, length(KVs), LCat, {Str, K, V, MatchType}),
+    {Entries,Rest} = lists:split(40, take(KVs, length(KVs), LCat, {Str, K, V, MatchType})),
+    Action = case length(Rest) of
+		 0 -> Action0;
+		 _ -> bad_search
+	     end,
     {Action, polish_server:lock_keys(Entries, LCat), false};
 get_entries({LC, changes}) ->
     {changes, polish_server:get_changes(list_to_atom(LC)), false}.

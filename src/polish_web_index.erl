@@ -105,6 +105,8 @@ maybe_show_notification(Action) ->
 	save_search      -> "Your translation has been saved for submission.";
 	always_translate -> "Your selection has been marked as always translated.";
 	submit           -> "Your translations have been submitted.";
+	bad_search       -> "Your search criteria matched too many texts. "
+				"Please try to make it more restrictive.";
 	_                -> no_text
     end,
     case Text of
@@ -138,6 +140,7 @@ generate_buttons(Action, true) when Action =:= po_file;
 				    Action =:= save_search;
 				    Action =:= always_translate;
 				    Action =:= search;
+				    Action =:= bad_search;
 				    Action =:= submit ->
     Next = [#button{text = "Next", id = "next_button",
 		    postback = next_entries}],
