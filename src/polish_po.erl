@@ -47,11 +47,11 @@ get_entries({LC, {Action0, Str, {Trans, UnTrans, K, V, MatchType}}})
   when Action0 =:= search; Action0 =:= save_search ->
     KVs = get_entries_to_edit(LC, Trans, UnTrans),
     LCat = list_to_atom(LC),
-    {Entries,Rest} = lists:split(40, take(KVs, length(KVs), LCat, {Str, K, V, MatchType})),
-    Action = case length(Rest) of
-		 0 -> Action0;
-		 _ -> bad_search
-	     end,
+    Entries0 = take(KVs, length(KVs), LCat, {Str, K, V, MatchType}),
+    {Entries, Action} = case length(Entries0) > 40 of
+			    true  -> {element(1,lists:split(40, Entries0)), bad_search};
+			    false -> {Entries0, Action0}
+			end,
     {Action, polish_server:lock_keys(Entries, LCat), false};
 get_entries({LC, changes}) ->
     {changes, polish_server:get_changes(list_to_atom(LC)), false}.

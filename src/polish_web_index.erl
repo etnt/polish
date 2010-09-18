@@ -91,7 +91,7 @@ maybe_update_lang(LC) ->
 mk_body([]) ->
     #literal{text="Select a language"};
 mk_body({Action, [], _}) when Action /= changes ->
-    #literal{text="No entries found matching the criteria"};
+    maybe_show_notification(no_results);
 mk_body({Action, Entries, MoreEntries}) ->
     TableHeader = [#tableheader{text = "Key"}, #tableheader{text = "Translation"}],
     Rows = [build_row(Key, polish_utils:trim_whitespace(Val)) || 
@@ -101,13 +101,14 @@ mk_body({Action, Entries, MoreEntries}) ->
 
 maybe_show_notification(Action) ->
     Text = case Action of
-	save             -> "Your translation has been saved for submission.";
-	save_search      -> "Your translation has been saved for submission.";
-	always_translate -> "Your selection has been marked as always translated.";
-	submit           -> "Your translations have been submitted.";
-	bad_search       -> "Your search criteria matched too many texts. "
-				"Please try to make it more restrictive.";
-	_                -> no_text
+	       save             -> "Your translation has been saved for submission.";
+	       save_search      -> "Your translation has been saved for submission.";
+	       always_translate -> "Your selection has been marked as always translated.";
+	       submit           -> "Your translations have been submitted.";
+	       no_results       -> "No entries found matching the criteria.";
+	       bad_search       -> "Your search criteria matched too many texts. "
+				       "Please try to make it more restrictive.";
+	       _                -> no_text
     end,
     case Text of
 	no_text -> [];
