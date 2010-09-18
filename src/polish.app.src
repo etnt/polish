@@ -22,6 +22,10 @@
 	 % Wash all PO files automagically when starting.
 	 ,{auto_wash, true}
 
+	 % Print date and translator info in po file header when writing a po file
+	 % If it is set to true it will cause conflicts when merging
+	 ,{edit_po_header, false}
+
          % Log handling
 	 ,{nolog, false}
 	 ,{errlog_type, error}

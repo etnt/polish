@@ -66,7 +66,8 @@ write_po_file(LC, KVs, Name, Email) ->
     Bupname = Fname++"__"++rfc3339(),
     mv(Fname, Bupname),
     {ok,Fd} = file:open(Tname, [write]),
-    write_header(Fd, LC, Name, Email),
+    EditPoHeader = polish_deps:get_env(edit_po_header, true),
+    write_header(Fd, LC, Name, Email, EditPoHeader),
     write_entries(Fd, KVs),
     file:close(Fd),
     mv(Tname,Fname),
@@ -137,8 +138,15 @@ get_status_po_files(LCs) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% FIXME insert the proper user info into the header...
-write_header(Fd, LC, Name, Email) ->
+write_header(Fd, LC, Name, Email, EditPoHeader) ->
     OrgName = polish:get_org_name(),
+    Info = case EditPoHeader of
+	       true ->
+		   "\"PO-Revision-Date: "++rfc3339()++"\\n\"\n"
+		       "\"Last-Translator: "++Name++" <"++Email++">\\n\"\n";
+	       false ->
+		   "\"Last-Translator: Polish\\n\"\n"
+	   end,
     io:format(Fd,
 	      "# "++OrgName++" PO file for "++get_language_name(LC)++"\n"
 	      "# Copyright (C) "++year2str()++" "++OrgName++"\n"
@@ -147,8 +155,7 @@ write_header(Fd, LC, Name, Email) ->
 	      "msgstr \"\"\n"
 	      "\"Project-Id-Version: PACKAGE VERSION\\n\"\n"
 	      "\"POT-Creation-Date: 2006-07-01 16:45+0200\\n\"\n"
-	      "\"PO-Revision-Date: "++rfc3339()++"\\n\"\n"
-	      "\"Last-Translator: "++Name++" <"++Email++">\\n\"\n"
+	      ++ Info ++
 	      "\"Language-Team: Klarna <info@klarna.com>\\n\"\n"
 	      "\"MIME-Version: 1.0\\n\"\n"
 	      "\"Content-Type: text/plain; charset=iso-8859-1\\n\"\n"
