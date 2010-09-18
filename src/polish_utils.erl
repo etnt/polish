@@ -53,6 +53,7 @@ zone(Hr, Min) when Hr < 0; Min < 0 ->
 zone(Hr, Min) when Hr >= 0, Min >= 0 ->
     io_lib:format("+~2..0w~2..0w", [Hr, Min]).
 
+print_email_to_translators([]) -> ok;
 print_email_to_translators(NewKeys) ->
     Hostname = polish_deps:get_env(hostname, "localhost"),
     Port = integer_to_list(polish_deps:get_env(port, 8000)),
