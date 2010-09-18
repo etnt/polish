@@ -383,8 +383,8 @@ update_po_files(DefaultPo, [LC|T]) ->
     case read_and_check_po_file(LC) of
 	{duplicated, _D} = Duplicated -> 
 	    Duplicated;
-	{LCPo, TransUntrans} ->
-	    wash_po_file(LCPo, DefaultPo, LC, TransUntrans),
+	LCPo ->
+	    wash_po_file(LCPo, DefaultPo, LC),
 	    update_po_files(DefaultPo, T)
     end;
 update_po_files(_DefaultPo, []) ->
@@ -392,7 +392,6 @@ update_po_files(_DefaultPo, []) ->
 
 read_and_check_po_file(LC) ->
     LCPo = read_po_file(LC),
-    TransUntrans = get_amount_translated_and_untranslated(LCPo),
     case check_no_duplicates_and_sorted(LCPo, LC) of
 	unsorted ->
 	    sort_po_file(LC),
@@ -402,7 +401,7 @@ read_and_check_po_file(LC) ->
 				  "in "++LC++".~n~n"),
 	    Duplicated;
 	ok ->
-	    {LCPo, TransUntrans}
+	    LCPo
     end.    
 
 get_amount_translated_and_untranslated(LC) ->
@@ -428,7 +427,8 @@ check_no_duplicates_and_sorted([], _PrevK, _LC, []) ->
 check_no_duplicates_and_sorted([], _PrevK, _LC, Duplicated) ->
     {duplicated, Duplicated}.
 
-wash_po_file(PoToWash, DefaultPo, LC, {OldTrans, OldUntrans}) ->
+wash_po_file(PoToWash, DefaultPo, LC) ->
+    {OldTrans, OldUntrans} = get_amount_translated_and_untranslated(PoToWash),
     {PoToWash1, New, RemovedUntrans, RemovedTrans} = 
 	add_new_delete_old_keys(PoToWash, DefaultPo),
     {NewTrans, NewUntrans} = get_amount_translated_and_untranslated(PoToWash1),
