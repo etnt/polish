@@ -19,7 +19,6 @@
 	 , load_always_translated_keys/2
 	 , mark_as_always_translated/2
 	 , is_always_translated/2
-	 , locked_key_orig/2
         ]).
 
 %% gen_server callbacks
@@ -77,9 +76,6 @@ mark_as_always_translated(LC, Key) ->
 is_always_translated(LC, Key) ->
     gen_server:call(?MODULE, {is_always_translated, LC, Key}).
 
-locked_key_orig(LC, Key) ->
-    gen_server:call(?MODULE, {locked_key_orig, LC, Key}).
-    
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -172,10 +168,6 @@ handle_call({mark_as_always_translated, LC, Key}, _From, State) ->
 
 handle_call({is_always_translated, LC, Key}, _From, State) ->
     {NewState, Reply} = do_is_always_translated(State, LC, Key),
-    {reply, Reply, NewState};
-
-handle_call({locked_key_orig, LC, Key}, _From, State) ->
-    {NewState, Reply} = do_locked_key_orig(State, LC, Key),
     {reply, Reply, NewState};
 
 handle_call(_Request, _From, State) ->
@@ -284,27 +276,27 @@ do_get_translated_by_country(State, LC) ->
 
 do_lock_keys(State, KVs, LC, User) ->
     Res = lists:foldl(
-	    fun({Key, Val} = KV, Acc) ->
+	    fun({Key, _Val} = KV, Acc) ->
 		    case do_is_key_locked(State, Key, LC, User) of
 			{State, true}  -> Acc;
 			{State, false} ->
 			    {Mega, Sec, _} = erlang:now(),
 			    Time = Mega * 100000 + Sec,
-			    ets:insert(locked_keys, {{Key, LC}, {User, Time}, Val}),
+			    ets:insert(locked_keys, {{Key, LC}, {User, Time}}),
 			    [KV | Acc]
 		    end
 	    end, [], KVs),
     {State, Res}.
 
 do_unlock_user_keys(State, User) ->
-    [ets:delete(locked_keys, K) || {K, {U, _T}, _Val} <- ets:tab2list(locked_keys), 
+    [ets:delete(locked_keys, K) || {K, {U, _T}} <- ets:tab2list(locked_keys), 
 				   U =:= User],
     {State, result}.
 
 do_is_key_locked(State, Key, LC, User) ->
     Res = case ets:lookup(locked_keys, {Key, LC}) of
 	      []         -> false;
-	      [{_K, {U, _T}, _Val}]  -> User =/= U
+	      [{_K, {U, _T}}]  -> User =/= U
 	  end,
     {State, Res}.
 
@@ -347,12 +339,6 @@ do_is_always_translated(State, LC, Key) ->
 	      _  -> true
     end,
     {State, Res}.
-
-do_locked_key_orig(State, LC, Key)->
-    case ets:lookup(locked_keys, {Key, LC}) of
-	[{_, _, OrigTxt}] -> {State, OrigTxt};
-        []                -> []
-    end.
 
 build_info_log(LC, User, L) ->
     LCa = atom_to_list(LC),
