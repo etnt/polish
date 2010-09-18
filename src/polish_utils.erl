@@ -13,6 +13,7 @@
 	 , trim_whitespace/1
 	 , split_whitespace/1
 	 , restore_whitespace/2
+	 , print_email_to_translators/1
         ]).
 
 
@@ -51,6 +52,20 @@ zone(Hr, Min) when Hr < 0; Min < 0 ->
     io_lib:format("-~2..0w~2..0w", [abs(Hr), abs(Min)]);
 zone(Hr, Min) when Hr >= 0, Min >= 0 ->
     io_lib:format("+~2..0w~2..0w", [Hr, Min]).
+
+print_email_to_translators(NewKeys) ->
+    Hostname = polish_deps:get_env(hostname, "localhost"),
+    Port = integer_to_list(polish_deps:get_env(port, 8000)),
+    URL = "http://" ++ Hostname ++ ":" ++ Port,
+    KeysText = lists:foldl(fun(K, Acc) -> "* " ++ K ++ "~n" ++ Acc end, [], NewKeys),
+    io:format("~n~n~n~n~nEMAIL TO TRANSLATORS~n"
+	      "--------------------~n~n~n"
+	      "Hi all,~n~n"
+	      "URL:~n" ++ URL ++ "~n~n"
+	      "Texts:~n" ++ KeysText ++ "~n"
+	      "Ticket information:~n{Paste here ticket specs}~n~n~n"
+	      "Best regards,~n~n~n"
+	      "--------------------~n~n~n~n~n").    
 
 %% @spec trim_whitespace(Input::string()) -> Result
 %%   Result = string()

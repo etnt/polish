@@ -120,7 +120,9 @@ update_po_files(CustomLCs) ->
     %% after a make run_gettext. Strings that contain backslashes have problems.
     sort_po_file(default),
     DefaultPo = read_po_file(default),
-    update_po_files(DefaultPo, CustomLCs).
+    NewKeys = get_new_keys(DefaultPo, CustomLCs),
+    update_po_files(DefaultPo, CustomLCs),
+    polish_utils:print_email_to_translators(NewKeys).
 
 sort_po_files([LC|CustomLCs]) ->
     sort_po_file(LC),
@@ -575,3 +577,16 @@ check_duplicated_keys_lc([{K,_}|LCPo], PrevK) ->
 check_duplicated_keys_lc([], _) ->
     ok.
 	    
+get_new_keys(KVDef, [LC|_CustomLCs]) ->
+    KVCus = read_po_file(LC),
+    get_new_keys(KVDef, KVCus, []).
+get_new_keys([{K,_}|KVDef], [{K,_}|KVCus], Acc) -> 
+    get_new_keys(KVDef, KVCus, Acc);
+get_new_keys([{K1,_}|_] = KVDef, [{K2,_}|KVCus], Acc) when K1 > K2 -> 
+    get_new_keys(KVDef, KVCus, Acc);
+get_new_keys([{K1,_}|KVDef], KVCus, Acc) -> 
+    get_new_keys(KVDef, KVCus, [K1|Acc]);
+get_new_keys([], _KVCus, Acc) ->
+    Acc.
+
+    
