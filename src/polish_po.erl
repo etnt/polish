@@ -9,7 +9,7 @@
          , write_po_file/4
 	 , get_stats/1
 	 , check_correctness/2
-	 , update_po_files/1
+	 , update_po_files/2
 	 , sort_po_files/1
 	 , get_status_po_files/1
 	 , get_new_old_keys/1
@@ -120,13 +120,14 @@ check_correctness(Key, Val) ->
 		  gettext_validate_bad_punct, gettext_validate_bad_ws],
     run_validators(F, Key, Val, Validators).
 
-update_po_files(CustomLCs) ->
+update_po_files(CustomLCs, KeysToBeReplaced0) ->
     %% sort default po file because it may not be completely sorted even
     %% after a make run_gettext. Strings that contain backslashes have problems.
+    KeysToBeReplaced = get_keys_to_be_replaced_from_ids(KeysToBeReplaced0),
     sort_po_file(default),
     DefaultPo = read_po_file(default),
     {NewKeys, _} = get_new_old_keys(DefaultPo, hd(CustomLCs)),
-    update_po_files(DefaultPo, CustomLCs),
+    update_po_files(DefaultPo, CustomLCs, KeysToBeReplaced),
     polish_utils:print_email_to_translators(NewKeys).
 
 sort_po_files([LC|CustomLCs]) ->
@@ -143,7 +144,7 @@ get_new_old_keys(LC) ->
     sort_po_file(default),
     DefaultPo = read_po_file(default),
     NewOld = get_new_old_keys(DefaultPo, LC),
-    put(new_old_keys, NewOld),
+    polish_server:set_new_old_keys(NewOld),
     NewOld.
 
 
@@ -401,15 +402,15 @@ run_validators(F, Key, Val, [Validator|T]) ->
 	{error, _Msg} = E -> E
     end.
 
-update_po_files(DefaultPo, [LC|T]) ->
+update_po_files(DefaultPo, [LC|T], KeysToBeReplaced) ->
     case read_and_check_po_file(LC) of
 	{duplicated, _D} = Duplicated -> 
 	    Duplicated;
 	LCPo ->
-	    wash_po_file(LCPo, DefaultPo, LC),
-	    update_po_files(DefaultPo, T)
+	    wash_po_file(LCPo, DefaultPo, LC, KeysToBeReplaced),
+	    update_po_files(DefaultPo, T, KeysToBeReplaced)
     end;
-update_po_files(_DefaultPo, []) ->
+update_po_files(_DefaultPo, [], _) ->
     ok.
 
 read_and_check_po_file(LC) ->
@@ -449,11 +450,12 @@ check_no_duplicates_and_sorted([], _PrevK, _LC, []) ->
 check_no_duplicates_and_sorted([], _PrevK, _LC, Duplicated) ->
     {duplicated, Duplicated}.
 
-wash_po_file(PoToWash, DefaultPo, LC) ->
+wash_po_file(PoToWash, DefaultPo, LC, KeysToBeReplaced) ->
     {OldTrans, OldUntrans} = get_amount_translated_and_untranslated(PoToWash),
-    {PoToWash1, New, RemovedUntrans, RemovedTrans} = 
-	add_new_delete_old_keys(PoToWash, DefaultPo),
-    {NewTrans, NewUntrans} = get_amount_translated_and_untranslated(PoToWash1),
+    PoWashed0 = update_keys_to_be_replaced(PoToWash, KeysToBeReplaced),
+    {PoWashed, New, RemovedUntrans, RemovedTrans} = 
+	add_new_delete_old_keys(PoWashed0, DefaultPo),
+    {NewTrans, NewUntrans} = get_amount_translated_and_untranslated(PoWashed),
     case NewUntrans =:= OldUntrans + New - RemovedUntrans andalso
 	NewTrans =:= OldTrans - RemovedTrans of
 	true  -> ok;
@@ -462,14 +464,23 @@ wash_po_file(PoToWash, DefaultPo, LC) ->
 				   "Po file got corrupted"),
 	    exit(error)
     end,
-    case PoToWash =:= PoToWash1 of
+    case PoToWash =:= PoWashed of
 	false -> 
 	    error_logger:info_msg("Updating "++LC++"...~n"),
-	    write_po_file(LC, PoToWash1, "Polish tool", "polish@polish.org");
+	    write_po_file(LC, PoWashed, "Polish tool", "polish@polish.org");
 	true  ->
             error_logger:info_msg("Nothing to update for "++LC++"...~n"),
             ok
     end.
+
+update_keys_to_be_replaced(PoToWash, KeysToBeReplaced) ->
+    F = fun({K,V}, Acc) -> case lists:keyfind(K, 2, KeysToBeReplaced) of
+			       false                  -> [{K,V}|Acc];
+			       {NewK, K} when K =:= V -> [{NewK, NewK}|Acc];
+			       {NewK, K}              -> [{NewK, V}|Acc]
+			   end end,
+    lists:keysort(1, lists:foldl(F, [], PoToWash)).			
+    
     
 add_new_delete_old_keys(PoToWash, DefPo) ->
     add_new_delete_old_keys(PoToWash, DefPo, {[], 0, 0, 0}).
@@ -602,4 +613,18 @@ get_new_old_keys([{K1,_}|KVDef], KVCus, {New, Old}) ->
 get_new_old_keys([], _KVCus, Acc) ->
     Acc.
 
+get_keys_to_be_replaced_from_ids(KeysToBeReplaced) ->
+    case polish_server:get_new_old_keys() of
+	undefined -> 
+	    [];
+	NewOldKeys -> 
+	    get_keys_to_be_replaced_from_ids(KeysToBeReplaced, NewOldKeys, [])
+    end.
+get_keys_to_be_replaced_from_ids([{NewId, OldId}|KeysToBeReplaced], 
+				 {NewKeys, OldKeys} = NLK, Acc) ->
     
+    NewKey = lists:nth(NewId, NewKeys),
+    OldKey = lists:nth(OldId, OldKeys),
+    get_keys_to_be_replaced_from_ids(KeysToBeReplaced, NLK, [{NewKey,OldKey}|Acc]);
+get_keys_to_be_replaced_from_ids([], _NLK, Acc) ->
+    Acc.

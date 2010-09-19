@@ -14,6 +14,7 @@
          , meta_filename/1
          , all_custom_lcs/0
 	 , update_po_files/0
+	 , update_po_files/1
 	 , sort_po_files/0
 	 , get_status_po_files/0
          , hostname/0
@@ -53,8 +54,11 @@ print_new_old_keys() ->
     end.
 
 update_po_files() ->
+    update_po_files([]).
+
+update_po_files(KeysToBeReplaced) ->
     CustomLCs = all_custom_lcs(),
-    polish_po:update_po_files(CustomLCs).
+    polish_po:update_po_files(CustomLCs, KeysToBeReplaced).
 
 sort_po_files() ->
     CustomLCs = all_custom_lcs(),
