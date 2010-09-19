@@ -22,6 +22,9 @@
 	 % Wash all PO files automagically when starting.
 	 ,{auto_wash, true}
 
+	 % Give the possibility when starting Polish of replacing a new key with an old one
+	 ,{ask_replace_keys, true}
+
 	 % Print date and translator info in po file header when writing a po file
 	 % If it is set to true it will cause conflicts when merging
 	 ,{edit_po_header, false}
