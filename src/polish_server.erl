@@ -19,6 +19,8 @@
 	 , load_always_translated_keys/2
 	 , mark_as_always_translated/2
 	 , is_always_translated/2
+	 , set_new_old_keys/1
+	 , get_new_old_keys/0
         ]).
 
 %% gen_server callbacks
@@ -75,6 +77,12 @@ mark_as_always_translated(LC, Key) ->
 
 is_always_translated(LC, Key) ->
     gen_server:call(?MODULE, {is_always_translated, LC, Key}).
+
+set_new_old_keys(NewOldKeys) ->
+    gen_server:call(?MODULE, {set_new_old_keys, NewOldKeys}).
+
+get_new_old_keys() ->
+    gen_server:call(?MODULE, get_new_old_keys).
 
 
 %%--------------------------------------------------------------------
@@ -168,6 +176,14 @@ handle_call({mark_as_always_translated, LC, Key}, _From, State) ->
 
 handle_call({is_always_translated, LC, Key}, _From, State) ->
     {NewState, Reply} = do_is_always_translated(State, LC, Key),
+    {reply, Reply, NewState};
+
+handle_call({set_new_old_keys, NewOldKeys}, _From, State) ->
+    {NewState, Reply} = do_set_new_old_keys(State, NewOldKeys),
+    {reply, Reply, NewState};
+
+handle_call(get_new_old_keys, _From, State) ->
+    {NewState, Reply} = do_get_new_old_keys(State),
     {reply, Reply, NewState};
 
 handle_call(_Request, _From, State) ->
@@ -339,6 +355,13 @@ do_is_always_translated(State, LC, Key) ->
 	      _  -> true
     end,
     {State, Res}.
+
+do_set_new_old_keys(State, NewOldKeys) ->
+    put(new_old_keys, NewOldKeys),
+    {State, ok}.
+
+do_get_new_old_keys(State) ->
+    {State, get(new_old_keys)}.
 
 build_info_log(LC, User, L) ->
     LCa = atom_to_list(LC),

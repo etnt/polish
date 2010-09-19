@@ -6,6 +6,7 @@
 -export([setup_user_info/0
          , po_lang_dir/0
          , auto_wash/0
+	 , print_new_old_keys/0
 	 , get_acl/0
 	 , get_default_lang/0
 	 , get_org_name/0
@@ -13,6 +14,7 @@
          , meta_filename/1
          , all_custom_lcs/0
 	 , update_po_files/0
+	 , update_po_files/1
 	 , sort_po_files/0
 	 , get_status_po_files/0
          , hostname/0
@@ -42,9 +44,21 @@ all_custom_lcs() ->
     LCdirs = os:cmd("(cd "++po_lang_dir()++"; ls custom)"),
     string:tokens(LCdirs, "\n").
 
+print_new_old_keys() ->
+    [LC|_] = all_custom_lcs(),
+    case polish_po:get_new_old_keys(LC) of
+	{[], []} -> update_po_files();
+	{[], _}  -> update_po_files();
+	{_, []}  -> update_po_files();
+	Keys     -> polish_utils:print_new_old_keys(Keys)
+    end.
+
 update_po_files() ->
+    update_po_files([]).
+
+update_po_files(KeysToBeReplaced) ->
     CustomLCs = all_custom_lcs(),
-    polish_po:update_po_files(CustomLCs).
+    polish_po:update_po_files(CustomLCs, KeysToBeReplaced).
 
 sort_po_files() ->
     CustomLCs = all_custom_lcs(),

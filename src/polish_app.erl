@@ -16,7 +16,7 @@ start(_, _) ->
     eopenid:start(),
     Res = polish_sup:start_link(),
     load_always_translated_keys(),
-    maybe_auto_wash(),
+    maybe_replace_keys_or_auto_wash(),
     {ok,_Pid} = polish_inets:start_link(), % ends up under the inets supervisors
     Res.
     
@@ -35,9 +35,13 @@ load_always_translated_keys([H|T]) ->
 load_always_translated_keys([]) ->
     ok.
 
-maybe_auto_wash() ->
-    case polish:auto_wash() of
-        true  -> polish:update_po_files();
-        false -> false
+maybe_replace_keys_or_auto_wash() ->
+    case polish_deps:get_env(ask_replace_keys, true) of
+	true ->
+	    polish:print_new_old_keys();
+	false ->
+	    case polish:auto_wash() of
+		true  -> polish:update_po_files();
+		false -> ok
+	    end
     end.
-            
