@@ -14,6 +14,7 @@
 	 , split_whitespace/1
 	 , restore_whitespace/2
 	 , print_email_to_translators/1
+	 , print_new_old_keys/1
         ]).
 
 
@@ -67,6 +68,29 @@ print_email_to_translators(NewKeys) ->
 	      "Ticket information:~n{Paste here ticket specs}~n~n~n"
 	      "Best regards,~n~n~n"
 	      "--------------------~n~n~n~n~n").    
+
+print_new_old_keys({New, Old}) ->
+    io:format("~n~n~n~n~n"),
+    io:format("List of new keys and to be removed keys. If you want a new key to"
+	      " keep the translations of a key to be removed you need to say so "
+	      "when updating the po files. For example:~n"
+	      "polish:update_po_files([{1,3},{2,1}]).~n"
+	      "will make new key 1 keep translations of old key 3 and new key 2 "
+	      "keep translations of old key 1. Otherwise just run "
+	      "polish:update_po_files().~n"),
+    io:format("--------------------~n~nNEW KEYS~n~n"),
+    print_keys(New),
+    io:format("~n~nTO BE REMOVED KEYS~n~n"),
+    print_keys(Old),
+    io:format("~n--------------------~n~n~n~n~n").
+
+print_keys(Keys) ->
+    print_keys(Keys, 1).
+print_keys([K|Keys], N) ->
+    io:format("~p. ~s~n", [N, K]),
+    print_keys(Keys, N + 1);
+print_keys([], _N) ->
+    ok.			       
 
 %% @spec trim_whitespace(Input::string()) -> Result
 %%   Result = string()

@@ -12,6 +12,7 @@
 	 , update_po_files/1
 	 , sort_po_files/1
 	 , get_status_po_files/1
+	 , get_new_old_keys/1
         ]).
 
 -export([add_new_delete_old_keys/2]).
@@ -124,7 +125,7 @@ update_po_files(CustomLCs) ->
     %% after a make run_gettext. Strings that contain backslashes have problems.
     sort_po_file(default),
     DefaultPo = read_po_file(default),
-    NewKeys = get_new_keys(DefaultPo, CustomLCs),
+    {NewKeys, _} = get_new_old_keys(DefaultPo, hd(CustomLCs)),
     update_po_files(DefaultPo, CustomLCs),
     polish_utils:print_email_to_translators(NewKeys).
 
@@ -137,6 +138,14 @@ sort_po_files([]) ->
 get_status_po_files(LCs) ->
     DefaultPo = read_po_file(default),
     get_status_po_files(LCs, DefaultPo).
+
+get_new_old_keys(LC) ->
+    sort_po_file(default),
+    DefaultPo = read_po_file(default),
+    NewOld = get_new_old_keys(DefaultPo, LC),
+    put(new_old_keys, NewOld),
+    NewOld.
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -581,16 +590,16 @@ check_duplicated_keys_lc([{K,_}|LCPo], PrevK) ->
 check_duplicated_keys_lc([], _) ->
     ok.
 	    
-get_new_keys(KVDef, [LC|_CustomLCs]) ->
+get_new_old_keys(KVDef, LC) ->
     KVCus = read_po_file(LC),
-    get_new_keys(KVDef, KVCus, []).
-get_new_keys([{K,_}|KVDef], [{K,_}|KVCus], Acc) -> 
-    get_new_keys(KVDef, KVCus, Acc);
-get_new_keys([{K1,_}|_] = KVDef, [{K2,_}|KVCus], Acc) when K1 > K2 -> 
-    get_new_keys(KVDef, KVCus, Acc);
-get_new_keys([{K1,_}|KVDef], KVCus, Acc) -> 
-    get_new_keys(KVDef, KVCus, [K1|Acc]);
-get_new_keys([], _KVCus, Acc) ->
+    get_new_old_keys(KVDef, KVCus, {[], []}).
+get_new_old_keys([{K,_}|KVDef], [{K,_}|KVCus], Acc) -> 
+    get_new_old_keys(KVDef, KVCus, Acc);
+get_new_old_keys([{K1,_}|_] = KVDef, [{K2,_}|KVCus], {New, Old}) when K1 > K2 -> 
+    get_new_old_keys(KVDef, KVCus, {New, [K2|Old]});
+get_new_old_keys([{K1,_}|KVDef], KVCus, {New, Old}) -> 
+    get_new_old_keys(KVDef, KVCus, {[K1|New], Old});
+get_new_old_keys([], _KVCus, Acc) ->
     Acc.
 
     
