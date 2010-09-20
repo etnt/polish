@@ -45,7 +45,10 @@ is_translated(Key, LC) when is_atom(LC) ->
     gen_server:call(?MODULE, {is_translated, Key, LC}).
 
 insert(KVs, LC) when is_atom(LC) ->
-    gen_server:call(?MODULE, {insert, wf:session(name), KVs, LC}).
+    case wf:session(name) of
+	undefined -> end_of_session;
+	Name -> gen_server:call(?MODULE, {insert, Name, KVs, LC})
+    end.
 
 get_changes(LC) when is_atom(LC) ->
     gen_server:call(?MODULE, {get_changes, wf:session(name), LC}).
