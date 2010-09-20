@@ -97,7 +97,8 @@ get_stats(LC) ->
     Trans = polish_server:get_translated_by_country(list_to_atom(LC)),
     Editors = 
 	lists:foldl(
-	  fun(Editor, Acc) ->
+	  fun(undefined, Acc) -> Acc;
+	     (Editor, Acc) ->
 		  case proplists:get_value(Editor, Acc) of
 		      undefined -> [{Editor, 1} | Acc];
 		      V         -> [{Editor, V+1}|proplists:delete(Editor, Acc)]
