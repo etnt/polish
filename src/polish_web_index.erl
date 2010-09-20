@@ -92,6 +92,8 @@ mk_body([]) ->
     #literal{text="Select a language"};
 mk_body({changes, [], _}) ->
     maybe_show_notification(no_changes);
+mk_body({save_search, [], _}) ->
+    maybe_show_notification(save_search);
 mk_body({_Action, [], _}) ->
     maybe_show_notification(no_results);
 mk_body({Action, Entries, MoreEntries}) ->
