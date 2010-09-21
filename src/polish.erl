@@ -46,7 +46,7 @@ all_custom_lcs() ->
 
 print_new_old_keys() ->
     [LC|_] = all_custom_lcs(),
-    case polish_po:get_new_old_keys(LC) of
+    case polish_wash:get_new_old_keys(LC) of
 	{[], []} -> update_po_files();
 	{[], _}  -> update_po_files();
 	{_, []}  -> update_po_files();
@@ -58,15 +58,15 @@ update_po_files() ->
 
 update_po_files(KeysToBeReplaced) ->
     CustomLCs = all_custom_lcs(),
-    polish_po:update_po_files(CustomLCs, KeysToBeReplaced).
+    polish_wash:update_po_files(CustomLCs, KeysToBeReplaced).
 
 sort_po_files() ->
     CustomLCs = all_custom_lcs(),
-    polish_po:sort_po_files(CustomLCs).
+    polish_wash:sort_po_files(CustomLCs).
 
 get_status_po_files() ->
     CustomLCs = all_custom_lcs(),
-    polish_po:get_status_po_files(CustomLCs).
+    polish_wash:get_status_po_files(CustomLCs).
 
 default_port() -> 8080.
           

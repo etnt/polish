@@ -269,7 +269,7 @@ do_write(State, User, Name, Email, KVs, LC) ->
 			  NewV      -> [{K, NewV} | Acc]
 		      end
 	      end, [], KVs),
-    Result = polish_po:write_po_file(atom_to_list(LC), NewPo, Name, Email),
+    Result = polish_wash:write_po_file(atom_to_list(LC), NewPo, Name, Email),
     case Result of
 	ok -> 
 	    ets:match_delete(?MODULE, {{LC, '_'}, {User, '_'}}),
