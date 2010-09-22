@@ -185,9 +185,9 @@ run_validators(Key, Val, [Validator|T]) ->
 run_validator(Module, K, V) ->
     case Module:check({K, V}, polish_server, []) of
 	[] -> ok;
-	[Err] when element(1, Err) =:= 'ERROR' orelse
-		   element(1, Err) =:= 'Warning' ->
-	    {error, element(2, Err)}
+	Err when element(1, hd(Err)) =:= 'ERROR' orelse
+		 element(1, hd(Err)) =:= 'Warning' ->
+	    {error, element(2, hd(Err))}
     end.
 
 
