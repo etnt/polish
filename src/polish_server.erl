@@ -331,21 +331,32 @@ do_load_always_translated_keys(State, LC, File) ->
     case file:consult(File) of
         {ok, List} ->
             lists:foreach(
-              fun({always_translated, V}) -> 
-                      ets:insert(always_translated, {{LC, V}, true});
+              fun({always_translated, V}) ->
+		      UnescV = unescape_key(V),
+                      ets:insert(always_translated, {{LC, UnescV}, true});
                  ({_, _}) -> ok
-              end, List),	      
+              end, List),
             {State, ok};
         _ ->
             {State, ok}
     end.
+
+unescape_key(Str) ->
+    unescape_key(Str, []).
+unescape_key([$\\,$"|Str], Acc) -> unescape_key(Str, [$"|Acc]);
+unescape_key([Ch|Str], Acc)     -> unescape_key(Str, [Ch|Acc]);
+unescape_key([], Acc)           -> lists:reverse(Acc).
 
 do_mark_as_always_translated(State, LC, Key) ->
     ets:insert(always_translated, {{LC, Key}, true}),
     LCa = atom_to_list(LC),
     case file:open(polish:meta_filename(LCa), [append]) of
         {ok,Fd}  ->
-            Str = "{always_translated, \"" ++ Key ++ "\"}.\n",
+	    F = fun($", Acc)  -> [$\\,$"|Acc];
+		   (C, Acc)   -> [C|Acc] 
+		end,
+	    EscKey = lists:foldr(F, [], Key),
+            Str = "{always_translated, \"" ++ EscKey ++ "\"}.\n",
             file:write(Fd, Str),
             {State, ok};
         _ ->
