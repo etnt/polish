@@ -21,6 +21,7 @@
 	 , is_always_translated/2
 	 , set_new_old_keys/1
 	 , get_new_old_keys/0
+	 , load_po_files/1
         ]).
 
 %% gen_server callbacks
@@ -87,6 +88,9 @@ set_new_old_keys(NewOldKeys) ->
 get_new_old_keys() ->
     gen_server:call(?MODULE, get_new_old_keys).
 
+load_po_files(CustomLCs) ->
+    gen_server:call(?MODULE, {load_po_files, CustomLCs}).
+
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -115,6 +119,7 @@ start_link() ->
 %%--------------------------------------------------------------------
 init([]) ->
     ets:new(?MODULE, [bag,protected,{keypos,1},named_table]),
+    ets:new(keys, [ordered_set,protected,{keypos,1},named_table]),
     ets:new(locked_keys, [ordered_set,protected,{keypos,1},named_table]),
     ets:new(always_translated, [ordered_set,protected,{keypos,1},named_table]),
     {ok, #state{}}.
@@ -187,6 +192,10 @@ handle_call({set_new_old_keys, NewOldKeys}, _From, State) ->
 
 handle_call(get_new_old_keys, _From, State) ->
     {NewState, Reply} = do_get_new_old_keys(State),
+    {reply, Reply, NewState};
+
+handle_call({load_po_files, CustomLCs}, _From, State) ->
+    {NewState, Reply} = do_load_po_files(State, CustomLCs),
     {reply, Reply, NewState};
 
 handle_call(_Request, _From, State) ->
@@ -376,6 +385,34 @@ do_set_new_old_keys(State, NewOldKeys) ->
 
 do_get_new_old_keys(State) ->
     {State, get(new_old_keys)}.
+
+do_load_po_files(State, CustomLCs) ->
+    do_load_po_files(CustomLCs),
+    {State, ok}.
+
+do_load_po_files([LC|CustomLCs]) ->
+    KVs = polish_wash:read_po_file(LC),
+    [ets:insert(keys, {{LC, hash(K)}, {K, V}}) || {K, V} <- KVs],
+    assure_po_file_loaded_correctly(LC, KVs),
+    do_load_po_files(CustomLCs);
+do_load_po_files([]) ->
+    ok.
+
+%% SDBM hash algorithm
+hash(Str) ->
+    F = fun(Char, Hash0) ->
+		Hash = Char + (Hash0 bsl 6) + (Hash0 bsl 16) - Hash0,
+		case Hash > 4294967295 of
+		    true  ->  Hash rem 4294967296;
+		    false -> Hash
+		end
+	end,
+    lists:foldl(F, 0, Str).
+
+assure_po_file_loaded_correctly(LC, KVs) ->
+    StoredKVs = ets:select(keys, [{{{LC, '_'}, {'$1','$2'}},
+				   [], [{{'$1', '$2'}}]}]),
+    KVs = lists:sort(StoredKVs).
 
 build_info_log(LC, User, L) ->
     LCa = atom_to_list(LC),
