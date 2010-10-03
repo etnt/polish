@@ -6,16 +6,16 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -export([get_language_name/1
-         , year2str/0
-         , translator_name/0
-         , translator_email/0
-         , rfc3339/0
-	 , trim_whitespace/1
-	 , split_whitespace/1
-	 , restore_whitespace/2
+	 , hash/1
 	 , print_email_to_translators/1
 	 , print_new_old_keys/1
-	 , hash/1
+	 , restore_whitespace/2
+	 , split_whitespace/1
+         , rfc3339/0
+         , translator_name/0
+         , translator_email/0
+	 , trim_whitespace/1
+         , year2str/0
         ]).
 
 
@@ -26,13 +26,11 @@ year2str() ->
     {Y,_,_} = date(),
     integer_to_list(Y).
 
-
 translator_name() ->
     wf:session(name).
 
 translator_email() ->
     wf:session(email).
-
 
 rfc3339() ->
     rfc3339(calendar:now_to_local_time(now())).
