@@ -59,7 +59,5 @@ language({_Req, _ResContentType, _Path, delete}) ->
 language({_Req, _ResContentType, _Path, put}) ->
     {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG}.
 
-
-
-json(_Data) ->
-    ok.
+json(Data) ->
+    mochijson2:encode({array, Data}).
