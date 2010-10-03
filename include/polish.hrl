@@ -11,3 +11,8 @@
 -define(NOT_SUPPORTED_MSG, "Not acceptable").
 -define(NOT_FOUND, 404).
 -define(NOT_FOUND_MSG, "Not found").
+-define(BAD_REQUEST, 400).
+-define(BAD_REQUEST_MSG, "Bad request").
+-define(OK, 200).
+-define(BAD_METHOD, 405).
+-define(BAD_METHOD_MSG, "Bad method").
