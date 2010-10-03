@@ -54,8 +54,8 @@ init([]) ->
     Mochiweb = {mochiweb_server,
 		{mochiweb_http, start,
 		 [[{ip, polish_deps:get_env(hostname, "127.0.0.1")},
-		  {port, polish_deps:get_env(port, 8080)},
-		  {loop, fun polish_dispatcher:dispatch/1}]]},
+		   {port, polish_deps:get_env(port, 8080)},
+		   {loop, fun polish_dispatcher:dispatch/1}]]},
 		permanent, 5000, worker, [mochiweb_http]},
     {ok, {{one_for_one, 10, 10},
           [PolishServer, GettextServer, CronServer, Elogger, Mochiweb]}}.

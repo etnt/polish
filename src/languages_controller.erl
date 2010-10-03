@@ -18,10 +18,11 @@ dispatch({_Req, _ResContentType, Path, _Meth} = Args) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 top({_Req, CT = "application/json", _Path, get}) ->
     try
-	Data = [[{lang, LC}, {name, gettext_iso639:lc2lang(LC)}]
-		|| LC <- polish:all_custom_lcs()],
-	Response = json(Data),
-	{?OK, [{?CT, CT}], Response}
+	Data = [{struct, [{lang, LC}, 
+			  {name, ?l2a(to_utf8(gettext_iso639:lc2lang(LC)))}]}
+		|| LC <- polish:all_custom_lcs(), LC =/= "a"],
+	Response = json({array, Data}),
+	{?OK, CT, Response}
     catch
 	throw:bad_request->
 	    {?BAD_REQUEST, [{?CT, "text/plain"}], ?BAD_REQUEST_MSG}
@@ -42,8 +43,8 @@ top({_Req, _ResContentType, _Path, put}) ->
 language({_Req, CT = "application/json", [LC], get}) ->
     try
 	{Total, Untrans} = polish_po:get_stats(LC),
-	Response = json([{total, Total}, {untrans, Untrans}]),
-	{?OK, [{?CT, CT}], Response}
+	Response = json({struct, [{total, Total}, {untrans, Untrans}]}),
+	{?OK, CT, Response}
     catch
 	throw:bad_request->
 	    {?BAD_REQUEST, [{?CT, "text/plain"}], ?BAD_REQUEST_MSG};
@@ -60,4 +61,9 @@ language({_Req, _ResContentType, _Path, put}) ->
     {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG}.
 
 json(Data) ->
-    mochijson2:encode({array, Data}).
+    mochijson2:encode(Data).
+
+to_utf8(Str) ->
+    lists:flatten(
+      lists:foldr(fun(Ch, Acc) -> [xmerl_ucs:to_utf8(Ch)|Acc] end, [], Str)).
+
