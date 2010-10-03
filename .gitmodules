@@ -1,6 +1,3 @@
-[submodule "dep/nitrogen"]
-	path = dep/nitrogen
-	url = http://github.com/jordi-chacon/nitrogen.git
 [submodule "dep/elogger"]
 	path = dep/elogger
 	url = http://github.com/etnt/elogger.git
@@ -10,6 +7,6 @@
 [submodule "dep/gettext"]
 	path = dep/gettext
 	url = http://github.com/etnt/gettext.git
-[submodule "dep/trane"]
-	path = dep/trane
-	url = http://github.com/massemanet/trane.git
+[submodule "dep/mochiweb"]
+	path = dep/mochiweb
+	url = http://github.com/mochi/mochiweb.git
