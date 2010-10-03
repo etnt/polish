@@ -67,10 +67,8 @@ get_checkbox_from_qs(K) ->
 
 get_radiobutton_from_qs(match_type, K) ->
     case wf:qs(K) of
-	["match_any_word"] ->
-	    any;
-	["match_exact_phrase"] ->
-	    exact
+	["any"]   -> any;
+	["exact"] -> exact
     end.
     
 maybe_reset_session() ->
