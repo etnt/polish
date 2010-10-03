@@ -49,8 +49,16 @@ get_entry(Key, Info) ->
 
 write() ->
     LC = wf:session(lang),
-    KVs = lists:keysort(1, polish_wash:read_po_file(LC)),
-    ok = polish_server:write(KVs, list_to_atom(LC)).
+    Changes = polish_server:get_changes(LC),
+    KVs0 = polish_server:read_po_file(LC),
+    KVs = merge_changes(KVs0, Changes),
+    TransName = polish_utils:translator_name(),
+    polish_wash:write_po_file(LC, KVs, TransName,
+			      polish_utils:translator_email()),
+    polish_server:update_po_file(LC, Changes),
+    polish_server:delete_to_be_submitted_translations(LC),
+    Str = polish_utils:build_info_log(LC, TransName, Changes),
+    error_logger:info_msg(Str).
 
 get_stats(undefined) -> {0, 0, 0, []};
 get_stats(LC) ->
@@ -189,6 +197,18 @@ run_validator(Module, K, V) ->
 		 element(1, hd(Err)) =:= 'Warning' ->
 	    {error, element(2, hd(Err))}
     end.
+
+
+
+% write
+%------------------------------------------------------------------------------
+merge_changes(KVs, Changes) ->
+    lists:foldr(
+      fun({K, _V} = KV, Acc) -> case proplists:get_value(K, Changes) of
+				    undefined -> [KV | Acc];
+				    NewV      -> [{K, NewV} | Acc]
+				end
+      end, [], KVs).
 
 
 

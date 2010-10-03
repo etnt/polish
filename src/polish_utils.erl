@@ -5,7 +5,8 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--export([get_language_name/1
+-export([build_info_log/3
+	 , get_language_name/1
 	 , hash/1
 	 , print_email_to_translators/1
 	 , print_new_old_keys/1
@@ -137,3 +138,12 @@ restore_whitespace_test() ->
     Orig = "  \ngreat\t  ",
     {_, Text, _} = trim_whitespace(Orig),
     ?assertEqual(Orig, restore_whitespace(Orig, Text)).
+
+build_info_log(LC, User, L) ->
+    LCa = atom_to_list(LC),
+    Str = "User " ++ User ++ " exported a new file for " ++ LCa ++ " language. "
+	"The changes added are the following: ~n",
+    lists:foldl(
+      fun({K,V}, AccStr) ->
+	      AccStr ++ "Key: " ++ K ++ "~nValue: " ++ V ++ "~n~n"
+      end, Str, L) ++ "~n~n".

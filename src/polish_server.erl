@@ -7,6 +7,7 @@
 
 %% API
 -export([delete_old_locked_keys/0
+	 , delete_to_be_submitted_translations/1
 	 , get_changes/1
 	 , get_new_old_keys/0
 	 , get_translated_by_country/1
@@ -18,9 +19,10 @@
 	 , load_po_files/1
 	 , lock_keys/2
 	 , mark_as_always_translated/2
+	 , read_po_file/1
 	 , set_new_old_keys/1
 	 , unlock_user_keys/0
-         , write/2
+	 , update_po_file/2
         ]).
 
 %% gen_server callbacks
@@ -34,11 +36,6 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
-
-write(KVs, LC) when is_atom(LC) ->
-    Name = polish_utils:translator_name(),
-    Email = polish_utils:translator_email(),
-    gen_server:call(?MODULE, {write, wf:session(name), Name, Email, KVs, LC}).
 
 is_translated(Key, LC) when is_list(LC) -> is_translated(Key, list_to_atom(LC));
 is_translated(Key, LC) when is_atom(LC) ->
@@ -89,6 +86,16 @@ get_new_old_keys() ->
 
 load_po_files(CustomLCs) ->
     gen_server:call(?MODULE, {load_po_files, CustomLCs}).
+
+read_po_file(LC) ->
+    gen_server:call(?MODULE, {read_po_file, LC}).
+
+update_po_file(LC, Changes) ->
+    gen_server:call(?MODULE, {update_po_file, LC, Changes}).
+
+delete_to_be_submitted_translations(LC) ->
+    gen_server:call(?MODULE, {delete_to_be_submitted_translations, LC,
+			      list_to_atom(wf:user())}).
 
 
 %%--------------------------------------------------------------------
@@ -141,10 +148,6 @@ handle_call({insert, User, KVs, LC}, _From, State) ->
     {NewState, Reply} = do_insert(State, User, KVs, LC),
     {reply, Reply, NewState};
 
-handle_call({write, User, Name, Email, KVs, LC}, _From, State) ->
-    {NewState, Reply} = do_write(State, User, Name, Email, KVs, LC),
-    {reply, Reply, NewState};
-
 handle_call({is_translated, Key, LC}, _From, State) ->
     {NewState, Reply} = do_is_translated(State, Key, LC),
     {reply, Reply, NewState};
@@ -195,6 +198,18 @@ handle_call(get_new_old_keys, _From, State) ->
 
 handle_call({load_po_files, CustomLCs}, _From, State) ->
     {NewState, Reply} = do_load_po_files(State, CustomLCs),
+    {reply, Reply, NewState};
+
+handle_call({read_po_file, LC}, _From, State) ->
+    {NewState, Reply} = do_read_po_file(State, LC),
+    {reply, Reply, NewState};
+
+handle_call({update_po_file, LC, Changes}, _From, State) ->
+    {NewState, Reply} = do_update_po_file(State, LC, Changes),
+    {reply, Reply, NewState};
+
+handle_call({delete_to_be_submitted_translations, LC, User}, _From, State) ->
+    {NewState, Reply} = do_delete_to_be_submitted_translations(State, LC, User),
     {reply, Reply, NewState};
 
 handle_call(_Request, _From, State) ->
@@ -268,24 +283,9 @@ do_insert(State, User, KVs, LC) ->
       end, KVs),
     {State, _Reply = ok}.
 
-do_write(State, User, Name, Email, KVs, LC) ->
-    L =  ets:select(to_be_submitted, [{{{LC, '$1'}, {User,'$2'}}, [], [{{'$1','$2'}}]}]),
-    NewPo = lists:foldr(
-	      fun({K, _V} = KV, Acc) ->
-		      case proplists:get_value(K, L) of
-			  undefined -> [KV | Acc];
-			  NewV      -> [{K, NewV} | Acc]
-		      end
-	      end, [], KVs),
-    Result = polish_wash:write_po_file(atom_to_list(LC), NewPo, Name, Email),
-    case Result of
-	ok ->
-	    ets:match_delete(to_be_submitted, {{LC, '_'}, {User, '_'}}),
-	    Str = build_info_log(LC, User, L),
-	    error_logger:info_msg(Str);
-	_  -> ok
-    end,
-    {State, Result}.
+do_delete_to_be_submitted_translations(State, LC, User) ->
+    ets:match_delete(to_be_submitted, {{LC, '_'}, {User, '_'}}),
+    {State, ok}.
 
 do_is_translated(State, Key, LC) ->
     Res = case ets:lookup(to_be_submitted, {LC, Key}) of
@@ -389,9 +389,21 @@ do_load_po_files(State, CustomLCs) ->
     do_load_po_files(CustomLCs),
     {State, ok}.
 
+do_read_po_file(State, LC) ->
+    KVs = ets:select(?MODULE, [{{{LC,'_'}, {'$1','$2'}}, [], [{{'$1','$2'}}]}]),
+    {State, KVs}.
+
+do_update_po_file(State, LC, Changes) ->
+    [ets:insert(?MODULE, {{LC,polish_utils:hash(K)}, {K,V}}) || {K,V}<-Changes],
+    {State, ok}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  I N T E R N A L   F U N C T I O N S
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 do_load_po_files([LC|CustomLCs]) ->
     KVs = polish_wash:read_po_file(LC),
-    [ets:insert(?MODULE, {{LC, polish_utils:hash(K)}, {K, V}}) || {K, V} <- KVs],
+    [ets:insert(?MODULE, {{LC, polish_utils:hash(K)}, {K, V}}) || {K,V} <- KVs],
     assure_po_file_loaded_correctly(LC, KVs),
     do_load_po_files(CustomLCs);
 do_load_po_files([]) ->
@@ -402,11 +414,3 @@ assure_po_file_loaded_correctly(LC, KVs) ->
 				   [], [{{'$1', '$2'}}]}]),
     KVs = lists:sort(StoredKVs).
 
-build_info_log(LC, User, L) ->
-    LCa = atom_to_list(LC),
-    Str = "User " ++ User ++ " exported a new file for " ++ LCa ++ " language. "
-	"The changes added are the following: ~n",
-    lists:foldl(
-      fun({K,V}, AccStr) ->
-	      AccStr ++ "Key: " ++ K ++ "~nValue: " ++ V ++ "~n~n"
-      end, Str, L) ++ "~n~n".
