@@ -49,15 +49,15 @@ get_entry(Key, Info) ->
 
 write() ->
     LC = wf:session(lang),
-    Changes = polish_server:get_changes(LC),
+    Changes = polish_server:get_changes(list_to_atom(LC)),
     KVs0 = polish_server:read_po_file(LC),
-    KVs = merge_changes(KVs0, Changes),
+    KVs = lists:keysort(1, merge_changes(KVs0, Changes)),
     TransName = polish_utils:translator_name(),
     polish_wash:write_po_file(LC, KVs, TransName,
 			      polish_utils:translator_email()),
     polish_server:update_po_file(LC, Changes),
     polish_server:delete_to_be_submitted_translations(LC),
-    Str = polish_utils:build_info_log(LC, TransName, Changes),
+    Str = polish_utils:build_info_log(list_to_atom(LC), TransName, Changes),
     error_logger:info_msg(Str).
 
 get_stats(undefined) -> {0, 0, 0, []};
