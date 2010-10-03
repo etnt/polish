@@ -116,9 +116,11 @@ hash(Str) ->
 %%   Leading, Text, Trailing = string()
 %% @doc Trims whitespace at start and end of a string.
 split_whitespace(Input) ->
-   {match, [_, Leading, Text, Trailing]} =
-    re:run(Input, "^([\\s]*)(.*?)([\\s]*)$", [{capture, all, list}, dotall]),
-   {Leading, Text, Trailing}.
+    % Ugly hack to avoid the syntax highlighting to go crazy
+    RegExp = string:tokens("^([\\s]*)(.*?)([\\s]*)$ ", " "),
+    {match, [_, Leading, Text, Trailing]} =
+	re:run(Input, RegExp, [{capture, all, list}, dotall]),
+    {Leading, Text, Trailing}.
 
 trim_whitespace_test()->
     ?assertEqual({"   \t\n\r  ","hej\ng","  "},
