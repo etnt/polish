@@ -31,7 +31,6 @@
 -import(polish_deps,[get_env/2]).
 
 -include("polish.hrl").
--include_lib("nitrogen/include/wf.hrl").
 
 auto_wash() -> get_env(auto_wash, false).
 
