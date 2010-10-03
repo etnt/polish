@@ -5,7 +5,7 @@
 
 -export([get_entries/1
 	 , get_entry/2
-	 , write/0
+	 , write/1
 	 , get_stats/1
 	 , check_correctness/2
         ]).
@@ -40,35 +40,29 @@ get_entries({LC, {Action0, Str, {Trans, UnTrans, K, V, MatchType}}})
 			    true  -> {element(1,lists:split(40, Entries0)), bad_search};
 			    false -> {Entries0, Action0}
 			end,
-    {Action, polish_server:lock_keys(Entries, LCat), false};
-get_entries({LC, changes}) ->
-    {changes, polish_server:get_changes(list_to_atom(LC)), false}.
+    {Action, polish_server:lock_keys(Entries, LCat), false}.
 
 get_entry(Key, Info) ->
     lists:keyfind(Key, 1, get_entries(Info)).
 
-write() ->
+write(KV) ->
     LC = wf:session(lang),
-    Changes = polish_server:get_changes(list_to_atom(LC)),
     KVs0 = polish_server:read_po_file(LC),
-    KVs = lists:keysort(1, merge_changes(KVs0, Changes)),
+    KVs = lists:keysort(1, merge_changes(KVs0, KV)),
     TransName = polish_utils:translator_name(),
     polish_wash:write_po_file(LC, KVs, TransName,
 			      polish_utils:translator_email()),
-    polish_server:update_po_file(LC, Changes),
-    polish_server:delete_to_be_submitted_translations(LC),
-    Str = polish_utils:build_info_log(list_to_atom(LC), TransName, Changes),
+    polish_server:update_po_file(LC, KV),
+    Str = polish_utils:build_info_log(list_to_atom(LC), TransName, KV),
     error_logger:info_msg(Str).
 
-get_stats(undefined) -> {0, 0, 0, []};
+get_stats(undefined) -> {0, 0};
 get_stats(LC) ->
     KVs = polish_server:read_po_file(LC),
     LCa = list_to_atom(LC),
     Untrans = get_amount_untranslated_keys(KVs, LCa),
-    Trans = polish_server:get_translated_by_country(list_to_atom(LC)),
-    TransPerEditor = get_translations_per_editor(Trans),
-    {length(KVs), Untrans, length(Trans), TransPerEditor}.
-    
+    {length(KVs), Untrans}.
+
 check_correctness(Key, Val) ->
     Validators = [gettext_validate_bad_ftxt, gettext_validate_bad_stxt,
 		  gettext_validate_bad_case, gettext_validate_bad_html,
@@ -103,8 +97,7 @@ take(T, 1, N, LC, S)      -> take(T, N, LC, S);
 take([_H|T], Offset, N, LC, S) -> take(T, Offset - 1, N, LC, S).
 
 take([{K,V} = H|T], N, LC, Search) when N > 0 -> 
-    case (polish_server:is_translated(K, LC) orelse
-          polish_server:is_key_locked(K, LC) orelse
+    case (polish_server:is_key_locked(K, LC) orelse
           polish_server:is_always_translated(LC, K)) of
 	true                            -> 
             take(T, N, LC, Search);
@@ -223,13 +216,3 @@ get_amount_untranslated_keys(KVs, LCa) ->
 	      end;
 	 ({_K, _V}, Acc) -> Acc
       end, 0, KVs).
-
-get_translations_per_editor(Editors) ->
-    lists:foldl(
-      fun(undefined, Acc) -> Acc;
-	 (Editor, Acc) ->
-	      case proplists:get_value(Editor, Acc) of
-		  undefined -> [{Editor, 1} | Acc];
-		  V         -> [{Editor, V+1}|proplists:delete(Editor, Acc)]
-	      end
-      end, [], Editors).

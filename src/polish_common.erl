@@ -28,7 +28,6 @@ header(Selected) ->
 	#listitem{ body=[#link { text = "    -    "}]},
         #listitem{ body=[#link { class=search, url='#search_form', text="Search"}]},
         #listitem{ body=[#link { class=statsbutton, url='#stats', text="Status"}]},
-        #listitem{ body=[#link { id=write, url='/?action=show_changes', text="Submit translations"}]},
         #listitem{ body=[#link { class=statsbutton, url='#help', text="Help"}]},
         #listitem{ body=[#link { id=logout, url='/logout', text="Logout"}]}]}
     ]}.

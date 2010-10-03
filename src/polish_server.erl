@@ -7,14 +7,9 @@
 
 %% API
 -export([delete_old_locked_keys/0
-	 , delete_to_be_submitted_translations/1
-	 , get_changes/1
 	 , get_new_old_keys/0
-	 , get_translated_by_country/1
-         , insert/2
 	 , is_always_translated/2
 	 , is_key_locked/2
-         , is_translated/2
 	 , load_always_translated_keys/2
 	 , load_po_files/1
 	 , lock_keys/2
@@ -37,23 +32,8 @@
 %%% API
 %%%===================================================================
 
-is_translated(Key, LC) when is_list(LC) -> is_translated(Key, list_to_atom(LC));
-is_translated(Key, LC) when is_atom(LC) ->
-    gen_server:call(?MODULE, {is_translated, Key, LC}).
-
-insert(KVs, LC) when is_atom(LC) ->
-    case wf:session(name) of
-	undefined -> end_of_session;
-	Name -> gen_server:call(?MODULE, {insert, Name, KVs, LC})
-    end.
-
-get_changes(LC) when is_atom(LC) ->
-    gen_server:call(?MODULE, {get_changes, wf:session(name), LC}).
-
-get_translated_by_country(LC) when is_atom(LC) ->
-    gen_server:call(?MODULE, {get_translated_by_country, LC}).
-
 lock_keys(KVs, LC) when is_atom(LC) ->
+
     gen_server:call(?MODULE, {lock_keys, KVs, LC, list_to_atom(wf:user())}).
 
 unlock_user_keys() ->
@@ -93,10 +73,6 @@ read_po_file(LC) ->
 update_po_file(LC, Changes) ->
     gen_server:call(?MODULE, {update_po_file, LC, Changes}).
 
-delete_to_be_submitted_translations(LC) ->
-    gen_server:call(?MODULE, {delete_to_be_submitted_translations, LC,
-			      list_to_atom(wf:user())}).
-
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -125,7 +101,6 @@ start_link() ->
 %%--------------------------------------------------------------------
 init([]) ->
     ets:new(?MODULE, [ordered_set,protected,{keypos,1},named_table]),
-    ets:new(to_be_submitted, [bag,protected,{keypos,1},named_table]),
     ets:new(locked_keys, [ordered_set,protected,{keypos,1},named_table]),
     ets:new(always_translated, [ordered_set,protected,{keypos,1},named_table]),
     {ok, #state{}}.
@@ -144,22 +119,6 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({insert, User, KVs, LC}, _From, State) ->
-    {NewState, Reply} = do_insert(State, User, KVs, LC),
-    {reply, Reply, NewState};
-
-handle_call({is_translated, Key, LC}, _From, State) ->
-    {NewState, Reply} = do_is_translated(State, Key, LC),
-    {reply, Reply, NewState};
-
-handle_call({get_changes, User, LC}, _From, State) ->
-    {NewState, Reply} = do_get_changes(State, User, LC),
-    {reply, Reply, NewState};
-
-handle_call({get_translated_by_country, LC}, _From, State) ->
-    {NewState, Reply} = do_get_translated_by_country(State, LC),
-    {reply, Reply, NewState};
-
 handle_call({lock_keys, KVs, LC, User}, _From, State) ->
     {NewState, Reply} = do_lock_keys(State, KVs, LC, User),
     {reply, Reply, NewState};
@@ -206,10 +165,6 @@ handle_call({read_po_file, LC}, _From, State) ->
 
 handle_call({update_po_file, LC, Changes}, _From, State) ->
     {NewState, Reply} = do_update_po_file(State, LC, Changes),
-    {reply, Reply, NewState};
-
-handle_call({delete_to_be_submitted_translations, LC, User}, _From, State) ->
-    {NewState, Reply} = do_delete_to_be_submitted_translations(State, LC, User),
     {reply, Reply, NewState};
 
 handle_call(_Request, _From, State) ->
@@ -271,36 +226,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-do_insert(State, User, KVs, LC) ->
-    lists:foreach(
-      fun({K, V}) ->
-	      case do_is_translated(State, K, LC) of
-		  {State, false} -> ok;
-		  {State, true}  -> ets:match_delete(
-				      to_be_submitted, {{LC, K}, {User, '_'}})
-	      end,
-	      ets:insert(to_be_submitted, {{LC, K}, {User, V}})
-      end, KVs),
-    {State, _Reply = ok}.
-
-do_delete_to_be_submitted_translations(State, LC, User) ->
-    ets:match_delete(to_be_submitted, {{LC, '_'}, {User, '_'}}),
-    {State, ok}.
-
-do_is_translated(State, Key, LC) ->
-    Res = case ets:lookup(to_be_submitted, {LC, Key}) of
-	    [] -> false;
-	    _  -> true
-    end,
-    {State, Res}.
-
-do_get_changes(State, User, LC) ->
-    {State, ets:select(to_be_submitted, [{{{LC, '$1'}, {User, '$2'}}, [],
-				  [{{'$1','$2'}}]}])}.
-
-do_get_translated_by_country(State, LC) ->
-    {State, ets:select(to_be_submitted, [{{{LC, '_'}, {'$1', '_'}}, [], ['$1']}])}.
-
 do_lock_keys(State, KVs, LC, User) ->
     Res = lists:foldl(
 	    fun({Key, _Val} = KV, Acc) ->
@@ -348,12 +273,6 @@ do_load_always_translated_keys(State, LC, File) ->
         _ ->
             {State, ok}
     end.
-
-unescape_key(Str) ->
-    unescape_key(Str, []).
-unescape_key([$\\,$"|Str], Acc) -> unescape_key(Str, [$"|Acc]);
-unescape_key([Ch|Str], Acc)     -> unescape_key(Str, [Ch|Acc]);
-unescape_key([], Acc)           -> lists:reverse(Acc).
 
 do_mark_as_always_translated(State, LC, Key) ->
     ets:insert(always_translated, {{LC, Key}, true}),
@@ -414,3 +333,8 @@ assure_po_file_loaded_correctly(LC, KVs) ->
 				   [], [{{'$1', '$2'}}]}]),
     KVs = lists:sort(StoredKVs).
 
+unescape_key(Str) ->
+    unescape_key(Str, []).
+unescape_key([$\\,$"|Str], Acc) -> unescape_key(Str, [$"|Acc]);
+unescape_key([Ch|Str], Acc)     -> unescape_key(Str, [Ch|Acc]);
+unescape_key([], Acc)           -> lists:reverse(Acc).

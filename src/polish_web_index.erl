@@ -45,7 +45,6 @@ get_lang_and_action() ->
 	    ["show_changes"]      -> changes;
 	    ["save"]              -> save;
 	    ["always_translate"]  -> always_translate;
-	    ["submit"]            -> submit;
 	    _                     -> po_file
     end,
     {LC, Action}.
@@ -105,12 +104,10 @@ mk_body({Action, Entries, MoreEntries}) ->
 
 maybe_show_notification(Action) ->
     Text = case Action of
-	       save             -> "Your translation has been saved for submission.";
-	       save_search      -> "Your translation has been saved for submission.";
+	       save             -> "Your translation has been submitted.";
+	       save_search      -> "Your translation has been submitted.";
 	       always_translate -> "Your selection has been marked as always translated.";
-	       submit           -> "Your translations have been submitted.";
 	       no_results       -> "No entries found matching the criteria.";
-	       no_changes       -> "There is nothing to submit.";
 	       bad_search       -> "Your search criteria matched too many texts. "
 				       "Please try to make it more restrictive.";
 	       _                -> no_text
@@ -146,14 +143,10 @@ generate_buttons(Action, true) when Action =:= po_file;
 				    Action =:= save_search;
 				    Action =:= always_translate;
 				    Action =:= search;
-				    Action =:= bad_search;
-				    Action =:= submit ->
+				    Action =:= bad_search ->
     Next = [#button{text = "Next", id = "next_button",
 		    postback = next_entries}],
     maybe_generate_previous_button() ++ Next;
-generate_buttons(changes, _) ->
-    #button{text = "Submit", class = "button",
-	    postback = write};
 generate_buttons(_Action, false) ->
     maybe_generate_previous_button().
 
@@ -168,27 +161,12 @@ maybe_generate_previous_button() ->
 
 gen_stats() ->
     {LC, _A} = get_lang_and_action(),
-    {Total, Untrans, Trans, Editors} = polish_po:get_stats(LC),
-    Editors2 = 
-	lists:foldl(
-	  fun({Editor, Amount}, Acc) ->
-		  [#value{text = Editor++": "++integer_to_list(Amount)}|Acc]
-	  end, [], Editors),
-    Editors3 = case Editors2 of
-		   [] -> [#value{text = "Nobody"}];
-		   _  -> Editors2
-	       end,
+    {Total, Untrans} = polish_po:get_stats(LC),
     [ #label{text = "Number of keys: "},
       #value{text = integer_to_list(Total)},
       #br{},
       #label{text = "Untranslated: "},
-      #value{text = integer_to_list(Untrans)},
-      #br{},
-      #label{text = "Unsubmitted translations: "},
-      #value{text = integer_to_list(Trans)},
-      #br{},
-      #label{text = "Currently translating: "}] ++ Editors3.
-
+      #value{text = integer_to_list(Untrans)}].
 
 %% Save translation
 inplace_textarea_ok_event(Key, Val0) ->
@@ -197,7 +175,7 @@ inplace_textarea_ok_event(Key, Val0) ->
     case polish_po:check_correctness(Key, Val) of
 	ok ->
 	    polish_server:unlock_user_keys(),
-	    polish_server:insert([{Key,Val}], list_to_atom(wf:session(lang))),
+	    polish_po:write([{Key, Val}]),
 	    Redirect = get_redirect_url(Action),
 	    wf:redirect(Redirect);
 	{error, Msg} ->
@@ -223,11 +201,7 @@ event(next_entries) ->
     wf:redirect("");
 event(previous_entries) ->
     wf:session(offset, wf:session(offset) - 20),
-    wf:redirect("");
-event(write) ->
-    polish_po:write(),
-    LC = wf:session(lang),
-    wf:redirect("?action=submit&po="++LC).
+    wf:redirect("").
 
 get_redirect_url({Action, Str0, 
 		  {{translated, Trans}, {untranslated, Untrans}, {key, Key}, 
