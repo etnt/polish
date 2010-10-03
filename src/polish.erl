@@ -15,6 +15,7 @@
          , all_custom_lcs/0
 	 , update_po_files/0
 	 , update_po_files/1
+	 , load_po_files/0
 	 , sort_po_files/0
 	 , get_status_po_files/0
          , hostname/0
@@ -59,6 +60,10 @@ update_po_files() ->
 update_po_files(KeysToBeReplaced) ->
     CustomLCs = all_custom_lcs(),
     polish_wash:update_po_files(CustomLCs, KeysToBeReplaced).
+
+load_po_files() ->
+    CustomLCs = all_custom_lcs(),
+    polish_server:load_po_files(CustomLCs).
 
 sort_po_files() ->
     CustomLCs = all_custom_lcs(),
