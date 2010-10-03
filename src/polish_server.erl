@@ -6,27 +6,26 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0
-         , write/2
-         , is_translated/2
-         , insert/2
+-export([delete_old_locked_keys/0
 	 , get_changes/1
-	 , get_translated_by_country/1
-	 , lock_keys/2
-	 , unlock_user_keys/0
-	 , is_key_locked/2
-	 , delete_old_locked_keys/0
-	 , load_always_translated_keys/2
-	 , mark_as_always_translated/2
-	 , is_always_translated/2
-	 , set_new_old_keys/1
 	 , get_new_old_keys/0
+	 , get_translated_by_country/1
+         , insert/2
+	 , is_always_translated/2
+	 , is_key_locked/2
+         , is_translated/2
+	 , load_always_translated_keys/2
 	 , load_po_files/1
+	 , lock_keys/2
+	 , mark_as_always_translated/2
+	 , set_new_old_keys/1
+	 , unlock_user_keys/0
+         , write/2
         ]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3]).
+         terminate/2, code_change/3, start_link/0]).
 
 -define(SERVER, ?MODULE).
 
