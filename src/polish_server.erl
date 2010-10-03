@@ -28,7 +28,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--define(SERVER, ?MODULE). 
+-define(SERVER, ?MODULE).
 
 -record(state, {}).
 
@@ -280,7 +280,7 @@ do_write(State, User, Name, Email, KVs, LC) ->
 	      end, [], KVs),
     Result = polish_wash:write_po_file(atom_to_list(LC), NewPo, Name, Email),
     case Result of
-	ok -> 
+	ok ->
 	    ets:match_delete(?MODULE, {{LC, '_'}, {User, '_'}}),
 	    Str = build_info_log(LC, User, L),
 	    error_logger:info_msg(Str);
@@ -296,7 +296,7 @@ do_is_translated(State, Key, LC) ->
     {State, Res}.
 
 do_get_changes(State, User, LC) ->
-    {State, ets:select(?MODULE, [{{{LC, '$1'}, {User, '$2'}}, [], 
+    {State, ets:select(?MODULE, [{{{LC, '$1'}, {User, '$2'}}, [],
 				  [{{'$1','$2'}}]}])}.
 
 do_get_translated_by_country(State, LC) ->
@@ -317,7 +317,7 @@ do_lock_keys(State, KVs, LC, User) ->
     {State, Res}.
 
 do_unlock_user_keys(State, User) ->
-    [ets:delete(locked_keys, K) || {K, {U, _T}} <- ets:tab2list(locked_keys), 
+    [ets:delete(locked_keys, K) || {K, {U, _T}} <- ets:tab2list(locked_keys),
 				   U =:= User],
     {State, result}.
 
@@ -331,7 +331,7 @@ do_is_key_locked(State, Key, LC, User) ->
 do_delete_old_locked_keys(State) ->
     {Mega, Sec, _} = erlang:now(),
     Time = Mega * 100000 + Sec - 60*30,
-    R = ets:select(locked_keys, [{{{'$1', '$2'}, {'_','$3'}, '_'}, 
+    R = ets:select(locked_keys, [{{{'$1', '$2'}, {'_','$3'}, '_'},
 				  [{'<', '$3', Time}], [{{'$1', '$2'}}]}]),
     [ets:delete(locked_keys, K) || K <- R],
     {State, ok}.
@@ -362,7 +362,7 @@ do_mark_as_always_translated(State, LC, Key) ->
     case file:open(polish:meta_filename(LCa), [append]) of
         {ok,Fd}  ->
 	    F = fun($", Acc)  -> [$\\,$"|Acc];
-		   (C, Acc)   -> [C|Acc] 
+		   (C, Acc)   -> [C|Acc]
 		end,
 	    EscKey = lists:foldr(F, [], Key),
             Str = "{always_translated, \"" ++ EscKey ++ "\"}.\n",
