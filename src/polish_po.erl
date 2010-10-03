@@ -62,7 +62,7 @@ write() ->
 
 get_stats(undefined) -> {0, 0, 0, []};
 get_stats(LC) ->
-    KVs = polish_wash:read_po_file(LC),
+    KVs = polish_server:read_po_file(LC),
     LCa = list_to_atom(LC),
     Untrans = get_amount_untranslated_keys(KVs, LCa),
     Trans = polish_server:get_translated_by_country(list_to_atom(LC)),
@@ -96,7 +96,7 @@ get_entries_to_edit(LC) ->
     get_entries_to_edit(LC, fun(K, V) -> (K == V) orelse (V == "") end).
 
 get_entries_to_edit(LC, F) ->
-    [{Key,Val} || {Key,Val} <- polish_wash:read_po_file(LC), F(Key, Val)].
+    [{Key,Val} || {Key,Val} <- polish_server:read_po_file(LC), F(Key, Val)].
 
 take([], _, _, _, _)      -> [];
 take(T, 1, N, LC, S)      -> take(T, N, LC, S);
