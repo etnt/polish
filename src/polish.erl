@@ -31,7 +31,7 @@
 
 -include("polish.hrl").
 -include_lib("nitrogen/include/wf.hrl").
-           
+
 auto_wash() -> get_env(auto_wash, false).
 
 po_lang_dir() -> get_env(po_lang_dir, "/tmp").
@@ -69,7 +69,7 @@ get_status_po_files() ->
     polish_wash:get_status_po_files(CustomLCs).
 
 default_port() -> 8080.
-          
+
 setup_user_info() ->
     User = wf:user(),
     Users = get_users(),
@@ -87,7 +87,7 @@ get_default_lang() ->
     get_from_meta_file(default_lang).
 
 get_org_name() ->
-    get_from_meta_file(org_name).    
+    get_from_meta_file(org_name).
 
 get_from_meta_file(Field) ->
     PoDir = get_env(po_lang_dir, "/tmp"),
@@ -126,8 +126,3 @@ l2a(A) when is_atom(A) -> A.
 
 a2l(A) when is_atom(A) -> atom_to_list(A);
 a2l(L) when is_list(L) -> L.
-
-
-
-    
-
