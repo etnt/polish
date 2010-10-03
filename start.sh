@@ -26,7 +26,5 @@ echo "Starting Polish..."
 erl \
     -polish po_lang_dir $po_lang_dir ask_replace_keys $ask_replace_keys \
     -sname ${NAME} \
-    -pa ./ebin ${NITROGEN_EBIN} ${SIMPLE_BRIDGE_EBIN} ${NPROCREG_EBIN} \
-    ${GETTEXT_EBIN} ${EOPENID_EBIN} ${ELOGGER_EBIN} ${TRANE_EBIN} \
-    -eval "application:start(nprocreg)" \
+    -pa ./ebin ${YAWS_EBIN} ${GETTEXT_EBIN} ${EOPENID_EBIN} ${ELOGGER_EBIN} \
     -eval "application:start(polish)"

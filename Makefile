@@ -11,6 +11,5 @@ init:
 clean:
 	rm -rf ./ebin/*.beam
 
-init_clean: clean
-	rm -rf ebin dep logs www/nitrogen
-
+rm_deps:
+	rm -rf dep
