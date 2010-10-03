@@ -392,22 +392,11 @@ do_load_po_files(State, CustomLCs) ->
 
 do_load_po_files([LC|CustomLCs]) ->
     KVs = polish_wash:read_po_file(LC),
-    [ets:insert(keys, {{LC, hash(K)}, {K, V}}) || {K, V} <- KVs],
+    [ets:insert(keys, {{LC, polish_utils:hash(K)}, {K, V}}) || {K, V} <- KVs],
     assure_po_file_loaded_correctly(LC, KVs),
     do_load_po_files(CustomLCs);
 do_load_po_files([]) ->
     ok.
-
-%% SDBM hash algorithm
-hash(Str) ->
-    F = fun(Char, Hash0) ->
-		Hash = Char + (Hash0 bsl 6) + (Hash0 bsl 16) - Hash0,
-		case Hash > 4294967295 of
-		    true  ->  Hash rem 4294967296;
-		    false -> Hash
-		end
-	end,
-    lists:foldl(F, 0, Str).
 
 assure_po_file_loaded_correctly(LC, KVs) ->
     StoredKVs = ets:select(keys, [{{{LC, '_'}, {'$1','$2'}},
