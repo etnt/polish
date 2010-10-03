@@ -49,12 +49,14 @@ init([]) ->
     PolishServer = worker(polish_server),
     CronServer = worker(polish_cron_server),
     Elogger = worker(elogger),
-
     GettextServer = {gettext_server,{gettext_server,start_link,[polish]},
                      permanent,5000,worker,[gettext_server]},
-
-    {ok, {{one_for_one, 10, 10}, 
-          [PolishServer, GettextServer, CronServer, Elogger
-          ]}}.
-
+    Mochiweb = {mochiweb_server,
+		{mochiweb_http, start,
+		 [{ip, polish_deps:get_env(hostname, "127.0.0.1")},
+		  {port, polish_deps:get_env(post, "8080")},
+		  {loop, fun polish_dispatcher:dispatch/1}]},
+		permanent, 5000, worker, [mochiweb_http]},
+    {ok, {{one_for_one, 10, 10},
+          [PolishServer, GettextServer, CronServer, Elogger, Mochiweb]}}.
 
