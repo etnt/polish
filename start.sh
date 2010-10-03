@@ -26,5 +26,5 @@ echo "Starting Polish..."
 erl \
     -polish po_lang_dir $po_lang_dir ask_replace_keys $ask_replace_keys \
     -sname ${NAME} \
-    -pa ./ebin ${YAWS_EBIN} ${GETTEXT_EBIN} ${EOPENID_EBIN} ${ELOGGER_EBIN} \
+    -pa ./ebin ${MOCHIWEB_EBIN} ${GETTEXT_EBIN} ${EOPENID_EBIN} ${ELOGGER_EBIN} \
     -eval "application:start(polish)"
