@@ -12,3 +12,8 @@
         end).
 
 -endif.
+
+-define(i2l(I), integer_to_list(I)).
+-define(l2i(L), list_to_integer(L)).
+-define(a2l(A), atom_to_list(A)).
+-define(l2a(L), list_to_atom(L)).

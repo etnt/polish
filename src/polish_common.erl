@@ -40,7 +40,7 @@ build_dropdown_menu(Selected0) ->
     #listitem{body = [#link{text=Selected}, #list{body = lang_links()}]}.
 
 lang_links() ->
-    [#listitem { body = [#link{id=list_to_atom(string:to_lower(gettext_iso639:lc2lang(LC))),    
+    [#listitem { body = [#link{id=?l2a(string:to_lower(gettext_iso639:lc2lang(LC))),    
              url="/?po="++LC,        
              text=gettext_iso639:lc2lang(LC)  }]}
      || LC <- all_custom_lcs()].

@@ -3,6 +3,7 @@
 
 -module(polish_utils).
 
+-include("polish.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
 -export([build_info_log/3
@@ -25,7 +26,7 @@ get_language_name(LC)        -> gettext_iso639:lc2lang(LC).
 
 year2str() ->
     {Y,_,_} = date(),
-    integer_to_list(Y).
+    ?i2l(Y).
 
 translator_name() ->
     wf:session(name).
@@ -140,7 +141,7 @@ restore_whitespace_test() ->
     ?assertEqual(Orig, restore_whitespace(Orig, Text)).
 
 build_info_log(LC, User, L) ->
-    LCa = atom_to_list(LC),
+    LCa = ?a2l(LC),
     Str = "User " ++ User ++ " exported a new file for " ++ LCa ++ " language. "
 	"The changes added are the following: ~n",
     lists:foldl(

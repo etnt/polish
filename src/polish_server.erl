@@ -24,6 +24,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3, start_link/0]).
 
+-include("polish.hrl").
+
 -define(SERVER, ?MODULE).
 
 -record(state, {}).
@@ -32,19 +34,28 @@
 %%% API
 %%%===================================================================
 
-lock_keys(KVs, LC) when is_atom(LC) ->
+load_po_files(CustomLCs) ->
+    gen_server:call(?MODULE, {load_po_files, CustomLCs}).
 
-    gen_server:call(?MODULE, {lock_keys, KVs, LC, list_to_atom(wf:user())}).
+read_po_file(LC) ->
+    gen_server:call(?MODULE, {read_po_file, LC}).
+
+update_po_file(LC, Changes) ->
+    gen_server:call(?MODULE, {update_po_file, LC, Changes}).
+
+lock_keys(KVs, LC) when is_atom(LC) ->
+    gen_server:call(?MODULE, {lock_keys, KVs, LC, ?l2a(wf:user())}).
 
 unlock_user_keys() ->
     case wf:user() of
 	undefined -> ok;
-	U -> gen_server:call(?MODULE, {unlock_user_keys, list_to_atom(U)})
+	U -> gen_server:call(?MODULE, {unlock_user_keys, ?l2a(U)})
     end.
 
-is_key_locked(Key, LC) when is_list(LC) -> is_key_locked(Key, list_to_atom(LC));
+is_key_locked(Key, LC) when is_list(LC) ->
+    is_key_locked(Key, ?l2a(LC));
 is_key_locked(Key, LC) when is_atom(LC) ->
-    gen_server:call(?MODULE, {is_key_locked, Key, LC, list_to_atom(wf:user())}).
+    gen_server:call(?MODULE, {is_key_locked, Key, LC, ?l2a(wf:user())}).
 
 delete_old_locked_keys() ->
     gen_server:call(?MODULE, delete_old_locked_keys).
@@ -63,15 +74,6 @@ set_new_old_keys(NewOldKeys) ->
 
 get_new_old_keys() ->
     gen_server:call(?MODULE, get_new_old_keys).
-
-load_po_files(CustomLCs) ->
-    gen_server:call(?MODULE, {load_po_files, CustomLCs}).
-
-read_po_file(LC) ->
-    gen_server:call(?MODULE, {read_po_file, LC}).
-
-update_po_file(LC, Changes) ->
-    gen_server:call(?MODULE, {update_po_file, LC, Changes}).
 
 
 %%--------------------------------------------------------------------
@@ -119,6 +121,18 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_call({load_po_files, CustomLCs}, _From, State) ->
+    {NewState, Reply} = do_load_po_files(State, CustomLCs),
+    {reply, Reply, NewState};
+
+handle_call({read_po_file, LC}, _From, State) ->
+    {NewState, Reply} = do_read_po_file(State, LC),
+    {reply, Reply, NewState};
+
+handle_call({update_po_file, LC, Changes}, _From, State) ->
+    {NewState, Reply} = do_update_po_file(State, LC, Changes),
+    {reply, Reply, NewState};
+
 handle_call({lock_keys, KVs, LC, User}, _From, State) ->
     {NewState, Reply} = do_lock_keys(State, KVs, LC, User),
     {reply, Reply, NewState};
@@ -153,18 +167,6 @@ handle_call({set_new_old_keys, NewOldKeys}, _From, State) ->
 
 handle_call(get_new_old_keys, _From, State) ->
     {NewState, Reply} = do_get_new_old_keys(State),
-    {reply, Reply, NewState};
-
-handle_call({load_po_files, CustomLCs}, _From, State) ->
-    {NewState, Reply} = do_load_po_files(State, CustomLCs),
-    {reply, Reply, NewState};
-
-handle_call({read_po_file, LC}, _From, State) ->
-    {NewState, Reply} = do_read_po_file(State, LC),
-    {reply, Reply, NewState};
-
-handle_call({update_po_file, LC, Changes}, _From, State) ->
-    {NewState, Reply} = do_update_po_file(State, LC, Changes),
     {reply, Reply, NewState};
 
 handle_call(_Request, _From, State) ->
@@ -226,6 +228,18 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
+do_load_po_files(State, CustomLCs) ->
+    do_load_po_files(CustomLCs),
+    {State, ok}.
+
+do_read_po_file(State, LC) ->
+    KVs = ets:select(?MODULE, [{{{LC,'_'}, {'$1','$2'}}, [], [{{'$1','$2'}}]}]),
+    {State, KVs}.
+
+do_update_po_file(State, LC, Changes) ->
+    [ets:insert(?MODULE, {{LC,polish_utils:hash(K)}, {K,V}}) || {K,V}<-Changes],
+    {State, ok}.
+
 do_lock_keys(State, KVs, LC, User) ->
     Res = lists:foldl(
 	    fun({Key, _Val} = KV, Acc) ->
@@ -247,7 +261,7 @@ do_unlock_user_keys(State, User) ->
 
 do_is_key_locked(State, Key, LC, User) ->
     Res = case ets:lookup(locked_keys, {Key, LC}) of
-	      []         -> false;
+	      []               -> false;
 	      [{_K, {U, _T}}]  -> User =/= U
 	  end,
     {State, Res}.
@@ -276,8 +290,7 @@ do_load_always_translated_keys(State, LC, File) ->
 
 do_mark_as_always_translated(State, LC, Key) ->
     ets:insert(always_translated, {{LC, Key}, true}),
-    LCa = atom_to_list(LC),
-    case file:open(polish:meta_filename(LCa), [append]) of
+    case file:open(polish:meta_filename(?a2l(LC)), [append]) of
         {ok,Fd}  ->
 	    F = fun($", Acc)  -> [$\\,$"|Acc];
 		   (C, Acc)   -> [C|Acc]
@@ -304,17 +317,6 @@ do_set_new_old_keys(State, NewOldKeys) ->
 do_get_new_old_keys(State) ->
     {State, get(new_old_keys)}.
 
-do_load_po_files(State, CustomLCs) ->
-    do_load_po_files(CustomLCs),
-    {State, ok}.
-
-do_read_po_file(State, LC) ->
-    KVs = ets:select(?MODULE, [{{{LC,'_'}, {'$1','$2'}}, [], [{{'$1','$2'}}]}]),
-    {State, KVs}.
-
-do_update_po_file(State, LC, Changes) ->
-    [ets:insert(?MODULE, {{LC,polish_utils:hash(K)}, {K,V}}) || {K,V}<-Changes],
-    {State, ok}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  I N T E R N A L   F U N C T I O N S

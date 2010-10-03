@@ -32,7 +32,7 @@ layout() ->
               #grid_12 { class = header, body = Header},
               #grid_clear {},
               #grid_12 { body=mk_body(polish_po:get_entries(Info))},
-              #grid_clear {},              
+              #grid_clear {},
               #grid_12 { body=polish_common:footer() }
              ]}.
 
@@ -68,9 +68,9 @@ get_checkbox_from_qs(K) ->
 get_radiobutton_from_qs(match_type, K) ->
     case wf:qs(K) of
 	["match_any_word"] ->
-	    match_any_word;
+	    any;
 	["match_exact_phrase"] ->
-	    match_exact_phrase
+	    exact
     end.
     
 maybe_reset_session() ->

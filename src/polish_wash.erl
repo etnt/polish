@@ -18,7 +18,7 @@
          , rfc3339/0
         ]).
 
--import(polish, [a2l/1]).
+-include("polish.hrl").
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -312,10 +312,10 @@ sort_po_file(LC) ->
     SortedPo = lists:keysort(1, LCPo),
     case SortedPo =:= LCPo of
 	true  ->
-            error_logger:info_msg(a2l(LC)++" po file already sorted!"),
+            error_logger:info_msg(?a2l(LC)++" po file already sorted!"),
             ok;
 	false ->
-	    error_logger:info_msg(a2l(LC)++" po file not sorted. Sorting..."),
+	    error_logger:info_msg(?a2l(LC)++" po file not sorted. Sorting..."),
 	    write_po_file(LC, SortedPo, "Polish tool", "polish@polish.org")
     end.
 
