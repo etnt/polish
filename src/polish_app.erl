@@ -18,7 +18,6 @@ start(_, _) ->
     load_always_translated_keys(),
     maybe_replace_keys_or_auto_wash(),
     load_po_files(),
-    {ok,_Pid} = polish_inets:start_link(), % ends up under the inets supervisors
     Res.
 
 
