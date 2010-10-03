@@ -15,6 +15,7 @@
          , all_custom_lcs/0
 	 , update_po_files/0
 	 , update_po_files/1
+	 , load_po_files/0
 	 , sort_po_files/0
 	 , get_status_po_files/0
          , hostname/0
@@ -31,7 +32,7 @@
 
 -include("polish.hrl").
 -include_lib("nitrogen/include/wf.hrl").
-           
+
 auto_wash() -> get_env(auto_wash, false).
 
 po_lang_dir() -> get_env(po_lang_dir, "/tmp").
@@ -60,6 +61,10 @@ update_po_files(KeysToBeReplaced) ->
     CustomLCs = all_custom_lcs(),
     polish_wash:update_po_files(CustomLCs, KeysToBeReplaced).
 
+load_po_files() ->
+    CustomLCs = all_custom_lcs(),
+    polish_server:load_po_files(CustomLCs).
+
 sort_po_files() ->
     CustomLCs = all_custom_lcs(),
     polish_wash:sort_po_files(CustomLCs).
@@ -69,7 +74,7 @@ get_status_po_files() ->
     polish_wash:get_status_po_files(CustomLCs).
 
 default_port() -> 8080.
-          
+
 setup_user_info() ->
     User = wf:user(),
     Users = get_users(),
@@ -87,7 +92,7 @@ get_default_lang() ->
     get_from_meta_file(default_lang).
 
 get_org_name() ->
-    get_from_meta_file(org_name).    
+    get_from_meta_file(org_name).
 
 get_from_meta_file(Field) ->
     PoDir = get_env(po_lang_dir, "/tmp"),
@@ -126,8 +131,3 @@ l2a(A) when is_atom(A) -> A.
 
 a2l(A) when is_atom(A) -> atom_to_list(A);
 a2l(L) when is_list(L) -> L.
-
-
-
-    
-

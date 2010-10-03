@@ -18,7 +18,7 @@
          , rfc3339/0
         ]).
 
--import(polish, [a2l/1]).
+-include("polish.hrl").
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -138,11 +138,11 @@ escape_chars(Str) ->
     F = fun($", Acc)  -> [$\\,$"|Acc];
            ($\\, Acc) -> [$\\,$\\|Acc];
            ($\n, Acc) -> [$\\,$n|Acc];
-	   (C, Acc)   -> [C|Acc] 
+	   (C, Acc)   -> [C|Acc]
 	end,
     lists:foldr(F, [], Str).
 
-%%% Split the string into substrings, 
+%%% Split the string into substrings,
 %%% aligned around a specific column.
 get_line(Str) ->
     get_line(Str, ?SEP, 1, ?ENDCOL, []).
@@ -178,12 +178,12 @@ get_line([H|T] = In, Sep, End, End, Acc) ->
 find_end(Str, Sep) ->
     find_end(Str, Sep, 1, ?PIVOT, []).
 
-find_end([Sep|T], Sep, N, Pivot, Acc) when N =< Pivot -> {true, [Sep|Acc], T};
-find_end(_Str, _Sep, N, Pivot, _Acc) when N > Pivot   -> false;
-find_end([H|T], Sep, N, Pivot, Acc)                   -> find_end(T,Sep,N+1,
-                                                                  Pivot,[H|Acc]);
-find_end([], _Sep, _N, _Pivot, Acc)                   -> {true, Acc, []}.
-    
+find_end([Sep|T], Sep, N, Pivot, Acc) when N =< Pivot-> {true, [Sep|Acc], T};
+find_end(_Str, _Sep, N, Pivot, _Acc) when N > Pivot  -> false;
+find_end([H|T], Sep, N, Pivot, Acc)                  -> find_end(T,Sep,N+1,
+								 Pivot,[H|Acc]);
+find_end([], _Sep, _N, _Pivot, Acc)                  -> {true, Acc, []}.
+
 reverse_tape(Acc, Str) ->
     reverse_tape(Acc, Str, ?SEP).
 
@@ -207,7 +207,7 @@ mv(Tname, Fname) ->
 %------------------------------------------------------------------------------
 update_po_files(DefaultPo, [LC|T], KeysToBeReplaced) ->
     case read_and_check_po_file(LC) of
-	{duplicated, _D} = Duplicated -> 
+	{duplicated, _D} = Duplicated ->
 	    Duplicated;
 	LCPo ->
 	    wash_po_file(LCPo, DefaultPo, LC, KeysToBeReplaced),
@@ -228,7 +228,7 @@ read_and_check_po_file(LC) ->
 	    Duplicated;
 	ok ->
 	    LCPo
-    end.    
+    end.
 
 get_amount_translated_and_untranslated(LC) ->
     F = fun({K, K}, {Trans, Untrans})   -> {Trans, Untrans + 1};
@@ -241,9 +241,9 @@ check_no_duplicates_and_sorted([{K,_V}|KVs], LC) ->
     check_no_duplicates_and_sorted(KVs, K, LC, []).
 check_no_duplicates_and_sorted([{K,_V}|KVs], PrevK, LC, Duplicated) ->
     case K > PrevK of
-	true  -> 
+	true  ->
 	    check_no_duplicates_and_sorted(KVs, K, LC, Duplicated);
-	false when K =:= PrevK -> 
+	false when K =:= PrevK ->
 	    check_no_duplicates_and_sorted(KVs, K, LC, [K|Duplicated]);
 	false ->
 	    unsorted
@@ -256,19 +256,19 @@ check_no_duplicates_and_sorted([], _PrevK, _LC, Duplicated) ->
 wash_po_file(PoToWash, DefaultPo, LC, KeysToBeReplaced) ->
     {OldTrans, OldUntrans} = get_amount_translated_and_untranslated(PoToWash),
     PoWashed0 = update_keys_to_be_replaced(PoToWash, KeysToBeReplaced),
-    {PoWashed, New, RemovedUntrans, RemovedTrans} = 
+    {PoWashed, New, RemovedUntrans, RemovedTrans} =
 	add_new_delete_old_keys(PoWashed0, DefaultPo),
     {NewTrans, NewUntrans} = get_amount_translated_and_untranslated(PoWashed),
     case NewUntrans =:= OldUntrans + New - RemovedUntrans andalso
 	NewTrans =:= OldTrans - RemovedTrans of
 	true  -> ok;
-	false -> 
+	false ->
 	    error_logger:error_msg("Bad washing of "++LC++". "
 				   "Po file got corrupted"),
 	    exit(error)
     end,
     case PoToWash =:= PoWashed of
-	false -> 
+	false ->
 	    error_logger:info_msg("Updating "++LC++"...~n"),
 	    write_po_file(LC, PoWashed, "Polish tool", "polish@polish.org");
 	true  ->
@@ -282,20 +282,20 @@ update_keys_to_be_replaced(PoToWash, KeysToBeReplaced) ->
 			       {NewK, K} when K =:= V -> [{NewK, NewK}|Acc];
 			       {NewK, K}              -> [{NewK, V}|Acc]
 			   end end,
-    lists:keysort(1, lists:foldl(F, [], PoToWash)).			
-    
+    lists:keysort(1, lists:foldl(F, [], PoToWash)).
+
 add_new_delete_old_keys(PoToWash, DefPo) ->
     add_new_delete_old_keys(PoToWash, DefPo, {[], 0, 0, 0}).
-add_new_delete_old_keys([{K, _V1} = KV|PoToWash], [{K, _V2}|DefPo], 
+add_new_delete_old_keys([{K, _V1} = KV|PoToWash], [{K, _V2}|DefPo],
 			{Acc, New, RU, RT}) ->
     add_new_delete_old_keys(PoToWash, DefPo, {[KV|Acc], New, RU, RT});
-add_new_delete_old_keys([{K1, _V1}|_] = PoToWash, [{K2, _V2} = KV|DefPo], 
+add_new_delete_old_keys([{K1, _V1}|_] = PoToWash, [{K2, _V2} = KV|DefPo],
 			{Acc, New, RU, RT}) when K1 > K2 ->
     add_new_delete_old_keys(PoToWash, DefPo, {[KV|Acc], New + 1, RU, RT});
-add_new_delete_old_keys([{K, K}|PoToWash], DefPo, 
+add_new_delete_old_keys([{K, K}|PoToWash], DefPo,
 			{Acc, New, RU, RT}) ->
     add_new_delete_old_keys(PoToWash, DefPo, {Acc, New, RU + 1, RT});
-add_new_delete_old_keys([{_K, _V}|PoToWash], DefPo, 
+add_new_delete_old_keys([{_K, _V}|PoToWash], DefPo,
 			{Acc, New, RU, RT}) ->
     add_new_delete_old_keys(PoToWash, DefPo, {Acc, New, RU, RT + 1});
 add_new_delete_old_keys([], [KV|DefPo], {Acc, New, RU, RT}) ->
@@ -312,10 +312,10 @@ sort_po_file(LC) ->
     SortedPo = lists:keysort(1, LCPo),
     case SortedPo =:= LCPo of
 	true  ->
-            error_logger:info_msg(a2l(LC)++" po file already sorted!"),
+            error_logger:info_msg(?a2l(LC)++" po file already sorted!"),
             ok;
 	false ->
-	    error_logger:info_msg(a2l(LC)++" po file not sorted. Sorting..."),
+	    error_logger:info_msg(?a2l(LC)++" po file not sorted. Sorting..."),
 	    write_po_file(LC, SortedPo, "Polish tool", "polish@polish.org")
     end.
 
@@ -369,7 +369,7 @@ check_same_keys(LCs, DefaultPo) ->
 check_same_keys([LC|LCs], DefaultPo, Acc) ->
     LCPo = read_po_file(LC),
     case check_same_keys_lc(LCPo, DefaultPo) of
-	true -> 
+	true ->
 	    io:format("~p has same keys as default~n", [get_lang_dir(LC)]),
 	    check_same_keys(LCs, DefaultPo, [{LC, true}|Acc]);
 	false ->
@@ -379,7 +379,7 @@ check_same_keys([LC|LCs], DefaultPo, Acc) ->
 check_same_keys([], _DefaultPo, Acc) ->
     io:format("~n~n"),
     lists:reverse(Acc).
-    
+
 check_same_keys_lc([{K, _}|LCPo], [{K, _}|DefaultPo]) ->
     check_same_keys_lc(LCPo, DefaultPo);
 check_same_keys_lc([], []) ->
@@ -392,7 +392,7 @@ check_duplicated_keys(LCs) ->
 check_duplicated_keys([LC|LCs], Acc) ->
     [{FirstK, _}|LCPo] = read_po_file(LC),
     case check_duplicated_keys_lc(LCPo, FirstK) of
-	ok -> 
+	ok ->
 	    io:format("~p does not have duplicated keys~n", [get_lang_dir(LC)]),
 	    check_duplicated_keys(LCs, [{LC, true}|Acc]);
 	duplicated ->
@@ -418,28 +418,28 @@ check_duplicated_keys_lc([], _) ->
 get_new_old_keys(KVDef, LC) ->
     KVCus = read_po_file(LC),
     get_new_old_keys(KVDef, KVCus, {[], []}).
-get_new_old_keys([{K,_}|KVDef], [{K,_}|KVCus], Acc) -> 
+get_new_old_keys([{K,_}|KVDef], [{K,_}|KVCus], Acc) ->
     get_new_old_keys(KVDef, KVCus, Acc);
-get_new_old_keys([{K1,_}|_] = KVDef, [{K2,_}|KVCus], {New, Old}) when K1 > K2 -> 
+get_new_old_keys([{K1,_}|_] = KVDef, [{K2,_}|KVCus], {New, Old}) when K1 > K2 ->
     get_new_old_keys(KVDef, KVCus, {New, [K2|Old]});
-get_new_old_keys([{K1,_}|KVDef], KVCus, {New, Old}) -> 
+get_new_old_keys([{K1,_}|KVDef], KVCus, {New, Old}) ->
     get_new_old_keys(KVDef, KVCus, {[K1|New], Old});
 get_new_old_keys([], _KVCus, Acc) ->
     Acc.
 
 get_keys_to_be_replaced_from_ids(KeysToBeReplaced) ->
     case polish_server:get_new_old_keys() of
-	undefined -> 
+	undefined ->
 	    [];
-	NewOldKeys -> 
+	NewOldKeys ->
 	    get_keys_to_be_replaced_from_ids(KeysToBeReplaced, NewOldKeys, [])
     end.
-get_keys_to_be_replaced_from_ids([{NewId, OldId}|KeysToBeReplaced], 
+get_keys_to_be_replaced_from_ids([{NewId, OldId}|KeysToBeReplaced],
 				 {NewKeys, OldKeys} = NLK, Acc) ->
-    
     NewKey = lists:nth(NewId, NewKeys),
     OldKey = lists:nth(OldId, OldKeys),
-    get_keys_to_be_replaced_from_ids(KeysToBeReplaced, NLK, [{NewKey,OldKey}|Acc]);
+    get_keys_to_be_replaced_from_ids(KeysToBeReplaced, NLK,
+				     [{NewKey,OldKey}|Acc]);
 get_keys_to_be_replaced_from_ids([], _NLK, Acc) ->
     Acc.
 

@@ -8,7 +8,7 @@
 
 -export([start/2, stop/1]).
 
--import(polish, [all_custom_lcs/0, meta_filename/1]).
+-import(polish, [all_custom_lcs/0, meta_filename/1, load_po_files/0]).
 
 -include("polish.hrl").
 
@@ -17,9 +17,10 @@ start(_, _) ->
     Res = polish_sup:start_link(),
     load_always_translated_keys(),
     maybe_replace_keys_or_auto_wash(),
+    load_po_files(),
     {ok,_Pid} = polish_inets:start_link(), % ends up under the inets supervisors
     Res.
-    
+
 
 stop(_) ->
     eopenid:stop(),
@@ -27,9 +28,9 @@ stop(_) ->
 
 load_always_translated_keys() ->
     load_always_translated_keys(all_custom_lcs()).
-    
+
 load_always_translated_keys([H|T]) ->
-    polish_server:load_always_translated_keys(list_to_atom(H), 
+    polish_server:load_always_translated_keys(list_to_atom(H),
                                               meta_filename(H)),
     load_always_translated_keys(T);
 load_always_translated_keys([]) ->

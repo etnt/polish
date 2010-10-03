@@ -28,7 +28,6 @@ header(Selected) ->
 	#listitem{ body=[#link { text = "    -    "}]},
         #listitem{ body=[#link { class=search, url='#search_form', text="Search"}]},
         #listitem{ body=[#link { class=statsbutton, url='#stats', text="Status"}]},
-        #listitem{ body=[#link { id=write, url='/?action=show_changes', text="Submit translations"}]},
         #listitem{ body=[#link { class=statsbutton, url='#help', text="Help"}]},
         #listitem{ body=[#link { id=logout, url='/logout', text="Logout"}]}]}
     ]}.
@@ -41,7 +40,7 @@ build_dropdown_menu(Selected0) ->
     #listitem{body = [#link{text=Selected}, #list{body = lang_links()}]}.
 
 lang_links() ->
-    [#listitem { body = [#link{id=list_to_atom(string:to_lower(gettext_iso639:lc2lang(LC))),    
+    [#listitem { body = [#link{id=?l2a(string:to_lower(gettext_iso639:lc2lang(LC))),    
              url="/?po="++LC,        
              text=gettext_iso639:lc2lang(LC)  }]}
      || LC <- all_custom_lcs()].

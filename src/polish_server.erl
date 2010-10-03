@@ -6,28 +6,27 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0
-         , write/2
-         , is_translated/2
-         , insert/2
-	 , get_changes/1
-	 , get_translated_by_country/1
-	 , lock_keys/2
-	 , unlock_user_keys/0
-	 , is_key_locked/2
-	 , delete_old_locked_keys/0
-	 , load_always_translated_keys/2
-	 , mark_as_always_translated/2
-	 , is_always_translated/2
-	 , set_new_old_keys/1
+-export([delete_old_locked_keys/0
 	 , get_new_old_keys/0
+	 , is_always_translated/2
+	 , is_key_locked/2
+	 , load_always_translated_keys/2
+	 , load_po_files/1
+	 , lock_keys/2
+	 , mark_as_always_translated/2
+	 , read_po_file/1
+	 , set_new_old_keys/1
+	 , unlock_user_keys/0
+	 , update_po_file/2
         ]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3]).
+         terminate/2, code_change/3, start_link/0]).
 
--define(SERVER, ?MODULE). 
+-include("polish.hrl").
+
+-define(SERVER, ?MODULE).
 
 -record(state, {}).
 
@@ -35,39 +34,28 @@
 %%% API
 %%%===================================================================
 
-write(KVs, LC) when is_atom(LC) ->
-    Name = polish_utils:translator_name(),
-    Email = polish_utils:translator_email(),
-    gen_server:call(?MODULE, {write, wf:session(name), Name, Email, KVs, LC}).
+load_po_files(CustomLCs) ->
+    gen_server:call(?MODULE, {load_po_files, CustomLCs}).
 
-is_translated(Key, LC) when is_list(LC) -> is_translated(Key, list_to_atom(LC));
-is_translated(Key, LC) when is_atom(LC) ->
-    gen_server:call(?MODULE, {is_translated, Key, LC}).
+read_po_file(LC) ->
+    gen_server:call(?MODULE, {read_po_file, LC}).
 
-insert(KVs, LC) when is_atom(LC) ->
-    case wf:session(name) of
-	undefined -> end_of_session;
-	Name -> gen_server:call(?MODULE, {insert, Name, KVs, LC})
-    end.
-
-get_changes(LC) when is_atom(LC) ->
-    gen_server:call(?MODULE, {get_changes, wf:session(name), LC}).
-
-get_translated_by_country(LC) when is_atom(LC) ->
-    gen_server:call(?MODULE, {get_translated_by_country, LC}).
+update_po_file(LC, Changes) ->
+    gen_server:call(?MODULE, {update_po_file, LC, Changes}).
 
 lock_keys(KVs, LC) when is_atom(LC) ->
-    gen_server:call(?MODULE, {lock_keys, KVs, LC, list_to_atom(wf:user())}).
+    gen_server:call(?MODULE, {lock_keys, KVs, LC, ?l2a(wf:user())}).
 
 unlock_user_keys() ->
     case wf:user() of
 	undefined -> ok;
-	U -> gen_server:call(?MODULE, {unlock_user_keys, list_to_atom(U)})
+	U -> gen_server:call(?MODULE, {unlock_user_keys, ?l2a(U)})
     end.
 
-is_key_locked(Key, LC) when is_list(LC) -> is_key_locked(Key, list_to_atom(LC));
+is_key_locked(Key, LC) when is_list(LC) ->
+    is_key_locked(Key, ?l2a(LC));
 is_key_locked(Key, LC) when is_atom(LC) ->
-    gen_server:call(?MODULE, {is_key_locked, Key, LC, list_to_atom(wf:user())}).
+    gen_server:call(?MODULE, {is_key_locked, Key, LC, ?l2a(wf:user())}).
 
 delete_old_locked_keys() ->
     gen_server:call(?MODULE, delete_old_locked_keys).
@@ -114,7 +102,7 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    ets:new(?MODULE, [bag,protected,{keypos,1},named_table]),
+    ets:new(?MODULE, [ordered_set,protected,{keypos,1},named_table]),
     ets:new(locked_keys, [ordered_set,protected,{keypos,1},named_table]),
     ets:new(always_translated, [ordered_set,protected,{keypos,1},named_table]),
     {ok, #state{}}.
@@ -133,24 +121,16 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({insert, User, KVs, LC}, _From, State) ->
-    {NewState, Reply} = do_insert(State, User, KVs, LC),
+handle_call({load_po_files, CustomLCs}, _From, State) ->
+    {NewState, Reply} = do_load_po_files(State, CustomLCs),
     {reply, Reply, NewState};
 
-handle_call({write, User, Name, Email, KVs, LC}, _From, State) ->
-    {NewState, Reply} = do_write(State, User, Name, Email, KVs, LC),
+handle_call({read_po_file, LC}, _From, State) ->
+    {NewState, Reply} = do_read_po_file(State, LC),
     {reply, Reply, NewState};
 
-handle_call({is_translated, Key, LC}, _From, State) ->
-    {NewState, Reply} = do_is_translated(State, Key, LC),
-    {reply, Reply, NewState};
-
-handle_call({get_changes, User, LC}, _From, State) ->
-    {NewState, Reply} = do_get_changes(State, User, LC),
-    {reply, Reply, NewState};
-
-handle_call({get_translated_by_country, LC}, _From, State) ->
-    {NewState, Reply} = do_get_translated_by_country(State, LC),
+handle_call({update_po_file, LC, Changes}, _From, State) ->
+    {NewState, Reply} = do_update_po_file(State, LC, Changes),
     {reply, Reply, NewState};
 
 handle_call({lock_keys, KVs, LC, User}, _From, State) ->
@@ -248,50 +228,17 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-do_insert(State, User, KVs, LC) ->
-    lists:foreach(
-      fun({K, V}) ->
-	      case do_is_translated(State, K, LC) of
-		  {State, false} -> ok;
-		  {State, true}  -> ets:match_delete(
-				      ?MODULE, {{LC, K}, {User, '_'}})
-	      end,
-	      ets:insert(?MODULE, {{LC, K}, {User, V}})
-      end, KVs),
-    {State, _Reply = ok}.
+do_load_po_files(State, CustomLCs) ->
+    do_load_po_files(CustomLCs),
+    {State, ok}.
 
-do_write(State, User, Name, Email, KVs, LC) ->
-    L =  ets:select(?MODULE, [{{{LC, '$1'}, {User,'$2'}}, [], [{{'$1','$2'}}]}]),
-    NewPo = lists:foldr(
-	      fun({K, _V} = KV, Acc) ->
-		      case proplists:get_value(K, L) of
-			  undefined -> [KV | Acc];
-			  NewV      -> [{K, NewV} | Acc]
-		      end
-	      end, [], KVs),
-    Result = polish_wash:write_po_file(atom_to_list(LC), NewPo, Name, Email),
-    case Result of
-	ok -> 
-	    ets:match_delete(?MODULE, {{LC, '_'}, {User, '_'}}),
-	    Str = build_info_log(LC, User, L),
-	    error_logger:info_msg(Str);
-	_  -> ok
-    end,
-    {State, Result}.
+do_read_po_file(State, LC) ->
+    KVs = ets:select(?MODULE, [{{{LC,'_'}, {'$1','$2'}}, [], [{{'$1','$2'}}]}]),
+    {State, KVs}.
 
-do_is_translated(State, Key, LC) ->
-    Res = case ets:lookup(?MODULE, {LC, Key}) of
-	    [] -> false;
-	    _  -> true
-    end,
-    {State, Res}.
-
-do_get_changes(State, User, LC) ->
-    {State, ets:select(?MODULE, [{{{LC, '$1'}, {User, '$2'}}, [], 
-				  [{{'$1','$2'}}]}])}.
-
-do_get_translated_by_country(State, LC) ->
-    {State, ets:select(?MODULE, [{{{LC, '_'}, {'$1', '_'}}, [], ['$1']}])}.
+do_update_po_file(State, LC, Changes) ->
+    [ets:insert(?MODULE, {{LC,polish_utils:hash(K)}, {K,V}}) || {K,V}<-Changes],
+    {State, ok}.
 
 do_lock_keys(State, KVs, LC, User) ->
     Res = lists:foldl(
@@ -308,13 +255,13 @@ do_lock_keys(State, KVs, LC, User) ->
     {State, Res}.
 
 do_unlock_user_keys(State, User) ->
-    [ets:delete(locked_keys, K) || {K, {U, _T}} <- ets:tab2list(locked_keys), 
+    [ets:delete(locked_keys, K) || {K, {U, _T}} <- ets:tab2list(locked_keys),
 				   U =:= User],
     {State, result}.
 
 do_is_key_locked(State, Key, LC, User) ->
     Res = case ets:lookup(locked_keys, {Key, LC}) of
-	      []         -> false;
+	      []               -> false;
 	      [{_K, {U, _T}}]  -> User =/= U
 	  end,
     {State, Res}.
@@ -322,7 +269,7 @@ do_is_key_locked(State, Key, LC, User) ->
 do_delete_old_locked_keys(State) ->
     {Mega, Sec, _} = erlang:now(),
     Time = Mega * 100000 + Sec - 60*30,
-    R = ets:select(locked_keys, [{{{'$1', '$2'}, {'_','$3'}, '_'}, 
+    R = ets:select(locked_keys, [{{{'$1', '$2'}, {'_','$3'}, '_'},
 				  [{'<', '$3', Time}], [{{'$1', '$2'}}]}]),
     [ets:delete(locked_keys, K) || K <- R],
     {State, ok}.
@@ -341,19 +288,12 @@ do_load_always_translated_keys(State, LC, File) ->
             {State, ok}
     end.
 
-unescape_key(Str) ->
-    unescape_key(Str, []).
-unescape_key([$\\,$"|Str], Acc) -> unescape_key(Str, [$"|Acc]);
-unescape_key([Ch|Str], Acc)     -> unescape_key(Str, [Ch|Acc]);
-unescape_key([], Acc)           -> lists:reverse(Acc).
-
 do_mark_as_always_translated(State, LC, Key) ->
     ets:insert(always_translated, {{LC, Key}, true}),
-    LCa = atom_to_list(LC),
-    case file:open(polish:meta_filename(LCa), [append]) of
+    case file:open(polish:meta_filename(?a2l(LC)), [append]) of
         {ok,Fd}  ->
 	    F = fun($", Acc)  -> [$\\,$"|Acc];
-		   (C, Acc)   -> [C|Acc] 
+		   (C, Acc)   -> [C|Acc]
 		end,
 	    EscKey = lists:foldr(F, [], Key),
             Str = "{always_translated, \"" ++ EscKey ++ "\"}.\n",
@@ -377,11 +317,26 @@ do_set_new_old_keys(State, NewOldKeys) ->
 do_get_new_old_keys(State) ->
     {State, get(new_old_keys)}.
 
-build_info_log(LC, User, L) ->
-    LCa = atom_to_list(LC),
-    Str = "User " ++ User ++ " exported a new file for " ++ LCa ++ " language. "
-	"The changes added are the following: ~n",
-    lists:foldl(
-      fun({K,V}, AccStr) ->
-	      AccStr ++ "Key: " ++ K ++ "~nValue: " ++ V ++ "~n~n"
-      end, Str, L) ++ "~n~n".
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  I N T E R N A L   F U N C T I O N S
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+do_load_po_files([LC|CustomLCs]) ->
+    KVs = polish_wash:read_po_file(LC),
+    [ets:insert(?MODULE, {{LC, polish_utils:hash(K)}, {K, V}}) || {K,V} <- KVs],
+    assure_po_file_loaded_correctly(LC, KVs),
+    do_load_po_files(CustomLCs);
+do_load_po_files([]) ->
+    ok.
+
+assure_po_file_loaded_correctly(LC, KVs) ->
+    StoredKVs = ets:select(?MODULE, [{{{LC, '_'}, {'$1','$2'}},
+				   [], [{{'$1', '$2'}}]}]),
+    KVs = lists:sort(StoredKVs).
+
+unescape_key(Str) ->
+    unescape_key(Str, []).
+unescape_key([$\\,$"|Str], Acc) -> unescape_key(Str, [$"|Acc]);
+unescape_key([Ch|Str], Acc)     -> unescape_key(Str, [Ch|Acc]);
+unescape_key([], Acc)           -> lists:reverse(Acc).
