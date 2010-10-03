@@ -117,8 +117,8 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    ets:new(?MODULE, [bag,protected,{keypos,1},named_table]),
-    ets:new(keys, [ordered_set,protected,{keypos,1},named_table]),
+    ets:new(?MODULE, [ordered_set,protected,{keypos,1},named_table]),
+    ets:new(to_be_submitted, [bag,protected,{keypos,1},named_table]),
     ets:new(locked_keys, [ordered_set,protected,{keypos,1},named_table]),
     ets:new(always_translated, [ordered_set,protected,{keypos,1},named_table]),
     {ok, #state{}}.
@@ -262,14 +262,14 @@ do_insert(State, User, KVs, LC) ->
 	      case do_is_translated(State, K, LC) of
 		  {State, false} -> ok;
 		  {State, true}  -> ets:match_delete(
-				      ?MODULE, {{LC, K}, {User, '_'}})
+				      to_be_submitted, {{LC, K}, {User, '_'}})
 	      end,
-	      ets:insert(?MODULE, {{LC, K}, {User, V}})
+	      ets:insert(to_be_submitted, {{LC, K}, {User, V}})
       end, KVs),
     {State, _Reply = ok}.
 
 do_write(State, User, Name, Email, KVs, LC) ->
-    L =  ets:select(?MODULE, [{{{LC, '$1'}, {User,'$2'}}, [], [{{'$1','$2'}}]}]),
+    L =  ets:select(to_be_submitted, [{{{LC, '$1'}, {User,'$2'}}, [], [{{'$1','$2'}}]}]),
     NewPo = lists:foldr(
 	      fun({K, _V} = KV, Acc) ->
 		      case proplists:get_value(K, L) of
@@ -280,7 +280,7 @@ do_write(State, User, Name, Email, KVs, LC) ->
     Result = polish_wash:write_po_file(atom_to_list(LC), NewPo, Name, Email),
     case Result of
 	ok ->
-	    ets:match_delete(?MODULE, {{LC, '_'}, {User, '_'}}),
+	    ets:match_delete(to_be_submitted, {{LC, '_'}, {User, '_'}}),
 	    Str = build_info_log(LC, User, L),
 	    error_logger:info_msg(Str);
 	_  -> ok
@@ -288,18 +288,18 @@ do_write(State, User, Name, Email, KVs, LC) ->
     {State, Result}.
 
 do_is_translated(State, Key, LC) ->
-    Res = case ets:lookup(?MODULE, {LC, Key}) of
+    Res = case ets:lookup(to_be_submitted, {LC, Key}) of
 	    [] -> false;
 	    _  -> true
     end,
     {State, Res}.
 
 do_get_changes(State, User, LC) ->
-    {State, ets:select(?MODULE, [{{{LC, '$1'}, {User, '$2'}}, [],
+    {State, ets:select(to_be_submitted, [{{{LC, '$1'}, {User, '$2'}}, [],
 				  [{{'$1','$2'}}]}])}.
 
 do_get_translated_by_country(State, LC) ->
-    {State, ets:select(?MODULE, [{{{LC, '_'}, {'$1', '_'}}, [], ['$1']}])}.
+    {State, ets:select(to_be_submitted, [{{{LC, '_'}, {'$1', '_'}}, [], ['$1']}])}.
 
 do_lock_keys(State, KVs, LC, User) ->
     Res = lists:foldl(
@@ -391,14 +391,14 @@ do_load_po_files(State, CustomLCs) ->
 
 do_load_po_files([LC|CustomLCs]) ->
     KVs = polish_wash:read_po_file(LC),
-    [ets:insert(keys, {{LC, polish_utils:hash(K)}, {K, V}}) || {K, V} <- KVs],
+    [ets:insert(?MODULE, {{LC, polish_utils:hash(K)}, {K, V}}) || {K, V} <- KVs],
     assure_po_file_loaded_correctly(LC, KVs),
     do_load_po_files(CustomLCs);
 do_load_po_files([]) ->
     ok.
 
 assure_po_file_loaded_correctly(LC, KVs) ->
-    StoredKVs = ets:select(keys, [{{{LC, '_'}, {'$1','$2'}},
+    StoredKVs = ets:select(?MODULE, [{{{LC, '_'}, {'$1','$2'}},
 				   [], [{{'$1', '$2'}}]}]),
     KVs = lists:sort(StoredKVs).
 
