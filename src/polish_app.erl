@@ -8,7 +8,7 @@
 
 -export([start/2, stop/1]).
 
--import(polish, [all_custom_lcs/0, meta_filename/1, load_po_files/0]).
+-import(polish, [all_custom_lcs/0, meta_filename/1]).
 
 -include("polish.hrl").
 
@@ -17,7 +17,6 @@ start(_, _) ->
     Res = polish_sup:start_link(),
     load_always_translated_keys(),
     maybe_replace_keys_or_auto_wash(),
-    load_po_files(),
     {ok,_Pid} = polish_inets:start_link(), % ends up under the inets supervisors
     Res.
 
