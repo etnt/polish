@@ -30,7 +30,7 @@ write_po_file(LC, KVs, Name, Email) ->
     Bupname = Fname++"__"++rfc3339(),
     mv(Fname, Bupname),
     {ok,Fd} = file:open(Tname, [write]),
-    EditPoHeader = polish_deps:get_env(edit_po_header, true),
+    EditPoHeader = polish_deps:get_env(edit_po_header, false),
     write_header(Fd, LC, Name, Email, EditPoHeader),
     write_entries(Fd, KVs),
     file:close(Fd),
