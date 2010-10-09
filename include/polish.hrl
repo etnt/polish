@@ -2,6 +2,8 @@
 -define(l2i(L), list_to_integer(L)).
 -define(a2l(A), atom_to_list(A)).
 -define(l2a(L), list_to_atom(L)).
+-define(b2l(B), binary_to_list(B)).
+-define(l2b(L), list_to_binary(L)).
 
 -define(SUPPORTED_MEDIA, [ "application/xhtml+xml", "application/xml",
 			   "application/json", "text/html"]).

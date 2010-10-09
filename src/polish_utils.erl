@@ -102,16 +102,9 @@ trim_whitespace(Input) ->
     {_Leading, Txt, _Trailing} = split_whitespace(Input),
     Txt.
 
-%% SDBM hash algorithm
+%% MD5
 hash(Str) ->
-    F = fun(Char, Hash0) ->
-		Hash = Char + (Hash0 bsl 6) + (Hash0 bsl 16) - Hash0,
-		case Hash > 4294967295 of
-		    true  ->  Hash rem 4294967296;
-		    false -> Hash
-		end
-	end,
-    lists:foldl(F, 0, Str).
+    lists:flatten([io_lib:format("~.16B", [X]) || X <- ?b2l(crypto:md5(Str))]).
 
 %% @spec split_whitespace(Input::string()) -> Result
 %%   Result = {Leading, Text, Trailing}

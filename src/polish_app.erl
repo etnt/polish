@@ -14,6 +14,7 @@
 
 start(_, _) ->
     eopenid:start(),
+    crypto:start(),
     Res = polish_sup:start_link(),
     load_always_translated_keys(),
     maybe_replace_keys_or_auto_wash(),
