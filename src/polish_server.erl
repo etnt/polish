@@ -14,10 +14,11 @@
 	 , load_po_files/1
 	 , lock_keys/2
 	 , mark_as_always_translated/2
+	 , read_key/1
 	 , read_po_file/1
 	 , set_new_old_keys/1
 	 , unlock_user_keys/0
-	 , update_po_file/2
+	 , write_key/2
         ]).
 
 %% gen_server callbacks
@@ -40,8 +41,11 @@ load_po_files(CustomLCs) ->
 read_po_file(LC) ->
     gen_server:call(?MODULE, {read_po_file, LC}).
 
-update_po_file(LC, Changes) ->
-    gen_server:call(?MODULE, {update_po_file, LC, Changes}).
+write_key(Key, Value) ->
+    gen_server:call(?MODULE, {write_key, Key, Value}).
+
+read_key(Key) ->
+    gen_server:call(?MODULE, {read_key, Key}).
 
 lock_keys(KVs, LC) when is_atom(LC) ->
     gen_server:call(?MODULE, {lock_keys, KVs, LC, ?l2a(wf:user())}).
@@ -129,8 +133,12 @@ handle_call({read_po_file, LC}, _From, State) ->
     {NewState, Reply} = do_read_po_file(State, LC),
     {reply, Reply, NewState};
 
-handle_call({update_po_file, LC, Changes}, _From, State) ->
-    {NewState, Reply} = do_update_po_file(State, LC, Changes),
+handle_call({write_key, Key, Value}, _From, State) ->
+    {NewState, Reply} = do_write_key(State, Key, Value),
+    {reply, Reply, NewState};
+
+handle_call({read_key, Key}, _From, State) ->
+    {NewState, Reply} = do_read_key(State, Key),
     {reply, Reply, NewState};
 
 handle_call({lock_keys, KVs, LC, User}, _From, State) ->
@@ -236,9 +244,12 @@ do_read_po_file(State, LC) ->
     KVs = ets:select(?MODULE, [{{{LC,'_'}, {'$1','$2'}}, [], [{{'$1','$2'}}]}]),
     {State, KVs}.
 
-do_update_po_file(State, LC, Changes) ->
-    [ets:insert(?MODULE, {{LC,polish_utils:hash(K)}, {K,V}}) || {K,V}<-Changes],
+do_write_key(State, [C1, C2 | Hash], Value) ->
+    ets:insert(?MODULE, {{[C1, C2], Hash}, Value}),
     {State, ok}.
+
+do_read_key(State, [C1, C2 | Hash]) ->
+    {State, element(2, hd(ets:lookup(?MODULE, {[C1, C2], Hash})))}.
 
 do_lock_keys(State, KVs, LC, User) ->
     Res = lists:foldl(
