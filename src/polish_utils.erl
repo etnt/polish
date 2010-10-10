@@ -7,6 +7,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -export([build_info_log/3
+	 , build_url/0
 	 , get_language_name/1
 	 , hash/1
 	 , print_email_to_translators/1
@@ -14,6 +15,7 @@
 	 , restore_whitespace/2
 	 , split_whitespace/1
          , rfc3339/0
+	 , to_utf8/1
          , translator_name/0
          , translator_email/0
 	 , trim_whitespace/1
@@ -57,9 +59,7 @@ zone(Hr, Min) when Hr >= 0, Min >= 0 ->
 
 print_email_to_translators([]) -> ok;
 print_email_to_translators(NewKeys) ->
-    Hostname = polish_deps:get_env(hostname, "localhost"),
-    Port = integer_to_list(polish_deps:get_env(port, 8000)),
-    URL = "http://" ++ Hostname ++ ":" ++ Port,
+    URL = build_url(),
     KeysText = lists:foldl(fun(K, Acc) -> "* " ++ K ++ "~n" ++ Acc end,
 			   [], NewKeys),
     io:format("~n~n~n~n~nEMAIL TO TRANSLATORS~n"
@@ -70,6 +70,11 @@ print_email_to_translators(NewKeys) ->
 	      "Ticket information:~n{Paste here ticket specs}~n~n~n"
 	      "Best regards,~n~n~n"
 	      "--------------------~n~n~n~n~n").
+
+build_url() ->
+    Hostname = polish_deps:get_env(hostname, "localhost"),
+    Port = integer_to_list(polish_deps:get_env(port, 8000)),
+    "http://" ++ Hostname ++ ":" ++ Port.
 
 print_new_old_keys({New, Old}) ->
     io:format("~n~n~n~n~n"),
@@ -105,6 +110,10 @@ trim_whitespace(Input) ->
 %% MD5
 hash(Str) ->
     lists:flatten([io_lib:format("~.16B", [X]) || X <- ?b2l(crypto:md5(Str))]).
+
+to_utf8(Str) ->
+    lists:flatten(
+      lists:foldr(fun(Ch, Acc) -> [xmerl_ucs:to_utf8(Ch)|Acc] end, [], Str)).
 
 %% @spec split_whitespace(Input::string()) -> Result
 %%   Result = {Leading, Text, Trailing}

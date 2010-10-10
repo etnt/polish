@@ -50,7 +50,7 @@ parse_path(Path) ->
 	[] ->
 	    {index, no_path};
 	[Top|Rest] ->
-	    {?l2a(Top ++ "_controller"), Rest}
+	    {?l2a("polish_" ++ Top ++ "_controller"), Rest}
     end.
 
 clean_path(Path) ->
