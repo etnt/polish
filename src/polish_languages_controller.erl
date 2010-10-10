@@ -44,7 +44,7 @@ top({_Req, _ResContentType, _Path, put}) ->
 language({_Req, CT, [LC], get}) ->
     try
 	Data = polish_languages_resource:get(LC),
-	Response = polish_languages_format:language(Data),
+	Response = polish_languages_format:language(Data, CT),
 	{?OK, CT, Response}
     catch
 	throw:bad_request->
