@@ -9,7 +9,8 @@
 
 
 list(Data0, "application/json") ->
-    Data = [{struct, [{lang, country_url(LC)}, {name, country_name(LC)}]} || LC <-Data0],
+    Data = [{struct, [{url, country_url(LC)}, {name, country_name(LC)}]}
+	    || LC <-Data0],
     mochijson2:encode({array, Data});
 list(_Data, _CT) ->
     throw(not_supported).
