@@ -209,7 +209,8 @@ mv(Tname, Fname) ->
 %------------------------------------------------------------------------------
 update_po_files(DefaultPo, [LC|T], KeysToBeReplaced) ->
     case read_and_check_po_file(LC) of
-	{duplicated, _D} = Duplicated ->
+	{duplicated, D} = Duplicated ->
+	    io:format("~n~n~s", [["* "++io_lib:format("~p~n", [E]) || E <- D]]),
 	    Duplicated;
 	LCPo ->
 	    wash_po_file(LCPo, DefaultPo, LC, KeysToBeReplaced),
