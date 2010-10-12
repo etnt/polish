@@ -177,11 +177,14 @@ run_validators(Key, Val, [Validator|T]) ->
     end.
 
 run_validator(Module, K, V) ->
-    case Module:check({K, V}, polish_server, []) of
-	[] -> ok;
-	Err when element(1, hd(Err)) =:= 'ERROR' orelse
-		 element(1, hd(Err)) =:= 'Warning' ->
-	    {error, element(2, hd(Err))}
+    try
+	case Module:check({K, V}, polish_server, []) of
+	    [] -> ok;
+	    Err when element(1, hd(Err)) =:= 'ERROR' orelse
+		     element(1, hd(Err)) =:= 'Warning' ->
+		{error, element(2, hd(Err))}
+	end
+    catch throw:{formatter_crashed,K,V} -> {error,"Dollar $ signs do not match"}
     end.
 
 
