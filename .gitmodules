@@ -1,12 +1,12 @@
 [submodule "dep/elogger"]
 	path = dep/elogger
-	url = http://github.com/etnt/elogger.git
+	url = git://github.com/etnt/elogger.git
 [submodule "dep/eopenid"]
 	path = dep/eopenid
-	url = http://github.com/etnt/eopenid.git
+	url = git://github.com/etnt/eopenid.git
 [submodule "dep/gettext"]
 	path = dep/gettext
-	url = http://github.com/etnt/gettext.git
+	url = git://github.com/etnt/gettext.git
 [submodule "dep/mochiweb"]
 	path = dep/mochiweb
-	url = http://github.com/mochi/mochiweb.git
+	url = git://github.com/mochi/mochiweb.git
