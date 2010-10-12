@@ -52,8 +52,10 @@ update_po_files(CustomLCs, KeysToBeReplaced0) ->
     sort_po_file(default),
     DefaultPo = read_po_file(default),
     {NewKeys, _} = get_new_old_keys(DefaultPo, hd(CustomLCs)),
-    update_po_files(DefaultPo, CustomLCs, KeysToBeReplaced),
-    polish_utils:print_email_to_translators(NewKeys).
+    case update_po_files(DefaultPo, CustomLCs, KeysToBeReplaced) of
+	ok    -> polish_utils:print_email_to_translators(NewKeys);
+	Dupli -> Dupli
+    end.
 
 sort_po_files([LC|CustomLCs]) ->
     sort_po_file(LC),

@@ -59,8 +59,10 @@ update_po_files() ->
 
 update_po_files(KeysToBeReplaced) ->
     CustomLCs = all_custom_lcs(),
-    polish_wash:update_po_files(CustomLCs, KeysToBeReplaced),
-    load_po_files().
+    case polish_wash:update_po_files(CustomLCs, KeysToBeReplaced) of
+	ok    -> load_po_files();
+	Dupli -> Dupli
+    end.
 
 load_po_files() ->
     CustomLCs = all_custom_lcs(),
