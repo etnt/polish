@@ -26,16 +26,16 @@ top({_Req, CT, _Path, get}) ->
 	{?OK, CT, Response}
     catch
 	throw:bad_request->
-	    {?BAD_REQUEST, [{?CT, "text/plain"}], ?BAD_REQUEST_MSG};
+	    {?BAD_REQUEST, "text/plain", ?BAD_REQUEST_MSG};
 	throw:not_supported ->
-	    {?NOT_SUPPORTED, [{?CT, "text/plain"}], ?NOT_SUPPORTED_MSG}
+	    {?NOT_SUPPORTED, "text/plain", ?NOT_SUPPORTED_MSG}
     end;
 top({_Req, _CT, _Path, post}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG};
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
 top({_Req, _CT, _Path, delete}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG};
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
 top({_Req, _CT, _Path, put}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG}.
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -48,16 +48,16 @@ language({_Req, CT, [LC], get}) ->
 	{?OK, CT, Response}
     catch
 	throw:bad_request->
-	    {?BAD_REQUEST, [{?CT, "text/plain"}], ?BAD_REQUEST_MSG};
+	    {?BAD_REQUEST, "text/plain", ?BAD_REQUEST_MSG};
 	throw:bad_uri ->
-	    {404, [{?CT, "text/plain"}], "Not found"};
+	    {?NOT_FOUND, "text/plain", ?NOT_FOUND};
 	throw:not_supported ->
-	    {?NOT_SUPPORTED, [{?CT, "text/plain"}], ?NOT_SUPPORTED_MSG}
+	    {?NOT_SUPPORTED, "text/plain", ?NOT_SUPPORTED_MSG}
     end;
 language({_Req, _CT, _Path, post}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG};
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
 language({_Req, _CT, _Path, delete}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG};
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
 language({_Req, _CT, _Path, put}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG}.
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG}.
 
