@@ -15,6 +15,7 @@
 	 , restore_whitespace/2
 	 , split_whitespace/1
          , rfc3339/0
+	 , to_latin1/1
 	 , to_utf8/1
          , translator_name/0
          , translator_email/0
@@ -114,6 +115,12 @@ hash(Str) ->
 to_utf8(Str) ->
     lists:flatten(
       lists:foldr(fun(Ch, Acc) -> [xmerl_ucs:to_utf8(Ch)|Acc] end, [], Str)).
+
+to_latin1(Str) ->
+    case binary_to_list(<< <<C>> || <<C/utf8>> <= list_to_binary(Str) >>) of
+        []   -> Str;
+        Lstr -> Lstr
+    end.
 
 %% @spec split_whitespace(Input::string()) -> Result
 %%   Result = {Leading, Text, Trailing}

@@ -27,37 +27,49 @@ top({Req, CT, _Path, get}) ->
 	{?OK, CT, Response}
     catch
 	throw:bad_request->
-	    {?BAD_REQUEST, [{?CT, "text/plain"}], ?BAD_REQUEST_MSG};
+	    {?BAD_REQUEST, "text/plain", ?BAD_REQUEST_MSG};
 	throw:not_supported ->
-	    {?NOT_SUPPORTED, [{?CT, "text/plain"}], ?NOT_SUPPORTED_MSG}
+	    {?NOT_SUPPORTED, "text/plain", ?NOT_SUPPORTED_MSG}
     end;
-top({_Req, _ResContentType, _Path, post}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG};
-top({_Req, _ResContentType, _Path, delete}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG};
-top({_Req, _ResContentType, _Path, put}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG}.
+top({_Req, _CT, _Path, post}) ->
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
+top({_Req, _CT, _Path, delete}) ->
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
+top({_Req, _CT, _Path, put}) ->
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% /keys/key
+%% /keys/keyID
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-key({_Req, CT, [Key], get}) ->
+key({_Req, CT, [ID], get}) ->
     try
-	Data = polish_keys_resource:get(Key),
-	Response = polish_keys_format:key(Data, Key, CT),
+	Data = polish_keys_resource:get(ID),
+	Response = polish_keys_format:key(Data, ID, CT),
 	{?OK, CT, Response}
     catch
 	throw:bad_request->
-	    {?BAD_REQUEST, [{?CT, "text/plain"}], ?BAD_REQUEST_MSG};
+	    {?BAD_REQUEST, "text/plain", ?BAD_REQUEST_MSG};
 	throw:bad_uri ->
-	    {404, [{?CT, "text/plain"}], "Not found"};
+	    {?NOT_FOUND, "text/plain", ?NOT_FOUND_MSG};
 	throw:not_supported ->
-	    {?NOT_SUPPORTED, [{?CT, "text/plain"}], ?NOT_SUPPORTED_MSG}
+	    {?NOT_SUPPORTED, "text/plain", ?NOT_SUPPORTED_MSG}
     end;
-key({_Req, _ResContentType, _Path, post}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG};
-key({_Req, _ResContentType, _Path, delete}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG};
-key({_Req, _ResContentType, _Path, put}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG}.
+key({_Req, _CT, _Path, post}) ->
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
+key({_Req, _CT, _Path, delete}) ->
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
+key({Req, CT, [ID], put}) ->
+    Body = Req:parse_post(),
+    try
+        case polish_keys_resource:put(ID, Body) of
+	    ok  -> Response = polish_keys_format:put(ok, CT);
+	    Err -> Response = polish_keys_format:put(Err, CT)
+	end,
+        {?OK, CT, Response}
+    catch
+        throw:bad_uri ->
+            {?NOT_FOUND, "text/plain", ?NOT_FOUND_MSG};
+        throw:bad_request ->
+            {?BAD_REQUEST, "text/plain", ?BAD_REQUEST_MSG}
+    end.

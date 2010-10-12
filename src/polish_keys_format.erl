@@ -3,7 +3,7 @@
 
 -module(polish_keys_format).
 
--export([list/2, key/3]).
+-export([list/2, key/3, put/2]).
 -import(polish_utils, [to_utf8/1]).
 
 -include("polish.hrl").
@@ -24,3 +24,10 @@ key(_Data, _Key, _CT) ->
 
 key_url(Key) ->
     ?l2a(polish_utils:build_url() ++ "/keyss/" ++ Key).
+
+put(ok, "application/json") ->
+    mochijson2:encode({struct, [{result, ok}]});
+put({error, Err}, "application/json") ->
+    mochijson2:encode({struct, [{result, ok}, {reason, ?l2a(Err)}]});
+put(_Data, _CT) ->
+    throw(not_supported).
