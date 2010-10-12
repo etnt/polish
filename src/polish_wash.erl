@@ -314,12 +314,15 @@ sort_po_file(LC) ->
     SortedPo = lists:keysort(1, LCPo),
     case SortedPo =:= LCPo of
 	true  ->
-            error_logger:info_msg(?a2l(LC)++" po file already sorted!"),
+            error_logger:info_msg(to_list(LC)++" po file already sorted!"),
             ok;
 	false ->
-	    error_logger:info_msg(?a2l(LC)++" po file not sorted. Sorting..."),
+	    error_logger:info_msg(to_list(LC)++" po file not sorted. Sorting..."),
 	    write_po_file(LC, SortedPo, "Polish tool", "polish@polish.org")
     end.
+
+to_list(LC) when is_list(LC) -> LC;
+to_list(LC) when is_atom(LC) -> ?a2l(LC).
 
 is_sorted(KVs, LC) ->
     {_,Res} = lists:foldl(fun({K,_}, {PrevK, Acc}) ->
