@@ -83,126 +83,25 @@ get_new_old_keys(LC) ->
 
 % write_po_file
 %------------------------------------------------------------------------------
-write_header(Fd, LC, Name, Email, EditPoHeader) ->
-    OrgName = polish:get_org_name(),
-    Info = case EditPoHeader of
-	       true ->
-		   "\"PO-Revision-Date: "++rfc3339()++"\\n\"\n"
-		       "\"Last-Translator: "++Name++" <"++Email++">\\n\"\n";
-	       false ->
-		   "\"Last-Translator: Polish\\n\"\n"
-	   end,
-    io:format(Fd,
-	      "# "++OrgName++" PO file for "++get_language_name(LC)++"\n"
-	      "# Copyright (C) "++year2str()++" "++OrgName++"\n"
-	      "#\n"
-	      "msgid \"\"\n"
-	      "msgstr \"\"\n"
-	      "\"Project-Id-Version: PACKAGE VERSION\\n\"\n"
-	      "\"POT-Creation-Date: 2006-07-01 16:45+0200\\n\"\n"
-	      ++ Info ++
-	      "\"Language-Team: Klarna <info@klarna.com>\\n\"\n"
-	      "\"MIME-Version: 1.0\\n\"\n"
-	      "\"Content-Type: text/plain; charset=iso-8859-1\\n\"\n"
-	      "\"Content-Transfer-Encoding: 8bit\\n\"\n",
-	      []).
+% NB: We ignore any dynamic info for now, aiming for as fixed header as
+% possible in order to avoid annoying PO-file diffs when doing VC-merging.
+write_header(Fd, LC, _Name, _Email, _EditPoHeader) ->
+    io:format(Fd, gettext:mk_polish_style_header(LC), []).
 
 write_entries(Fd, KVs) ->
     F = fun({header_info,_Val}) ->
 		ok;
 	   ({Key, Val}) ->
 		file:write(Fd, "\nmsgid \"\"\n"),
-		write_pretty(Key, Fd),
+		gettext:write_pretty(Key, Fd),
 		file:write(Fd, "msgstr \"\"\n"),
-		write_pretty(Val, Fd)
+		gettext:write_pretty(Val, Fd)
 	end,
     lists:foreach(F, KVs).
 
--define(ENDCOL, 72).
--define(PIVOT, 4).
--define(SEP, $\s).
-
-write_pretty([], _) ->
-    true;
-write_pretty(Str, Fd) when length(Str) =< ?ENDCOL ->
-    write_string(Str, Fd);
-write_pretty(Str, Fd) ->
-    {Line, Rest} = get_line(Str),
-    write_string(Line, Fd),
-    write_pretty(Rest, Fd).
-
-write_string(Str, Fd) ->
-    file:write(Fd, "\""),
-    file:write(Fd, escape_chars(Str)),
-    file:write(Fd, "\"\n").
-
-escape_chars(Str) ->
-    F = fun($", Acc)  -> [$\\,$"|Acc];
-           ($\\, Acc) -> [$\\,$\\|Acc];
-           ($\n, Acc) -> [$\\,$n|Acc];
-	   (C, Acc)   -> [C|Acc]
-	end,
-    lists:foldr(F, [], Str).
-
-%%% Split the string into substrings,
-%%% aligned around a specific column.
-get_line(Str) ->
-    get_line(Str, ?SEP, 1, ?ENDCOL, []).
-
-%%% End of string reached.
-get_line([], _Sep, _N, _End, Acc) ->
-    {lists:reverse(Acc), []};
-%%% Weird header_info sometimes
-get_line(header_info, _Sep, _N, _End, _Acc) ->
-    {"", []};
-%%% Eat characters.
-get_line([H|T], Sep, N, End, Acc) when N < End ->
-    get_line(T, Sep, N+1, End, [H|Acc]);
-%%% Ended with a Separator on the End boundary.
-get_line([Sep|T], Sep, End, End, Acc) ->
-    {lists:reverse([Sep|Acc]), T};
-%%% At the end, try to find end of token within
-%%% the given constraint, else backup one token.
-get_line([H|T] = In, Sep, End, End, Acc) ->
-    case find_end(T, Sep) of
-	{true, Racc, Rest} ->
-	    {lists:reverse(Racc ++ [H|Acc]), Rest};
-	false ->
-	    case reverse_tape(Acc, In) of
-		{true, Bacc, Rest} ->
-		    {lists:reverse(Bacc), Rest};
-		{false,Str} ->
-		    %%% Ugh...the word is longer than ENDCOL...
-		    split_string(Str, ?ENDCOL)
-	    end
-    end.
-
-find_end(Str, Sep) ->
-    find_end(Str, Sep, 1, ?PIVOT, []).
-
-find_end([Sep|T], Sep, N, Pivot, Acc) when N =< Pivot-> {true, [Sep|Acc], T};
-find_end(_Str, _Sep, N, Pivot, _Acc) when N > Pivot  -> false;
-find_end([H|T], Sep, N, Pivot, Acc)                  -> find_end(T,Sep,N+1,
-								 Pivot,[H|Acc]);
-find_end([], _Sep, _N, _Pivot, Acc)                  -> {true, Acc, []}.
-
-reverse_tape(Acc, Str) ->
-    reverse_tape(Acc, Str, ?SEP).
-
-reverse_tape([Sep|_T] = In, Str, Sep) -> {true, In, Str};
-reverse_tape([H|T], Str, Sep)         -> reverse_tape(T, [H|Str], Sep);
-reverse_tape([], Str, _Sep)           -> {false, Str}.
-
-split_string(Str, End) ->
-    split_string(Str, End, 1, []).
-
-split_string(Str, End, End, Acc)            -> {lists:reverse(Acc), Str};
-split_string([H|T], End, N, Acc) when N<End -> split_string(T,End,N+1,[H|Acc]);
-split_string([], _End, _N, Acc)             -> {lists:reverse(Acc), []}.
 
 mv(Tname, Fname) ->
     os:cmd("mv "++Tname++" "++Fname).
-
 
 
 % update_po_files
