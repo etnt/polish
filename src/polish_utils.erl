@@ -7,7 +7,6 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -export([build_info_log/3
-	 , get_language_name/1
 	 , hash/1
 	 , print_email_to_translators/1
 	 , print_new_old_keys/1
@@ -20,9 +19,6 @@
          , year2str/0
         ]).
 
-
-get_language_name(undefined) -> "";
-get_language_name(LC)        -> gettext_iso639:lc2lang(LC).
 
 year2str() ->
     {Y,_,_} = date(),
