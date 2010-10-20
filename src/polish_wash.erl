@@ -13,9 +13,7 @@
         ]).
 
 -import(polish_utils,
-        [get_language_name/1
-	 , year2str/0
-         , rfc3339/0
+        [rfc3339/0
         ]).
 
 -include("polish.hrl").

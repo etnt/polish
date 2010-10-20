@@ -25,7 +25,7 @@ title() ->
 
 layout() ->
     {LC, _Action} = Info = get_lang_and_action(),
-    Header = polish_common:header(polish_utils:get_language_name(LC)),
+    Header = polish_common:header(gettext:get_language_name(LC)),
     polish_server:unlock_user_keys(),
     #container_12 {
         body=[
