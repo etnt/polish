@@ -27,16 +27,16 @@ top({Req, CT, _Path, get}) ->
 	{?OK, CT, Response}
     catch
 	throw:bad_request->
-	    {?BAD_REQUEST, [{?CT, "text/plain"}], ?BAD_REQUEST_MSG};
+	    {?BAD_REQUEST, "text/plain", ?BAD_REQUEST_MSG};
 	throw:not_supported ->
-	    {?NOT_SUPPORTED, [{?CT, "text/plain"}], ?NOT_SUPPORTED_MSG}
+	    {?NOT_SUPPORTED, "text/plain", ?NOT_SUPPORTED_MSG}
     end;
 top({_Req, _ResContentType, _Path, post}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG};
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
 top({_Req, _ResContentType, _Path, delete}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG};
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
 top({_Req, _ResContentType, _Path, put}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG}.
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -49,15 +49,15 @@ key({_Req, CT, [Key], get}) ->
 	{?OK, CT, Response}
     catch
 	throw:bad_request->
-	    {?BAD_REQUEST, [{?CT, "text/plain"}], ?BAD_REQUEST_MSG};
+	    {?BAD_REQUEST, "text/plain", ?BAD_REQUEST_MSG};
 	throw:bad_uri ->
-	    {?NOT_FOUND, [{?CT, "text/plain"}], ?NOT_FOUND_MSG};
+	    {?NOT_FOUND, "text/plain", ?NOT_FOUND_MSG};
 	throw:not_supported ->
-	    {?NOT_SUPPORTED, [{?CT, "text/plain"}], ?NOT_SUPPORTED_MSG}
+	    {?NOT_SUPPORTED, "text/plain", ?NOT_SUPPORTED_MSG}
     end;
 key({_Req, _ResContentType, _Path, post}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG};
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
 key({_Req, _ResContentType, _Path, delete}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG};
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
 key({_Req, _ResContentType, _Path, put}) ->
-    {?BAD_METHOD, [{?CT, "text/plain"}], ?BAD_METHOD_MSG}.
+    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG}.
