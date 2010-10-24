@@ -7,7 +7,7 @@
 
 -include("polish.hrl").
 
-dispatch({_Req, _ResContentType, Path, _Meth} = Args) ->
+dispatch({_Req, _CT, Path, _Meth} = Args) ->
     F = case Path of
 	    ""  -> top;
 	    [_] -> key;
@@ -31,11 +31,11 @@ top({Req, CT, _Path, get}) ->
 	throw:not_supported ->
 	    {?NOT_SUPPORTED, "text/plain", ?NOT_SUPPORTED_MSG}
     end;
-top({_Req, _ResContentType, _Path, post}) ->
+top({_Req, _CT, _Path, post}) ->
     {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
-top({_Req, _ResContentType, _Path, delete}) ->
+top({_Req, _CT, _Path, delete}) ->
     {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
-top({_Req, _ResContentType, _Path, put}) ->
+top({_Req, _CT, _Path, put}) ->
     {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG}.
 
 
@@ -55,9 +55,19 @@ key({_Req, CT, [Key], get}) ->
 	throw:not_supported ->
 	    {?NOT_SUPPORTED, "text/plain", ?NOT_SUPPORTED_MSG}
     end;
-key({_Req, _ResContentType, _Path, post}) ->
+key({_Req, _CT, _Path, post}) ->
     {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
-key({_Req, _ResContentType, _Path, delete}) ->
+key({_Req, _CT, _Path, delete}) ->
     {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
-key({_Req, _ResContentType, _Path, put}) ->
-    {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG}.
+key({Req, CT, [Key], put}) ->
+    Body = Req:parse_post(),
+    try
+	Result = polish_keys_resource:put(Key, Body),
+	Response = polish_keys_format:put(Result, CT),
+	{?OK, CT, Response}
+    catch
+	throw:bad_request->
+	    {?BAD_REQUEST, "text/plain", ?BAD_REQUEST_MSG};
+	throw:bad_uri ->
+	    {?NOT_FOUND, "text/plain", ?NOT_FOUND_MSG}
+    end.

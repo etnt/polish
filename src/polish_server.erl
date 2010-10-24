@@ -252,9 +252,12 @@ do_read_po_file(State, LC) ->
     KVs = ets:select(?MODULE, [{{{LC,'_'}, {'$1','$2'}}, [], [{{'$1','$2'}}]}]),
     {State, KVs}.
 
-do_write_key(State, [C1, C2 | Hash], Value) ->
-    ets:insert(?MODULE, {{[C1, C2], Hash}, Value}),
-    {State, ok}.
+do_write_key(State, [C1, C2 | Hash] = K, Value) ->
+    Res = case do_try_read_key(State, K) of
+	      false -> false;
+	      {K,_} -> ets:insert(?MODULE, {{[C1, C2], Hash}, {K, Value}})
+	  end,
+    {State, Res}.
 
 do_read_key(State, [C1, C2 | Hash]) ->
     {State, element(2, hd(ets:lookup(?MODULE, {[C1, C2], Hash})))}.

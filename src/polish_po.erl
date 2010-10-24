@@ -6,7 +6,6 @@
 -export([check_correctness/2
 	 , get_entries/1
 	 , get_stats/1
-	 , write/1
         ]).
 
 -include("polish.hrl").
@@ -38,17 +37,6 @@ get_entries({LC, {Action0, Str, {Trans, UnTrans, K, V, MatchType}}})
 	    false -> {Entries0, Action0}
 	end,
     {Action, polish_server:lock_keys(Entries, ?l2a(LC)), false}.
-
-write(KV) ->
-    LC = wf:session(lang),
-    KVs0 = polish_server:read_po_file(LC),
-    KVs = lists:keysort(1, merge_changes(KVs0, KV)),
-    TransName = polish_utils:translator_name(),
-    polish_wash:write_po_file(LC, KVs, TransName,
-			      polish_utils:translator_email()),
-    polish_server:update_po_file(LC, KV),
-    Str = polish_utils:build_info_log(?l2a(LC), TransName, KV),
-    error_logger:info_msg(Str).
 
 get_stats(undefined) -> {0, 0};
 get_stats(LC) ->
@@ -183,19 +171,6 @@ run_validator(Module, K, V) ->
 		 element(1, hd(Err)) =:= 'Warning' ->
 	    {error, element(2, hd(Err))}
     end.
-
-
-
-% write
-%------------------------------------------------------------------------------
-merge_changes(KVs, Changes) ->
-    lists:foldr(
-      fun({K, _V} = KV, Acc) -> case proplists:get_value(K, Changes) of
-				    undefined -> [KV | Acc];
-				    NewV      -> [{K, NewV} | Acc]
-				end
-      end, [], KVs).
-
 
 
 % get_stats

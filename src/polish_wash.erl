@@ -4,7 +4,8 @@
 -module(polish_wash).
 
 
--export([write_po_file/4
+-export([write_po_file/1
+	 , write_po_file/4
 	 , read_po_file/1
 	 , update_po_files/2
 	 , sort_po_files/1
@@ -24,6 +25,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  A P I
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+write_po_file(LC) ->
+    KVs = lists:keysort(1, polish_server:read_po_file(LC)),
+    write_po_file(LC, KVs, "", "").
+
 write_po_file(LC, KVs, Name, Email) ->
     Fname = mk_po_filename(LC),
     Tname = Fname++".tmp",

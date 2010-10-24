@@ -16,8 +16,6 @@
 	 , split_whitespace/1
          , rfc3339/0
 	 , to_utf8/1
-         , translator_name/0
-         , translator_email/0
 	 , trim_whitespace/1
          , year2str/0
         ]).
@@ -29,12 +27,6 @@ get_language_name(LC)        -> gettext_iso639:lc2lang(LC).
 year2str() ->
     {Y,_,_} = date(),
     ?i2l(Y).
-
-translator_name() ->
-    wf:session(name).
-
-translator_email() ->
-    wf:session(email).
 
 rfc3339() ->
     rfc3339(calendar:now_to_local_time(now())).

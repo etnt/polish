@@ -7,7 +7,7 @@
 
 -include("polish.hrl").
 
-dispatch({_Req, _ResContentType, Path, _Meth} = Args) ->
+dispatch({_Req, _CT, Path, _Meth} = Args) ->
     F = case Path of
 	    ""  -> top;
 	    [_] -> language;
@@ -30,11 +30,11 @@ top({_Req, CT, _Path, get}) ->
 	throw:not_supported ->
 	    {?NOT_SUPPORTED, "text/plain", ?NOT_SUPPORTED_MSG}
     end;
-top({_Req, _ResContentType, _Path, post}) ->
+top({_Req, _CT, _Path, post}) ->
     {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
-top({_Req, _ResContentType, _Path, delete}) ->
+top({_Req, _CT, _Path, delete}) ->
     {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
-top({_Req, _ResContentType, _Path, put}) ->
+top({_Req, _CT, _Path, put}) ->
     {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG}.
 
 
@@ -54,10 +54,10 @@ language({_Req, CT, [LC], get}) ->
 	throw:not_supported ->
 	    {?NOT_SUPPORTED, "text/plain", ?NOT_SUPPORTED_MSG}
     end;
-language({_Req, _ResContentType, _Path, post}) ->
+language({_Req, _CT, _Path, post}) ->
     {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
-language({_Req, _ResContentType, _Path, delete}) ->
+language({_Req, _CT, _Path, delete}) ->
     {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
-language({_Req, _ResContentType, _Path, put}) ->
+language({_Req, _CT, _Path, put}) ->
     {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG}.
 
