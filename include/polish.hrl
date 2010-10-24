@@ -18,3 +18,5 @@
 -define(OK, 200).
 -define(BAD_METHOD, 405).
 -define(BAD_METHOD_MSG, "Bad method").
+-define(INTERNAL_SERVER_ERROR, 500).
+-define(INTERNAL_SERVER_ERROR_MSG, "Internal server error").

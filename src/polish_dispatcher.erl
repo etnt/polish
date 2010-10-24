@@ -37,8 +37,10 @@ dispatch(Req) ->
 % Call the controller action here
 run_controller(Req, Controller, Args) ->
     case (catch apply(Controller, dispatch, Args)) of
-	{'EXIT', _} ->
-	    Req:respond({?NOT_FOUND, [{?CT, "text/plain"}], ?NOT_FOUND_MSG});
+	{'EXIT', Err} ->
+	    error_logger:format("~p~n", [Err]),
+	    Req:respond({?INTERNAL_SERVER_ERROR, [{?CT, "text/plain"}],
+			 ?INTERNAL_SERVER_ERROR_MSG});
 	{Status, ContentType, Data} ->
 	    Req:respond({Status, [{?CT, ContentType}], Data})
     end.
