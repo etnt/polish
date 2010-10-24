@@ -40,12 +40,12 @@ top({_Req, _CT, _Path, put}) ->
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% /keys/key
+%% /keys/keyID
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-key({_Req, CT, [Key], get}) ->
+key({_Req, CT, [ID], get}) ->
     try
-	Data = polish_keys_resource:get(Key),
-	Response = polish_keys_format:key(Data, Key, CT),
+	Data = polish_keys_resource:get(ID),
+	Response = polish_keys_format:key(Data, ID, CT),
 	{?OK, CT, Response}
     catch
 	throw:bad_request->

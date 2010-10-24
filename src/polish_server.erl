@@ -13,7 +13,7 @@
 	 , load_always_translated_keys/2
 	 , load_po_files/1
 	 , lock_keys/2
-	 , mark_as_always_translated/2
+	 , mark_as_always_translated/1
 	 , read_key/1
 	 , read_po_file/1
 	 , set_new_old_keys/1
@@ -42,11 +42,11 @@ load_po_files(CustomLCs) ->
 read_po_file(LC) ->
     gen_server:call(?MODULE, {read_po_file, LC}).
 
-write_key(Key, Value) ->
-    gen_server:call(?MODULE, {write_key, Key, Value}).
+write_key(ID, Value) ->
+    gen_server:call(?MODULE, {write_key, ID, Value}).
 
-read_key(Key) ->
-    gen_server:call(?MODULE, {read_key, Key}).
+read_key(ID) ->
+    gen_server:call(?MODULE, {read_key, ID}).
 
 try_read_key(Key) ->
     gen_server:call(?MODULE, {try_read_key, Key}).
@@ -71,8 +71,8 @@ delete_old_locked_keys() ->
 load_always_translated_keys(LC, File) ->
     gen_server:call(?MODULE, {load_always_translated_keys, LC, File}).
 
-mark_as_always_translated(LC, Key) ->
-    gen_server:call(?MODULE, {mark_as_always_translated, LC, Key}).
+mark_as_always_translated(ID) ->
+    gen_server:call(?MODULE, {mark_as_always_translated, ID}).
 
 is_always_translated(LC, Key) ->
     gen_server:call(?MODULE, {is_always_translated, LC, Key}).
@@ -137,12 +137,12 @@ handle_call({read_po_file, LC}, _From, State) ->
     {NewState, Reply} = do_read_po_file(State, LC),
     {reply, Reply, NewState};
 
-handle_call({write_key, Key, Value}, _From, State) ->
-    {NewState, Reply} = do_write_key(State, Key, Value),
+handle_call({write_key, ID, Value}, _From, State) ->
+    {NewState, Reply} = do_write_key(State, ID, Value),
     {reply, Reply, NewState};
 
-handle_call({read_key, Key}, _From, State) ->
-    {NewState, Reply} = do_read_key(State, Key),
+handle_call({read_key, ID}, _From, State) ->
+    {NewState, Reply} = do_read_key(State, ID),
     {reply, Reply, NewState};
 
 handle_call({try_read_key, Key}, _From, State) ->
@@ -169,8 +169,8 @@ handle_call({load_always_translated_keys, LC, File}, _From, State) ->
     {NewState, Reply} = do_load_always_translated_keys(State, LC, File),
     {reply, Reply, NewState};
 
-handle_call({mark_as_always_translated, LC, Key}, _From, State) ->
-    {NewState, Reply} = do_mark_as_always_translated(State, LC, Key),
+handle_call({mark_as_always_translated, ID}, _From, State) ->
+    {NewState, Reply} = do_mark_as_always_translated(State, ID),
     {reply, Reply, NewState};
 
 handle_call({is_always_translated, LC, Key}, _From, State) ->
@@ -317,14 +317,15 @@ do_load_always_translated_keys(State, LC, File) ->
             {State, ok}
     end.
 
-do_mark_as_always_translated(State, LC, Key) ->
-    ets:insert(always_translated, {{LC, Key}, true}),
-    case file:open(polish:meta_filename(?a2l(LC)), [append]) of
+do_mark_as_always_translated(State, [C1, C2 | Hash]) ->
+    {K, _} = element(2, hd(ets:lookup(?MODULE, {[C1, C2], Hash}))),
+    ets:insert(always_translated, {{?l2a([C1, C2]), K}, true}),
+    case file:open(polish:meta_filename([C1, C2]), [append]) of
         {ok,Fd}  ->
 	    F = fun($", Acc)  -> [$\\,$"|Acc];
 		   (C, Acc)   -> [C|Acc]
 		end,
-	    EscKey = lists:foldr(F, [], Key),
+	    EscKey = lists:foldr(F, [], K),
             Str = "{always_translated, \"" ++ EscKey ++ "\"}.\n",
             file:write(Fd, Str),
             {State, ok};
