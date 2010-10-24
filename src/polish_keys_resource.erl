@@ -13,5 +13,5 @@ get_list(_Query) ->
 get(Key) ->
     case polish_server:try_read_key(Key) of
 	false -> throw(bad_uri);
-	Key   -> Key
+	Res   -> Res
     end.
