@@ -11,4 +11,7 @@ get_list(_Query) ->
      [LC || LC <- polish:all_custom_lcs(), LC =/= "a"].
 
 get(Key) ->
-    polish_server:read_key(Key).
+    case polish_server:try_read_key(Key) of
+	false -> throw(bad_uri);
+	Key   -> Key
+    end.

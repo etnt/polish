@@ -17,6 +17,7 @@
 	 , read_key/1
 	 , read_po_file/1
 	 , set_new_old_keys/1
+	 , try_read_key/1
 	 , unlock_user_keys/0
 	 , write_key/2
         ]).
@@ -46,6 +47,9 @@ write_key(Key, Value) ->
 
 read_key(Key) ->
     gen_server:call(?MODULE, {read_key, Key}).
+
+try_read_key(Key) ->
+    gen_server:call(?MODULE, {try_read_key, Key}).
 
 lock_keys(KVs, LC) when is_atom(LC) ->
     gen_server:call(?MODULE, {lock_keys, KVs, LC, ?l2a(wf:user())}).
@@ -139,6 +143,10 @@ handle_call({write_key, Key, Value}, _From, State) ->
 
 handle_call({read_key, Key}, _From, State) ->
     {NewState, Reply} = do_read_key(State, Key),
+    {reply, Reply, NewState};
+
+handle_call({try_read_key, Key}, _From, State) ->
+    {NewState, Reply} = do_try_read_key(State, Key),
     {reply, Reply, NewState};
 
 handle_call({lock_keys, KVs, LC, User}, _From, State) ->
@@ -250,6 +258,13 @@ do_write_key(State, [C1, C2 | Hash], Value) ->
 
 do_read_key(State, [C1, C2 | Hash]) ->
     {State, element(2, hd(ets:lookup(?MODULE, {[C1, C2], Hash})))}.
+
+do_try_read_key(State, [C1, C2 | Hash]) ->
+    Res = case ets:lookup(?MODULE, {[C1, C2], Hash}) of
+	      []        -> false;
+	      [{_, KV}] -> KV
+	  end,
+    {State, Res}.
 
 do_lock_keys(State, KVs, LC, User) ->
     Res = lists:foldl(

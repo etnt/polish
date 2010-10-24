@@ -51,7 +51,7 @@ key({_Req, CT, [Key], get}) ->
 	throw:bad_request->
 	    {?BAD_REQUEST, [{?CT, "text/plain"}], ?BAD_REQUEST_MSG};
 	throw:bad_uri ->
-	    {404, [{?CT, "text/plain"}], "Not found"};
+	    {?NOT_FOUND, [{?CT, "text/plain"}], ?NOT_FOUND_MSG};
 	throw:not_supported ->
 	    {?NOT_SUPPORTED, [{?CT, "text/plain"}], ?NOT_SUPPORTED_MSG}
     end;

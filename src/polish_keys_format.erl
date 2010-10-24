@@ -23,4 +23,4 @@ key(_Data, _Key, _CT) ->
     throw(not_supported).
 
 key_url(Key) ->
-    ?l2a(polish_utils:build_url() ++ "/keyss/" ++ Key).
+    ?l2a(polish_utils:build_url() ++ "/keys/" ++ Key).
