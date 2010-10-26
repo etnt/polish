@@ -3,7 +3,7 @@
 
 -module(polish_po).
 
--export([check_correctness/2
+-export([is_correct_translation/2
 	 , get_entries/1
 	 , get_stats/1
         ]).
@@ -44,7 +44,7 @@ get_stats(LC) ->
     Untrans = get_amount_untranslated_keys(KVs, ?l2a(LC)),
     {length(KVs), Untrans}.
 
-check_correctness(Key, Val) ->
+is_correct_translation(Key, Val) ->
     Validators = [gettext_validate_bad_ftxt, gettext_validate_bad_stxt,
 		  gettext_validate_bad_case, gettext_validate_bad_html,
 		  gettext_validate_bad_punct, gettext_validate_bad_ws],
@@ -157,11 +157,11 @@ escape_regexp([], Acc) -> lists:reverse(Acc).
 % check_correctness
 %------------------------------------------------------------------------------
 run_validators(_Key, _Val, []) ->
-    ok;
+    true;
 run_validators(Key, Val, [Validator|T]) ->
     case run_validator(Validator, Key, Val) of
-	ok                -> run_validators(Key, Val, T);
-	{error, _Msg} = E -> E
+	ok           -> run_validators(Key, Val, T);
+	{error, Msg} -> {false, Msg}
     end.
 
 run_validator(Module, K, V) ->

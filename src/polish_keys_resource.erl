@@ -10,54 +10,50 @@
 get_list(_Query) ->
      [LC || LC <- polish:all_custom_lcs(), LC =/= "a"].
 
-get(Key) ->
-    case polish_server:try_read_key(Key) of
+get(ID) ->
+    case polish_server:try_read_key(ID) of
 	false -> throw(bad_uri);
 	Res   -> Res
     end.
 
-put([LC1, LC2|_] = Key, Body) ->
-    case get_and_validate_translation(Key, Body) of
-	{ok, Translation} ->
-	    polish_server:write_key(Key, Translation),
-	    polish_wash:write([LC1, LC2]);
-	{Err, _} ->
-	    Err
+put(ID, Body) ->
+    case maybe_save_translation(ID, Body) of
+	false -> maybe_mark_as_always_translated(ID, Body);
+	Res   -> Res
     end.
 
-get_and_validate_translation(Key, Body) ->
-    Translation0 = case lists:keyfind("translation", 1, Body) of
-		      false ->
-			  throw(bad_request);
-		      {"translation", T} ->
-			  polish_utils:trim_whitespace(T)
-		  end,
-    {K, _V} = ?MODULE:get(Key),
-    Translation = polish_utils:restore_whitespace(K, Translation0),
-    {polish_po:check_correctness(K, Translation), Translation}.
+maybe_save_translation(ID, Body) ->
+    case lists:keyfind("translation", 1, Body) of
+	false            -> false;
+	{_, Translation} -> save_translation(ID, Translation)
+    end.
 
-    %% Str = polish_utils:build_info_log(?l2a(LC), "", KV),
-    %% error_logger:info_msg(Str).
+maybe_mark_as_always_translated(ID, Body) ->
+    case lists:keyfind("mark_as_always_translated", 1, Body) of
+	false  -> throw(bad_request);
+	{_, _} -> polish_server:mark_as_always_translated(ID)
+    end.
 
-%% put(ID, ReqBody) ->
-%%     case lists:keyfind(action, 1, ReqBody) of
-%% 	false ->
-%% 	    write(ID, lists:keyfind(translation, 1, ReqBody));
-%% 	"mark_as_always_translated" ->
-%% 	    polish_server:mark_as_always_translated(ID)
-%%     end.
+save_translation([LC1, LC2|_] = ID, Translation) ->
+    {Key, _V} = ?MODULE:get(ID),
+    case validate_translation(Key, Translation) of
+	{error, _} = Err ->
+	    Err;
+	ValidatedTranslation  ->
+	    polish_server:write_key(ID, ValidatedTranslation),
+	    polish_wash:write([LC1, LC2]),
+	    log_save_translation([LC1,LC2], Key, ValidatedTranslation)
+    end.
 
-%% write(ID, Val0) ->
-%%     {Key, _PrevV} = polish_server:read_key(ID),
-%%     Val = polish_utils:to_latin1(
-%% 	    polish_utils:restore_whitespace(
-%% 	      Key, polish_utils:trim_whitespace(Val0))),
-%%     case polish_po:check_correctness(Key, Val) of
-%% 	ok ->
-%% 	    %polish_server:unlock_user_keys(),
-%% 	    polish_po:write([{Key, Val}]),
-%% 	    ok;
-%% 	Err ->
-%% 	    Err
-%%     end.
+validate_translation(Key, Translation0) ->
+    Translation = polish_utils:to_latin1(
+		    polish_utils:restore_whitespace(
+		      Key, polish_utils:trim_whitespace(Translation0))),
+    case polish_po:is_correct_translation(Key, Translation) of
+	true         -> Translation;
+	{false, Err} -> {error, Err}
+    end.
 
+log_save_translation(LC, Key, Translation) ->
+    Str = polish_utils:build_info_log(?l2a(LC), "", [Key, Translation]),
+    error_logger:info_msg(Str).

@@ -59,10 +59,10 @@ key({_Req, _CT, _Path, post}) ->
     {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
 key({_Req, _CT, _Path, delete}) ->
     {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
-key({Req, CT, [Key], put}) ->
+key({Req, CT, [ID], put}) ->
     Body = Req:parse_post(),
     try
-	Result = polish_keys_resource:put(Key, Body),
+	Result = polish_keys_resource:put(ID, Body),
 	Response = polish_keys_format:put(Result, CT),
 	{?OK, CT, Response}
     catch
