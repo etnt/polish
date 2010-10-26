@@ -89,6 +89,8 @@ write_header(Fd, LC, _Name, _Email, _EditPoHeader) ->
 write_entries(Fd, KVs) ->
     F = fun({header_info,_Val}) ->
 		ok;
+	   ({_Key,header_info}) ->
+		ok;
 	   ({Key, Val}) ->
 		file:write(Fd, "\nmsgid \"\"\n"),
 		gettext:write_pretty(Key, Fd),
