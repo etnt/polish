@@ -42,7 +42,8 @@ save_translation([LC1, LC2|_] = ID, Translation) ->
 	ValidatedTranslation  ->
 	    polish_server:write_key(ID, ValidatedTranslation),
 	    polish_wash:write([LC1, LC2]),
-	    log_save_translation([LC1,LC2], Key, ValidatedTranslation)
+	    log_save_translation([LC1,LC2], Key, ValidatedTranslation),
+	    ok
     end.
 
 validate_translation(Key, Translation0) ->
