@@ -38,7 +38,7 @@
 %%%===================================================================
 
 load_po_files(CustomLCs) ->
-    gen_server:call(?MODULE, {load_po_files, CustomLCs}).
+    gen_server:call(?MODULE, {load_po_files, CustomLCs}, infinity).
 
 read_po_file(LC) ->
     gen_server:call(?MODULE, {read_po_file, LC}).
