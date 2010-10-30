@@ -30,8 +30,9 @@ maybe_save_translation(ID, Body) ->
 
 maybe_mark_as_always_translated(ID, Body) ->
     case lists:keyfind("mark_as_always_translated", 1, Body) of
-	false  -> throw(bad_request);
-	{_, _} -> polish_server:mark_as_always_translated(ID)
+	false        -> throw(bad_request);
+	{_, "true"}  -> polish_server:mark_as_always_translated(ID);
+	{_, "false"} -> polish_server:unmark_as_always_translated(ID)
     end.
 
 save_translation([LC1, LC2|_] = ID, Translation) ->

@@ -19,6 +19,7 @@
 	 , set_new_old_keys/1
 	 , try_read_key/1
 	 , unlock_user_keys/0
+	 , unmark_as_always_translated/1
 	 , write_key/2
         ]).
 
@@ -73,6 +74,9 @@ load_always_translated_keys(LC, File) ->
 
 mark_as_always_translated(ID) ->
     gen_server:call(?MODULE, {mark_as_always_translated, ID}).
+
+unmark_as_always_translated(ID) ->
+    gen_server:call(?MODULE, {unmark_as_always_translated, ID}).
 
 is_always_translated(LC, Key) ->
     gen_server:call(?MODULE, {is_always_translated, LC, Key}).
@@ -171,6 +175,10 @@ handle_call({load_always_translated_keys, LC, File}, _From, State) ->
 
 handle_call({mark_as_always_translated, ID}, _From, State) ->
     {NewState, Reply} = do_mark_as_always_translated(State, ID),
+    {reply, Reply, NewState};
+
+handle_call({unmark_as_always_translated, ID}, _From, State) ->
+    {NewState, Reply} = do_unmark_as_always_translated(State, ID),
     {reply, Reply, NewState};
 
 handle_call({is_always_translated, LC, Key}, _From, State) ->
@@ -321,13 +329,23 @@ do_mark_as_always_translated(State, [C1, C2 | Hash]) ->
     {K, _} = element(2, hd(ets:lookup(?MODULE, {[C1, C2], Hash}))),
     ets:insert(always_translated, {{?l2a([C1, C2]), K}, true}),
     case file:open(polish:meta_filename([C1, C2]), [append]) of
-        {ok,Fd}  ->
-	    F = fun($", Acc)  -> [$\\,$"|Acc];
-		   (C, Acc)   -> [C|Acc]
-		end,
-	    EscKey = lists:foldr(F, [], K),
-            Str = "{always_translated, \"" ++ EscKey ++ "\"}.\n",
-            file:write(Fd, Str),
+        {ok, Fd} ->
+	    add_always_translated_key_to_meta_file(K, Fd),
+	    file:close(Fd),
+            {State, ok};
+        _ ->
+            {State, ok}
+    end.
+
+do_unmark_as_always_translated(State, [C1, C2 | Hash]) ->
+    {K, _} = element(2, hd(ets:lookup(?MODULE, {[C1, C2], Hash}))),
+    ets:delete(always_translated, {?l2a([C1,C2]), K}),
+    case file:consult(polish:meta_filename([C1,C2])) of
+        {ok, List0} ->
+	    {ok, Fd} = file:open(polish:meta_filename([C1, C2]), [write]),
+	    List = lists:keydelete(K, 2, List0),
+	    [add_always_translated_key_to_meta_file(Key,Fd) || {_,Key} <- List],
+	    file:close(Fd),
             {State, ok};
         _ ->
             {State, ok}
@@ -370,3 +388,11 @@ unescape_key(Str) ->
 unescape_key([$\\,$"|Str], Acc) -> unescape_key(Str, [$"|Acc]);
 unescape_key([Ch|Str], Acc)     -> unescape_key(Str, [Ch|Acc]);
 unescape_key([], Acc)           -> lists:reverse(Acc).
+
+add_always_translated_key_to_meta_file(Key, Fd) ->
+    F = fun($", Acc)  -> [$\\,$"|Acc];
+	   (C, Acc)   -> [C|Acc]
+	end,
+    EscKey = lists:foldr(F, [], Key),
+    Str = "{always_translated, \"" ++ EscKey ++ "\"}.\n",
+    file:write(Fd, Str).
