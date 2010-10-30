@@ -28,6 +28,6 @@ key_url(Key) ->
 put(ok, "application/json") ->
     mochijson2:encode({struct, [{result, ok}]});
 put({error, Err}, "application/json") ->
-    mochijson2:encode({struct, [{result, ok}, {reason, ?l2a(Err)}]});
+    mochijson2:encode({struct, [{result, error}, {reason, ?l2a(Err)}]});
 put(_Data, _CT) ->
     throw(not_supported).

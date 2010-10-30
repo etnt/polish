@@ -42,7 +42,7 @@ save_translation([LC1, LC2|_] = ID, Translation) ->
 	    Err;
 	ValidatedTranslation  ->
 	    polish_server:write_key(ID, ValidatedTranslation),
-	    polish_wash:write([LC1, LC2]),
+	    polish_wash:write_po_file([LC1, LC2]),
 	    log_save_translation([LC1,LC2], Key, ValidatedTranslation),
 	    ok
     end.
@@ -57,5 +57,5 @@ validate_translation(Key, Translation0) ->
     end.
 
 log_save_translation(LC, Key, Translation) ->
-    Str = polish_utils:build_info_log(?l2a(LC), "", [Key, Translation]),
+    Str = polish_utils:build_info_log(?l2a(LC), "", [{Key, Translation}]),
     error_logger:info_msg(Str).

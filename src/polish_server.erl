@@ -260,10 +260,10 @@ do_read_po_file(State, LC) ->
     KVs = ets:select(?MODULE, [{{{LC,'_'}, {'$1','$2'}}, [], [{{'$1','$2'}}]}]),
     {State, KVs}.
 
-do_write_key(State, [C1, C2 | Hash] = K, Value) ->
-    Res = case do_try_read_key(State, K) of
-	      false -> false;
-	      {K,_} -> ets:insert(?MODULE, {{[C1, C2], Hash}, {K, Value}})
+do_write_key(State, [C1, C2 | Hash], Value) ->
+    Res = case try_read_key([C1, C2], Hash) of
+	      false   -> false;
+	      {Key,_} -> ets:insert(?MODULE, {{[C1, C2], Hash}, {Key, Value}})
 	  end,
     {State, Res}.
 
@@ -271,11 +271,7 @@ do_read_key(State, [C1, C2 | Hash]) ->
     {State, element(2, hd(ets:lookup(?MODULE, {[C1, C2], Hash})))}.
 
 do_try_read_key(State, [C1, C2 | Hash]) ->
-    Res = case ets:lookup(?MODULE, {[C1, C2], Hash}) of
-	      []        -> false;
-	      [{_, KV}] -> KV
-	  end,
-    {State, Res}.
+    {State, try_read_key([C1, C2], Hash)}.
 
 do_lock_keys(State, KVs, LC, User) ->
     Res = lists:foldl(
@@ -377,6 +373,12 @@ do_load_po_files([LC|CustomLCs]) ->
     do_load_po_files(CustomLCs);
 do_load_po_files([]) ->
     ok.
+
+try_read_key(Language, Hash) ->
+    case ets:lookup(?MODULE, {Language, Hash}) of
+	[]        -> false;
+	[{_, KV}] -> KV
+    end.
 
 assure_po_file_loaded_correctly(LC, KVs) ->
     StoredKVs = ets:select(?MODULE, [{{{LC, '_'}, {'$1','$2'}},
