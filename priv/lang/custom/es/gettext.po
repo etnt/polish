@@ -1,0 +1,37 @@
+# Klarna AB Sweden PO file for Spanish
+# Copyright (C) 2010 Klarna AB Sweden
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2006-07-01 16:45+0200\n"
+"Last-Translator: Polish\n"
+"Language-Team: Klarna <info@klarna.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid ""
+"Hej POlish"
+msgstr ""
+"Hola POlish"
+
+msgid ""
+"jag heter POlish"
+msgstr ""
+"me llamo POlish"
+
+msgid ""
+"POlish"
+msgstr ""
+"POlish"
+
+msgid ""
+"POlish bor i Github "
+msgstr ""
+"POlish vive en Github "
+
+msgid ""
+"POlish är 4 månader gammal."
+msgstr ""
+"POlish tiene 4 años."
