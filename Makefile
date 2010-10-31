@@ -10,7 +10,7 @@ init:
 
 run_test:
 	mkdir -p results
-	run_test -dir test/ -logdir results/ -pa ./ebin ${MOCHIWEB_EBIN} ${GETTEXT_EBIN} ${EOPENID_EBIN} ${ELOGGER_EBIN}
+	run_test -dir test/ -logdir results/ -pa $(PWD)/ebin $(PWD)/${MOCHIWEB_EBIN} $(PWD)/${GETTEXT_EBIN} $(PWD)/${EOPENID_EBIN} $(PWD)/${ELOGGER_EBIN}
 	mv test/*beam ebin/
 
 clean:
