@@ -1,7 +1,7 @@
 %%% @author Jordi Chacon <jordi.chacon@klarna.com>
 %%% @copyright (C) 2010, Jordi Chacon
 -module(polish_test_lib).
--export([start_polish_for_test/0, send_http_request/4]).
+-export([send_http_request/4]).
 
 -include_lib("eunit/include/eunit.hrl").
 
