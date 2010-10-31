@@ -10,7 +10,8 @@ suite() ->
     [].
 
 all() ->
-    [http_get_languages].
+    [http_get_languages,
+     http_get_language].
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -50,3 +51,10 @@ http_get_languages(_Config) ->
       [{"url", URL++"/es"}, {"name", "Spanish"}], Es),
     ok.
 
+http_get_language(_Config) ->
+    ResponseJSON = polish_test_lib:send_http_request(
+		     get, "/languages/ca", ?JSON, ?OK),
+    {struct, Response} = mochijson2:decode(ResponseJSON),
+    polish_test_lib:assert_fields_from_response(
+      [{"total", 5}, {"untrans", 1}], Response),
+    ok.
