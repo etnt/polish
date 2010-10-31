@@ -1,9 +1,11 @@
 %%% @author Jordi Chacon <jordi.chacon@klarna.com>
 %%% @copyright (C) 2010, Jordi Chacon
 -module(polish_test_lib).
--export([send_http_request/4]).
+-export([send_http_request/4
+	 , assert_fields_from_response/2]).
 
 -include_lib("eunit/include/eunit.hrl").
+-include_lib("../include/polish.hrl").
 
 start_polish_for_test() ->
     PWD = get_polish_path(),
@@ -26,3 +28,19 @@ send_http_request(Method, SubURL, Accept, ExpectedCode) ->
 			      [{"Accept", Accept}]}, [], []),
     ?assertEqual(ExpectedCode, Code),
     Body.
+
+assert_fields_from_response([{FieldName, ExpectedValue} | T], Response)
+  when is_integer(ExpectedValue) ->
+    assert_field_from_response(FieldName, ExpectedValue, Response),
+    assert_fields_from_response(T, Response);
+assert_fields_from_response([{FieldName, ExpectedValue} | T], Response)
+  when is_list(ExpectedValue) ->
+    assert_field_from_response(FieldName, ?l2b(ExpectedValue), Response),
+    assert_fields_from_response(T, Response);
+assert_fields_from_response([], _Response) ->
+    ok.
+
+assert_field_from_response(FieldName, ExpectedValue, Response) ->
+    FieldNameBin = ?l2b(FieldName),
+    ?assertEqual({FieldNameBin, ExpectedValue},
+		 lists:keyfind(FieldNameBin, 1, Response)).
