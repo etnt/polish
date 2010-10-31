@@ -1,4 +1,6 @@
 ebin/
 www/nitrogen/
 logs/
+results/
+priv/gettext_server_db.dets
 *~
