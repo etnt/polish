@@ -1,4 +1,4 @@
-# Klarna AB Sweden PO file for Swedish
+# Klarna AB Sweden PO file for 
 # Copyright (C) 2010 Klarna AB Sweden
 #
 msgid ""
@@ -17,11 +17,6 @@ msgstr ""
 "Hej POlish"
 
 msgid ""
-"jag heter POlish"
-msgstr ""
-"jag heter POlish"
-
-msgid ""
 "POlish"
 msgstr ""
 "POlish"
@@ -35,3 +30,8 @@ msgid ""
 "POlish är 4 månader gammal."
 msgstr ""
 "POlish är 4 månader gammal."
+
+msgid ""
+"jag heter POlish"
+msgstr ""
+"jag heter POlish"
