@@ -5,8 +5,9 @@
 -define(b2l(B), binary_to_list(B)).
 -define(l2b(L), list_to_binary(L)).
 
+-define(JSON, "application/json").
 -define(SUPPORTED_MEDIA, [ "application/xhtml+xml", "application/xml",
-			   "application/json", "text/html"]).
+			   ?JSON, "text/html"]).
 -define(CT, "Content-Type").
 -define(CHARSET, "charset=iso-8859-1").
 -define(NOT_SUPPORTED, 406).

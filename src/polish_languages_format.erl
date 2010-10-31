@@ -8,7 +8,7 @@
 -include("polish.hrl").
 
 
-list(Data0, "application/json") ->
+list(Data0, ?JSON) ->
     Data = [{struct, [{url, country_url(LC)}, {name, country_name(LC)}]}
 	    || LC <-Data0],
     mochijson2:encode({array, Data});
@@ -21,7 +21,7 @@ country_name(LC) ->
 country_url(LC) ->
     ?l2a(polish_utils:build_url() ++ "/languages/" ++ LC).
 
-language({Total, Untrans}, "application/json") ->
+language({Total, Untrans}, ?JSON) ->
     mochijson2:encode({struct, [{total, Total}, {untrans, Untrans}]});
 language(_Data, _CT) ->
     throw(not_supported).

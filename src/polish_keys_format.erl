@@ -9,13 +9,13 @@
 -include("polish.hrl").
 
 
-list(_Data0, "application/json") ->
+list(_Data0, ?JSON) ->
     Data = [{struct, []}],
     mochijson2:encode({array, Data});
 list(_Data, _CT) ->
     throw(not_supported).
 
-key({K, V}, Key, "application/json") ->
+key({K, V}, Key, ?JSON) ->
     mochijson2:encode({struct, [{url, key_url(Key)},
 				{key, ?l2a(to_utf8(K))},
 				{value, ?l2a(to_utf8(V))}]});
@@ -25,9 +25,9 @@ key(_Data, _Key, _CT) ->
 key_url(Key) ->
     ?l2a(polish_utils:build_url() ++ "/keys/" ++ Key).
 
-put(ok, "application/json") ->
+put(ok, ?JSON) ->
     mochijson2:encode({struct, [{result, ok}]});
-put({error, Err}, "application/json") ->
+put({error, Err}, ?JSON) ->
     mochijson2:encode({struct, [{result, error}, {reason, ?l2a(Err)}]});
 put(_Data, _CT) ->
     throw(not_supported).
