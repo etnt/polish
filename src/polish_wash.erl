@@ -315,12 +315,16 @@ add_new_delete_old_keys([], [], {Acc, New, RU, RT}) ->
 sort_po_file(LC) ->
     LCPo = read_po_file(LC),
     SortedPo = lists:keysort(1, LCPo),
+    LCStr = case is_list(LC) of
+		true  -> LC;
+		false -> ?a2l(LC)
+	    end,
     case SortedPo =:= LCPo of
 	true  ->
-            error_logger:info_msg(?a2l(LC)++" po file already sorted!"),
+            error_logger:info_msg(LCStr++" po file already sorted!"),
             ok;
 	false ->
-	    error_logger:info_msg(?a2l(LC)++" po file not sorted. Sorting..."),
+	    error_logger:info_msg(LCStr++" po file not sorted. Sorting..."),
 	    write_po_file(LC, SortedPo, "Polish tool", "polish@polish.org")
     end.
 
