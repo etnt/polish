@@ -13,7 +13,8 @@ all() ->
     [http_get_languages,
      http_get_language,
      http_bad_method_languages,
-     http_bad_method_language].
+     http_bad_method_language,
+     http_not_existent_language].
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -74,4 +75,8 @@ http_bad_method_language(_Config) ->
       put, "/languages/ca", "", ?JSON, ?BAD_METHOD),
     polish_test_lib:send_http_request(
       post, "/languages/ca", "", ?JSON, ?BAD_METHOD),
+    ok.
+
+http_not_existent_language(_Config) ->
+    polish_test_lib:send_http_request(get, "/languages/nn", ?JSON, ?NOT_FOUND),
     ok.
