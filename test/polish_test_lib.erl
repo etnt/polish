@@ -2,6 +2,7 @@
 %%% @copyright (C) 2010, Jordi Chacon
 -module(polish_test_lib).
 -export([send_http_request/4
+	 , send_http_request/5
 	 , assert_fields_from_response/2]).
 
 -include_lib("eunit/include/eunit.hrl").
@@ -22,10 +23,19 @@ get_polish_path() ->
 	     end, string:tokens(os:cmd("pwd"), "/")),
     "/" ++ string:join(PWD0++["polish"], "/").
 
-send_http_request(Method, SubURL, Accept, ExpectedCode) ->
-    {ok, {{_Vsn, Code, _Reason}, _Headers, Body}} =
-	http:request(Method, {polish_utils:build_url() ++ SubURL,
-			      [{"Accept", Accept}]}, [], []),
+send_http_request(Method, SubURL, Accept, ExpectedCode) when
+      (Method =:= get orelse Method =:= delete) andalso is_list(SubURL) ->
+    Request = {polish_utils:build_url() ++ SubURL, [{"Accept", Accept}]},
+    send_http_request(Method, Request, ExpectedCode).
+
+send_http_request(Method, SubURL, Body, Accept, ExpectedCode) when
+      (Method =:= put orelse Method =:= post) andalso is_list(SubURL) ->
+    Request = {polish_utils:build_url() ++ SubURL, [{"Accept", Accept}],
+	      "application/x-www-form-urlencoded", Body},
+    send_http_request(Method, Request, ExpectedCode).
+
+send_http_request(Method, Request, ExpectedCode) ->
+    {ok, {{_, Code, _}, _Headrs, Body}} = http:request(Method, Request, [], []),
     ?assertEqual(ExpectedCode, Code),
     Body.
 

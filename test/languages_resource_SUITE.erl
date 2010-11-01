@@ -11,7 +11,8 @@ suite() ->
 
 all() ->
     [http_get_languages,
-     http_get_language].
+     http_get_language,
+     http_bad_method_languages].
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -57,4 +58,10 @@ http_get_language(_Config) ->
     {struct, Response} = mochijson2:decode(ResponseJSON),
     polish_test_lib:assert_fields_from_response(
       [{"total", 5}, {"untrans", 1}], Response),
+    ok.
+
+http_bad_method_languages(_Config) ->
+    polish_test_lib:send_http_request(delete, "/languages", ?JSON, ?BAD_METHOD),
+    polish_test_lib:send_http_request(put,"/languages", "", ?JSON, ?BAD_METHOD),
+    polish_test_lib:send_http_request(post,"/languages","", ?JSON, ?BAD_METHOD),
     ok.
