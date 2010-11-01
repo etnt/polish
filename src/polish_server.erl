@@ -285,7 +285,8 @@ do_load_always_translated_keys(State, LC, File) ->
               end, List),
             {State, ok};
         _ ->
-            {State, ok}
+	    error_logger:error_msg("Error reading meta file: "++?a2l(LC)++"~n"),
+            {State, error}
     end.
 
 do_mark_as_always_translated(State, LC, Key) ->
