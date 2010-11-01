@@ -12,7 +12,8 @@ suite() ->
 all() ->
     [http_get_languages,
      http_get_language,
-     http_bad_method_languages].
+     http_bad_method_languages,
+     http_bad_method_language].
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -64,4 +65,13 @@ http_bad_method_languages(_Config) ->
     polish_test_lib:send_http_request(delete, "/languages", ?JSON, ?BAD_METHOD),
     polish_test_lib:send_http_request(put,"/languages", "", ?JSON, ?BAD_METHOD),
     polish_test_lib:send_http_request(post,"/languages","", ?JSON, ?BAD_METHOD),
+    ok.
+
+http_bad_method_language(_Config) ->
+    polish_test_lib:send_http_request(
+      delete, "/languages/ca", ?JSON, ?BAD_METHOD),
+    polish_test_lib:send_http_request(
+      put, "/languages/ca", "", ?JSON, ?BAD_METHOD),
+    polish_test_lib:send_http_request(
+      post, "/languages/ca", "", ?JSON, ?BAD_METHOD),
     ok.
