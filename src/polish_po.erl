@@ -58,8 +58,11 @@ get_stats(LC) ->
 
 check_correctness(Key, Val) ->
     Validators = [gettext_validate_bad_ftxt, gettext_validate_bad_stxt,
-		  gettext_validate_bad_case, gettext_validate_bad_html,
-		  gettext_validate_bad_punct, gettext_validate_bad_ws],
+		  % comment out this check for now since it has become an issue
+		  % with some german translations.
+		  %gettext_validate_bad_case,
+		  gettext_validate_bad_html, gettext_validate_bad_punct,
+		  gettext_validate_bad_ws],
     run_validators(Key, Val, Validators).
 
 
