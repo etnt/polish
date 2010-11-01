@@ -25,8 +25,6 @@ top({_Req, CT, _Path, get}) ->
 	Response = polish_languages_format:list(Data, CT),
 	{?OK, CT, Response}
     catch
-	throw:bad_request->
-	    {?BAD_REQUEST, "text/plain", ?BAD_REQUEST_MSG};
 	throw:not_supported ->
 	    {?NOT_SUPPORTED, "text/plain", ?NOT_SUPPORTED_MSG}
     end;
