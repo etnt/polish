@@ -1,145 +1,186 @@
 CONTENTS
-----
-1 - First-time setup
-  1.1 - polish.meta
-  1.2 - gettext.po.meta
-2 - Setup after clone
-  2.1 - first-time flow
-  2.2 - normal flow
-3 - Miscellaneus
-  3.1 - adding translators
+
+1 - Developer -- day to day tasks
+  1.1 - Setup after clone
+  1.2 - normal flow
+2 - Polish master -- To be used just for the initial setup
+ 2.1 - Setup
+ 2.2 - polish.meta
+ 2.3 - gettext.po.meta
+ 2.4 - Adding translators
+ 2.5 - First-time flow
 
 
 
-1. FIRST-TIME SETUP
-----
-This section explains how to include Polish in your project so that you can use it.
-Basically, you need to make sure you have a correct 'lang' directory structure.
-It should have a structure like the one in the following example:
+1. DEVELOPERS -- day to day tasks
 
-.:
+1.1. Setup should be done just once.
+Only to be done the first time. This is to be done after you as a developer check out the code from the repository
+
+- Clone the Polish repository:
+git clone git@github.com:etnt/polish.git
+
+- To set up and initialize Polish run:
+make init
+
+- Edit ebin/polish.app file and introduce the ip address of your machine in the ‘hostname’ field:
+replace {hostname, “localhost”} with {hostname, “XXX.XXX.XXX.XXX”}   # your ip
+
+
+
+1.2 Normal polish flow
+
+You should use Polish:
+A) Each time you add a new ?TXT or ?STXT macro with a key that didn’t exist before.
+B) Each time you edit the text of a ?TXT or ?STXT macro and hence edit the key.
+C) Each time you remove a ?TXT or ?STXT macro and that key is not used anymore in the code.
+You are supposed to follow steps 1 to 5 when being in situation A and follow steps 1 to 2 when being in situation B:
+
+    1. Update the default po file:
+    make run_gettext
+
+    2a.
+	a1) If you have modified the content of a key and you want to keep the translations of the old version
+	of that key linked to the new version you should start Polish by running the start script passing as
+	argument the absolute path to your branch’s lang directory:
+	./start.sh PATH_TO_LANG_DIR
+
+	a2) Polish will print the new keys and the keys that are going to be removed:
+	NEW KEYS
+	1. Hello world
+	2. I have a white cat.
+	3. I like Sweden
+
+	TO BE REMOVED KEYS
+	1. Hell world
+	2. He plays football
+	3. Anna is a good translator
+	4. I like sweden
+
+	a3)
+	a3a) If you replaced in the code “Hell world” with “Hello world” and “I like sweden” with “I like Sweden”
+	because you realized that the old ones were wrong you may want to keep the translations of the old keys.
+	In this case you will run this command to update the po files:
+	polish:update_po_files([{1,1}, {3,4}]).
+
+	a3b) On the other hand, if you consider the new keys completely new and you want to remove everything that
+	has to do with the “to be removed keys”, you should run:
+	polish:update_po_files().
+
+    2b.
+	b1) If you know that you haven’t modified any key or if you have you did it to actually to create new ones
+	you start Polish like this:
+	./start.sh --no-replace-keys /home/[user]/development/dev/lib/site/priv/lang/
+
+    3. If POlish detected new keys, it will print the content of the email that you should send
+    to the translators. It should be something like this:
+       URL:
+       http://XXX.XXX.XXX.XXX:8282   # replaced with your IP address
+
+       Texts:
+       * Hello world                 # list of texts you want to be translated
+       * I have a white cat.
+       * I like Sweden
+
+       Ticket information:
+       {Paste here ticket specs}     # replace with the specs of the ticket you are working on
+
+    4. Send the email to the translators
+
+    5. Now you can login to the polish GUI if you want. To login, provide the myopenid username in the
+    “fully dressed format”, i.e. “username.myopenid.com”
+
+    6. Monitor your email: the translators are supposed to send you an email back once they have translated
+    the text to their language. You can also check the erlang shell to see if someone has submitted something.
+
+
+
+
+2. POLISH MASTER:
+
+
+2.1. SETUP
+This section explains how to set up your system so that POlish can be used as a translation handling tool.
+Basically, it is needed a correct structure of your ‘lang’ directory. Next, it is shown what is the result
+of executing ‘ls *’ in a ‘lang’ directory with a proper structure:
+
+nicolae@stiuca:~/project$ ls lang/
 custom  default  polish.meta
 
-./custom:
-de  en
+nicolae@stiuca:~/project$ ls lang/custom
+a  da  de  en  fi  nb  nl
 
-./custom/de:
-gettext.po gettext.po.meta
+nicolae@stiuca:~/project$ ls lang/custom/nl/
+gettext.po  gettext.po.meta
 
-./custom/en:
-gettext.po gettext.po.meta
+(Note: the gettext.po.meta should exist in all of the directories under lang/custom)
 
-./default:
+nicolae@stiuca:~/project$ ls lang/default/
 sv
 
-./default/sv:
-gettext.po 
+nicolae@stiuca:~/project$ ls lang/default/sv/
+gettext.po
+
+(observe, no gettext.po.meta file for the default language)
 
 
-1.1 POLISH.META
-----
-The purpose of the 'polish.meta' file is to store information regarding your project. Specifically, it
-should contain:
+2.2. POLISH.META
+The purpose of the 'polish.meta' file is to store information regarding the translation handling of your
+system.  Specifically, it should contain:
 - List of users allowed to do translations: acl
 - Information of each of those users: users
-- Your default language code following iso639: default_lang
-- Your organisation name: org_name
+- The default language code following iso639: default_lang
+- The organisation name: org_name
 
 It is mandatory to have the 'polish.meta' file and it should be placed in the 'lang'
-directory specified in polish.app.src: ${lang}/polish.meta (see section 2).
-An example of the content of this file is presented next (you should replace the data in 
-the example with the one from your project):
+directory (specified in polish.app.src: ${lang}/polish.meta - see section 2.5).
+An example of the content of the polish.meta is presented next:
+
+   {acl, ["http://etnt.myopenid.com/", "http://jordi-chacon.myopenid.com/"]}.
+   {users,
+   [{"http://etnt.myopenid.com/", [{name, "Torbjorn Tornkvist"},{email,tobbe@klarna.com"}]},
+   {"http://jordi-chacon.myopenid.com/", [{name, "Jordi Chacon"},{email,jordi@klarna.com"}]}]}.
+   {default_lang, "sv"}.
+   {org_name, "Klarna AB Sweden"}.
 
 
-% The 'acl' list defines who is allowed to do translations.
-{acl, ["http://etnt.myopenid.com/"
-      ,"http://jordi-chacon.myopenid.com/"
-      ]}.
-% The 'users' list connects the OpenID with a Name and Email.
-{users,[{"http://etnt.myopenid.com/", [{name, "Torbjorn Tornkvist"},{email, "tobbe@klarna.com"}]},
-        {"http://jordi-chacon.myopenid.com/", [{name, "Jordi Chacon"},{email, "jordi.chacon@klarna.com"}]}
-        ]}.
-{default_lang, "sv"}.
-{org_name, "Klarna AB Sweden"}.
-
-
-1.2 GETTEXT.PO.META
-----
-For each language that you want to translate with Polish, you need to add a 'gettext.po.meta' file.
-For example, if you have a ${lang}/custom/en/gettext.po file for the English language, 
-you will need to create a ${lang}/custom/en/gettext.po.meta empty file.
-The purpose of this file is to store the sentences whose translations look exactly the same as 
+2.3. GETTEXT.PO.META
+For each language that should be handled by Polish, a 'gettext.po.meta' file should be added.
+For example, if there is a ${lang}/custom/en/gettext.po file for the English language,
+a ${lang}/custom/en/gettext.po.meta empty file should be created.
+The purpose of this file is to store the sentences whose translations look exactly the same as
 in the default language. When a translator marks a sentence as 'Always translated', it will
 be added in the meta file of that language and it will not appear again as untranslated.
 
 
+2.4. ADDING TRANSLATORS
+To add translators to Polish first they need an openid account (they can get one on www.myopenid.com).
+Once they have an openid, they should be added in the 'polish.meta' file. Specifically, they need to
+be added to both 'acl' and 'users' fields following the template shown in section 2.2.
 
 
+2.5. FIRST(EVER)-TIME POLISH FLOW
+For Polish to work as expected, all po files should be consistent. This means that all po files
+should have the exact same keys, they should be sorted alphabetically by key and they should not
+contain duplicated keys. The flow that Polish offers to achieve this state is the following:
 
-2. SETUP AFTER CLONE
-----
-- To set up and initialize Polish run:
- make init
+- Follow steps in section 1.1.
 
-- Change hostname: Open the ebin/polish.app file and replace the hostname value which is by default
-"localhost" with your own Hostname. This is necessary for some redirects that happen after the OpenID
-login, to avoid being redirected to "localhost".
+- Start POlish with this command:
+./start.sh PATH_TO_LANG_DIR
 
-- Change po_lang_dir: Again in the ebin/polish.app file, you need to replace "/xxx/yyy/priv/lang"
-with the path to your 'lang' directory (see section 1).
+- Wash/update the po files from the erlang shell by executing:
+polish:update_po_files()
 
-- Now, you are ready to start Polish by running:
- ./start.sh
+- Check the status of the po files from the erlang shell by executing
+polish:get_status_po_files()
 
-- Wash po files (see next sections).
+The update_po_files/0 function does all the magic. It sorts all the po files alphabetically,
+adds the new keys and remove the unused ones from all the po files. The new po files are stored
+in their directories and backups of the previous versions are also saved. It also detects
+duplicated keys but obviously it cannot solve them. Instead it prompts an error specifying
+which keys are duplicated for a specific language and you are supposed to go to the po file
+and fix those duplicates by hand. When the update_po_files function finishes with an ok,
+the po files are consistent and translators can start using POlish.
 
-
-(optional)
-- To re-compile the source code of the polish application run:
- make
-
-
-2.1 FIRST-TIME POLISH FLOW
-----
-For Polish to work as expected, all your po files should be consistent. This means
-that all po files should have the exact same keys, they should be sorted alphabetically by the keys 
-and they should not contain duplicated keys. Polish helps you to achieve this state:
-- Execute 'make run_gettext' to update the default po file
-- Start polish './start'
-- From the erlang shell, execute 'polish:get_status_po_files()' to see what is the status
-  of the po files regarding their consistency.
-- From the erlang shell, execute 'polish:update_po_files()' to wash/update them
-- Execute again 'polish:get_status_po_files()' and the status of the po files should be perfect now.
-
-This last step does all the magic. It sorts all the po files alphabetically and adds the new keys
-and remove the unused ones from all the po files. The new po files are stored in their directories
-and backups of the previous versions are also saved. It also detects duplicated keys but obviously
-it cannot solve them. Instead it prompts an error specifying which keys are duplicated for a 
-specific language and you are supposed to go to the po file and remove those duplicates by hand.
-When the update_po_files functions finishes with an ok, the po files are consistent and translators
-can start using Polish.
-
-
-2.2 NORMAL POLISH FLOW
-----
-Every time you add a new TXT or similar macro to your code, you are supposed to:
-- Execute 'make run_gettext' to update the default po file
-- Start polish './start'
-- From the erlang shell, execute 'polish:update_po_files()' to automatically add the 
-  new keys into the custom po files
-- Execute 'polish:get_status_po_files()' to check that the status of the po files is correct.
-- Ask the translators to translate the new sentences. Once they do that, a new version of the
-  po file will be stored on your local machine and you can add that new version to the repository.
-
-
-
-
-3. MISCELLANEUS
-----
-
-
-3.1 ADDING TRANSLATORS
-----
-To add translators to Polish first they need an openid account (they can get one in www.myopenid.com).
-Once they have an openid, you need to add them in the 'polish.meta'. Specifically, you need to 
-add him/her to both 'acl' and 'users' fields following the pattern shown in section 1.1.
+- Commit the modified .po files as well as the meta files.
