@@ -40,8 +40,9 @@ end_per_testcase(_TestCase, _Config) ->
 %% T E S T   C A S E S
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 http_get_languages(_Config) ->
-    ResponseJSON = polish_test_lib:send_http_request(
-		     get, "/languages", ?JSON, ?OK),
+    {Code, ResponseJSON} = polish_test_lib:send_http_request(
+			     get, "/languages", ?JSON),
+    ?assertEqual(?OK, Code),
     Response = mochijson2:decode(ResponseJSON),
     ?assertEqual(3, length(Response)),
     URL = polish_utils:build_url() ++ "/languages",
@@ -55,28 +56,36 @@ http_get_languages(_Config) ->
     ok.
 
 http_get_language(_Config) ->
-    ResponseJSON = polish_test_lib:send_http_request(
-		     get, "/languages/ca", ?JSON, ?OK),
+    {Code, ResponseJSON} = polish_test_lib:send_http_request(
+			     get, "/languages/ca", ?JSON),
+    ?assertEqual(?OK, Code),
     {struct, Response} = mochijson2:decode(ResponseJSON),
     polish_test_lib:assert_fields_from_response(
       [{"total", 5}, {"untrans", 1}], Response),
     ok.
 
 http_bad_method_languages(_Config) ->
-    polish_test_lib:send_http_request(delete, "/languages", ?JSON, ?BAD_METHOD),
-    polish_test_lib:send_http_request(put,"/languages", "", ?JSON, ?BAD_METHOD),
-    polish_test_lib:send_http_request(post,"/languages","", ?JSON, ?BAD_METHOD),
+    {Code1, _} = polish_test_lib:send_http_request(delete, "/languages", ?JSON),
+    ?assertEqual(?BAD_METHOD, Code1),
+    {Code2, _} = polish_test_lib:send_http_request(put,"/languages", "", ?JSON),
+    ?assertEqual(?BAD_METHOD, Code2),
+    {Code3, _} = polish_test_lib:send_http_request(post,"/languages","", ?JSON),
+    ?assertEqual(?BAD_METHOD, Code3),
     ok.
 
 http_bad_method_language(_Config) ->
-    polish_test_lib:send_http_request(
-      delete, "/languages/ca", ?JSON, ?BAD_METHOD),
-    polish_test_lib:send_http_request(
-      put, "/languages/ca", "", ?JSON, ?BAD_METHOD),
-    polish_test_lib:send_http_request(
-      post, "/languages/ca", "", ?JSON, ?BAD_METHOD),
+    {Code1, _} = polish_test_lib:send_http_request(
+		   delete, "/languages/ca", ?JSON),
+    ?assertEqual(?BAD_METHOD, Code1),
+    {Code2, _} = polish_test_lib:send_http_request(
+		   put, "/languages/ca", ?JSON),
+    ?assertEqual(?BAD_METHOD, Code2),
+    {Code3, _} = polish_test_lib:send_http_request(
+		   post, "/languages/ca", ?JSON),
+    ?assertEqual(?BAD_METHOD, Code3),
     ok.
 
 http_not_existent_language(_Config) ->
-    polish_test_lib:send_http_request(get, "/languages/nn", ?JSON, ?NOT_FOUND),
+    {Code, _} = polish_test_lib:send_http_request(get, "/languages/nn", ?JSON),
+    ?assertEqual(?NOT_FOUND, Code),
     ok.
