@@ -55,11 +55,9 @@ http_get_key(Config) ->
     ok.
 
 http_bad_method_key(_Config) ->
-    {Code1, _} = polish_test_lib:send_http_request(
-		   delete, "/keys/ca", ?JSON),
+    {Code1, _} = polish_test_lib:send_http_request(delete, "/keys/ca1", ?JSON),
     ?assertEqual(?BAD_METHOD, Code1),
-    {Code2, _} = polish_test_lib:send_http_request(
-		   post, "/keys/ca", ?JSON),
+    {Code2, _} = polish_test_lib:send_http_request(post, "/keys/ca1", ?JSON),
     ?assertEqual(?BAD_METHOD, Code2),
     ok.
 
