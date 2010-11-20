@@ -8,6 +8,7 @@
 
 -export([build_info_log/3
 	 , build_url/0
+	 , generate_key_identifier/2
 	 , get_language_name/1
 	 , hash/1
 	 , print_email_to_translators/1
@@ -103,6 +104,9 @@ trim_whitespace(Input) ->
 %% MD5
 hash(Str) ->
     lists:flatten([io_lib:format("~.16B", [X]) || X <- ?b2l(crypto:md5(Str))]).
+
+generate_key_identifier(Key, LC) ->
+    LC ++ hash(Key).
 
 to_utf8(Str) ->
     lists:flatten(

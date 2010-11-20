@@ -4,6 +4,7 @@
 -define(l2a(L), list_to_atom(L)).
 -define(b2l(B), binary_to_list(B)).
 -define(l2b(L), list_to_binary(L)).
+-define(lkup(K, L), element(2, lists:keyfind(K, 1, L))).
 
 -define(JSON, "application/json").
 -define(SUPPORTED_MEDIA, [ "application/xhtml+xml", "application/xml",
