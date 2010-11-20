@@ -7,14 +7,17 @@
 -define(lkup(K, L), element(2, lists:keyfind(K, 1, L))).
 
 -define(JSON, "application/json").
+-define(HTML, "text/html").
 -define(SUPPORTED_MEDIA, [ "application/xhtml+xml", "application/xml",
-			   ?JSON, "text/html"]).
+			   ?JSON, ?HTML]).
 -define(CT, "Content-Type").
 -define(CHARSET, "charset=iso-8859-1").
 -define(NOT_SUPPORTED, 406).
 -define(NOT_SUPPORTED_MSG, "Not acceptable").
 -define(NOT_FOUND, 404).
 -define(NOT_FOUND_MSG, "Not found").
+-define(FOUND, 302).
+-define(FOUND_MSG, "Found").
 -define(BAD_REQUEST, 400).
 -define(BAD_REQUEST_MSG, "Bad request").
 -define(OK, 200).
