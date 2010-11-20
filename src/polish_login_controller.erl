@@ -7,25 +7,33 @@
 
 -include("polish.hrl").
 
-dispatch({Req, CT, Path, _Meth}) ->
-    case Path of
-	[] -> start_openid_authentication(Req, CT);
-	_  -> ok
+dispatch({Req, CT, _Path, _Meth}) ->
+    case lists:keyfind(action, 1, Req:parse_qs()) of
+	false              -> start_openid_authentication(Req, CT);
+	{action, "auth"}   -> finish_openid_authentication(Req, CT);
+	{action, "logout"} -> ok
     end.
 
 start_openid_authentication(Req, CT) ->
     try
-	ClaimedId = eopenid_lib:http_path_norm(
-		      ?lkup(claimed_id, Req:parse_qs())),
-	URL = polish_utils:build_url(),
-	OpenIdData = generate_openid_data(ClaimedId, URL),
-	OpenIdURL = generate_openid_url(OpenIdData),
-	write_openid_data(OpenIdData),
-	{?FOUND, {OpenIdURL, ?HTML++";"++?CHARSET}, ""}
+	case is_user_allowed(Req) of
+	    {false, _} ->
+		{?OK, CT, [], polish_login_format:login_error(not_allowed)};
+	    {true, ClaimedId} ->
+		URL = polish_utils:build_url(),
+		OpenIdData = generate_openid_data(ClaimedId, URL),
+		OpenIdURL = generate_openid_url(OpenIdData),
+		write_openid_data(OpenIdData),
+		{?FOUND, OpenIdURL, ?HTML++";"++?CHARSET, [], []}
+	end
     catch
 	_:_ ->
-	    {?OK, CT, polish_login_format:login_error("bad_login")}
+	    {?OK, CT, [], polish_login_format:login_error(bad_format)}
     end.
+
+is_user_allowed(Req) ->
+    ClaimedId = eopenid_lib:http_path_norm(?lkup(claimed_id, Req:parse_qs())),
+    {lists:member(ClaimedId, polish:get_acl()), ClaimedId}.
 
 generate_openid_data(ClaimedId, URL) ->
     Data0 = eopenid_lib:foldf(
@@ -41,5 +49,31 @@ generate_openid_url(Data) ->
     OpenIdURL.
 
 write_openid_data(Data) ->
-    DataId = eopenid_lib:out("openid.assoc_handle", Data),
-    polish_server:write_openid_data(DataId, Data).
+    AuthId = eopenid_lib:out("openid.assoc_handle", Data),
+    polish_server:write_user_auth(AuthId, Data).
+
+finish_openid_authentication(Req, CT) ->
+    try
+	RawPath = get_raw_path(Req),
+	AuthId = get_openid_auth_id(Req),
+	SavedData = polish_server:read_user_auth(AuthId),
+	true = eopenid_v1:verify_signed_keys(RawPath, SavedData),
+	write_user_data(AuthId, SavedData),
+	{?FOUND, polish_utils:build_url(), CT, [], []}
+    catch
+	_:_ ->
+	    {?OK, CT, polish_login_format:login_error(error)}
+    end.
+
+get_raw_path(Req) ->
+    "/login?action=auth" ++ RawPath = Req:get(raw_path),
+    RawPath.
+
+get_openid_auth_id(Req) ->
+    ?lkup(openid.assoc_handle, Req:parse_qs()).
+
+write_user_data(AuthId, Data) ->
+    User = ?lkup("openid.claimed_id", Data),
+    {User, [{name, Name}, _]} = ?lkup(User, polish:get_users()),
+    polish_server:write_user_auth(AuthId, Name),
+    ok.

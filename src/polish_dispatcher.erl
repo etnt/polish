@@ -41,11 +41,14 @@ run_controller(Req, Controller, Args) ->
 	    error_logger:format("~p~n", [Err]),
 	    Req:respond({?INTERNAL_SERVER_ERROR, [{?CT, "text/plain"}],
 			 ?INTERNAL_SERVER_ERROR_MSG});
-	{Status, {Location, ContentType}, Data} ->
-	    Req:respond({Status, [{"Location", Location}, {?CT, ContentType}],
-			 Data});
-	{Status, ContentType, Data} ->
-	    Req:respond({Status, [{?CT, ContentType}], Data})
+	{Status, Location, ContentType, Cookie, Data} ->
+	    Headers = [{"Location", Location}, {?CT, ContentType},
+		       mochiweb_cookies:cookie(auth, Cookie, [])],
+	    Req:respond({Status, Headers, Data});
+	{Status, ContentType, CookieV, Data} ->
+	    Headers = [{?CT, ContentType},
+		       mochiweb_cookies:cookie(auth, CookieV, [])],
+	    Req:respond({Status, Headers, Data})
     end.
 
 % Parses the path and returns {top_controller, rest}

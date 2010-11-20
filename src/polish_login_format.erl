@@ -13,5 +13,11 @@ login(?JSON) ->
     ok.
 
 login_error(Reason, ?JSON) ->
-    mochijson2:encode({struct, [{login, error}, {reason, ?l2a(Reason)}]}).
+    mochijson2:encode({struct, [{login, error},{reason,?l2a(reason(Reason))}]}).
 
+reason(not_allowed) ->
+    "user not allowed";
+reason(bad_format) ->
+    "wrong openid format";
+reason(error) ->
+    "login error".

@@ -15,13 +15,14 @@
 	 , lock_keys/2
 	 , mark_as_always_translated/1
 	 , read_key/1
+	 , read_user_auth/1
 	 , read_po_file/1
 	 , set_new_old_keys/1
 	 , try_read_key/1
 	 , unlock_user_keys/0
 	 , unmark_as_always_translated/1
 	 , write_key/2
-	 , write_openid_data/2
+	 , write_user_auth/2
         ]).
 
 %% gen_server callbacks
@@ -88,8 +89,11 @@ set_new_old_keys(NewOldKeys) ->
 get_new_old_keys() ->
     gen_server:call(?MODULE, get_new_old_keys).
 
-write_openid_data(ID, Data) ->
-    gen_server:call(?MODULE, write_openid_data, ID, Data).
+write_user_auth(ID, Data) ->
+    gen_server:call(?MODULE, write_user_auth, ID, Data).
+
+read_user_auth(ID) ->
+    gen_server:call(?MODULE, read_user_auth, ID).
 
 
 %%--------------------------------------------------------------------
@@ -198,8 +202,12 @@ handle_call(get_new_old_keys, _From, State) ->
     {NewState, Reply} = do_get_new_old_keys(State),
     {reply, Reply, NewState};
 
-handle_call({write_openid_data, ID, Data}, _From, State) ->
-    {NewState, Reply} = do_write_openid_data(State, ID, Data),
+handle_call({write_user_auth, ID, Data}, _From, State) ->
+    {NewState, Reply} = do_write_user_auth(State, ID, Data),
+    {reply, Reply, NewState};
+
+handle_call({read_user_auth, ID}, _From, State) ->
+    {NewState, Reply} = do_read_user_auth(State, ID),
     {reply, Reply, NewState};
 
 handle_call(_Request, _From, State) ->
@@ -370,9 +378,15 @@ do_set_new_old_keys(State, NewOldKeys) ->
 do_get_new_old_keys(State) ->
     {State, get(new_old_keys)}.
 
-do_write_openid_data(State, ID, Data) ->
+do_write_user_auth(State, ID, Data) ->
     ets:insert(?MODULE, {ID, Data}),
     {State, ok}.
+
+do_read_user_auth(State, ID) ->
+    case ets:lookup(?MODULE, ID) of
+	[{ID, Data}] -> {State, Data};
+	_            -> {State, false}
+    end.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
