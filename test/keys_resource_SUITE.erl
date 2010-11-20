@@ -11,6 +11,7 @@ suite() ->
 
 all() ->
     [http_get_key
+     , http_bad_method_key
      , http_not_existent_key
     ].
 
@@ -50,6 +51,15 @@ http_get_key(Config) ->
     polish_test_lib:assert_fields_from_response(
       [{"url", polish_utils:build_url()++"/keys/"++ResourceID},
        {"key", Key}, {"value", ExpectedTranslation}], Response),
+    ok.
+
+http_bad_method_key(_Config) ->
+    {Code1, _} = polish_test_lib:send_http_request(
+		   delete, "/keys/ca", ?JSON),
+    ?assertEqual(?BAD_METHOD, Code1),
+    {Code2, _} = polish_test_lib:send_http_request(
+		   post, "/keys/ca", ?JSON),
+    ?assertEqual(?BAD_METHOD, Code2),
     ok.
 
 http_not_existent_key(_Config) ->
