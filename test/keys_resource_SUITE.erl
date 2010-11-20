@@ -12,6 +12,7 @@ suite() ->
 all() ->
     [http_get_key
      , http_bad_method_key
+     , http_bad_method_keys
      , http_not_existent_key
     ].
 
@@ -60,6 +61,15 @@ http_bad_method_key(_Config) ->
     {Code2, _} = polish_test_lib:send_http_request(
 		   post, "/keys/ca", ?JSON),
     ?assertEqual(?BAD_METHOD, Code2),
+    ok.
+
+http_bad_method_keys(Config) ->
+    {Code1, _} = polish_test_lib:send_http_request(delete, "/keys", ?JSON),
+    ?assertEqual(?BAD_METHOD, Code1),
+    {Code2, _} = polish_test_lib:send_http_request(put,"/keys", "", ?JSON),
+    ?assertEqual(?BAD_METHOD, Code2),
+    {Code3, _} = polish_test_lib:send_http_request(post,"/keys","", ?JSON),
+    ?assertEqual(?BAD_METHOD, Code3),
     ok.
 
 http_not_existent_key(_Config) ->
