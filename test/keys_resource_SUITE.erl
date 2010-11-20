@@ -11,7 +11,8 @@ suite() ->
 
 all() ->
     [http_get_key
-     ].
+     , http_not_existent_key
+    ].
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -49,4 +50,9 @@ http_get_key(Config) ->
     polish_test_lib:assert_fields_from_response(
       [{"url", polish_utils:build_url()++"/keys/"++ResourceID},
        {"key", Key}, {"value", ExpectedTranslation}], Response),
+    ok.
+
+http_not_existent_key(_Config) ->
+    {Code, _} = polish_test_lib:send_http_request(get, "/keys/ca435", ?JSON),
+    ?assertEqual(?NOT_FOUND, Code),
     ok.
