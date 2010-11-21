@@ -31,7 +31,7 @@ dispatch(Req) ->
 		    Meth = clean_method(Req:get(method)),
 		    Args = {Req, ContentType, ControllerPath, Meth},
 		    run_controller(Req, Controller, [Args],
-				  polish_login_controller:is_user_logged(Req))
+				  polish_utils:is_user_logged(Req))
 	    end
     end.
 

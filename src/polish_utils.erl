@@ -10,7 +10,9 @@
 	 , build_url/0
 	 , generate_key_identifier/2
 	 , get_language_name/1
+	 , get_user_from_request/1
 	 , hash/1
+	 , is_user_logged/1
 	 , print_email_to_translators/1
 	 , print_new_old_keys/1
 	 , restore_whitespace/2
@@ -153,3 +155,20 @@ build_info_log(LC, User, L) ->
       fun({K,V}, AccStr) ->
 	      AccStr ++ "Key: " ++ K ++ "~nValue: " ++ V ++ "~n~n"
       end, Str, L) ++ "~n~n".
+
+is_user_logged(Req) ->
+    case get_user_from_request(Req) of
+	not_logged -> false;
+	_          -> true
+    end.
+
+get_user_from_request(Req) ->
+    Cookies = Req:parse_cookie(),
+    case lists:keyfind(auth, 1, Cookies) of
+	false          -> not_logged;
+	{auth, AuthId} ->
+	    case polish_server:read_user_auth(AuthId) of
+		false -> not_logged;
+		Name  -> Name
+	    end
+    end.

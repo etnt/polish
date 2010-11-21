@@ -3,7 +3,7 @@
 
 -module(polish_login_controller).
 
--export([dispatch/1, is_user_logged/1]).
+-export([dispatch/1]).
 
 -include("polish.hrl").
 
@@ -12,17 +12,6 @@ dispatch({Req, CT, _Path, _Meth}) ->
 	false              -> start_openid_authentication(Req, CT);
 	{action, "auth"}   -> finish_openid_authentication(Req, CT);
 	{action, "logout"} -> ok
-    end.
-
-is_user_logged(Req) ->
-    Cookies = Req:parse_cookie(),
-    case lists:keyfind(auth, 1, Cookies) of
-	false          -> false;
-	{auth, AuthId} ->
-	    case polish_server:read_user_auth(AuthId) of
-		false -> false;
-		_     -> true
-	    end
     end.
 
 start_openid_authentication(Req, CT) ->
