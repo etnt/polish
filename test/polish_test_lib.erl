@@ -1,8 +1,9 @@
 %%% @author Jordi Chacon <jordi.chacon@klarna.com>
 %%% @copyright (C) 2010, Jordi Chacon
 -module(polish_test_lib).
--export([send_http_request/3
-	 , send_http_request/4
+-export([send_http_request/4
+	 , send_http_request/5
+	 , send_http_request/6
 	 , assert_fields_from_response/2]).
 
 -include_lib("eunit/include/eunit.hrl").
@@ -24,22 +25,29 @@ get_polish_path() ->
 	     end, string:tokens(os:cmd("pwd"), "/")),
     "/" ++ string:join(PWD0++["polish"], "/").
 
-send_http_request(Method, SubURL, Accept) when
-      Method =:= get orelse Method =:= delete ->
-    Request = {polish_utils:build_url() ++ SubURL, [{"Accept", Accept}]},
-    send_http_request(Method, Request);
-send_http_request(Method, SubURL, Accept) when
-      Method =:= put orelse Method =:= post ->
-    send_http_request(Method, SubURL, [], Accept).
+send_http_request(Method, HTTPOptions, SubURL, Accept) ->
+    send_http_request(Method, HTTPOptions, SubURL, Accept, basic).
 
-send_http_request(Method, SubURL, Body, Accept) ->
+send_http_request(Method, HTTPOptions, SubURL, Accept, What)
+  when Method =:= get orelse Method =:= delete ->
+    Request = {polish_utils:build_url() ++ SubURL, [{"Accept", Accept}]},
+    do_send_http_request(Method, HTTPOptions, Request, What);
+send_http_request(Method, HTTPOptions, SubURL, Accept, What)
+  when Method =:= put orelse Method =:= post ->
+    send_http_request(Method, HTTPOptions, SubURL, [], Accept, What).
+
+send_http_request(Method, HTTPOptions, SubURL, Body, Accept, What) ->
     Request = {polish_utils:build_url() ++ SubURL, [{"Accept", Accept}],
 	      "application/x-www-form-urlencoded", Body},
-    send_http_request(Method, Request).
+    do_send_http_request(Method, HTTPOptions, Request, What).
 
-send_http_request(Method, Request) ->
-    {ok, {{_, Code, _}, _Headrs, Body}} = http:request(Method, Request, [], []),
-    {Code, Body}.
+do_send_http_request(Method, HTTPOptions, Request, What) ->
+    {ok, {{_, Code, _}, Headers, Body}} = http:request(Method, Request,
+						       HTTPOptions, []),
+    case What of
+	headers -> {Code, Headers, Body};
+	basic   -> {Code, Body}
+    end.
 
 assert_fields_from_response([{FieldName, ExpectedValue} | T], Response)
   when is_integer(ExpectedValue) ->

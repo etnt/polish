@@ -46,7 +46,7 @@ http_get_key(Config) ->
     ExpectedTranslation = ?lkup(translation, Config),
     ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
     {Code, ResponseJSON} = polish_test_lib:send_http_request(
-			     get, "/keys/"++ResourceID, ?JSON),
+			     get, [], "/keys/"++ResourceID, ?JSON),
     ?assertEqual(?OK, Code),
     {struct, Response} = mochijson2:decode(ResponseJSON),
     polish_test_lib:assert_fields_from_response(
@@ -55,22 +55,24 @@ http_get_key(Config) ->
     ok.
 
 http_bad_method_key(_Config) ->
-    {Code1, _} = polish_test_lib:send_http_request(delete, "/keys/ca1", ?JSON),
+    {Code1, _} = polish_test_lib:send_http_request(delete, [],
+						   "/keys/ca1", ?JSON),
     ?assertEqual(?BAD_METHOD, Code1),
-    {Code2, _} = polish_test_lib:send_http_request(post, "/keys/ca1", ?JSON),
+    {Code2, _} = polish_test_lib:send_http_request(post, [],
+						   "/keys/ca1", ?JSON),
     ?assertEqual(?BAD_METHOD, Code2),
     ok.
 
-http_bad_method_keys(Config) ->
-    {Code1, _} = polish_test_lib:send_http_request(delete, "/keys", ?JSON),
+http_bad_method_keys(_Config) ->
+    {Code1, _} = polish_test_lib:send_http_request(delete, [], "/keys", ?JSON),
     ?assertEqual(?BAD_METHOD, Code1),
-    {Code2, _} = polish_test_lib:send_http_request(put,"/keys", "", ?JSON),
+    {Code2, _} = polish_test_lib:send_http_request(put, [], "/keys", "", ?JSON),
     ?assertEqual(?BAD_METHOD, Code2),
-    {Code3, _} = polish_test_lib:send_http_request(post,"/keys","", ?JSON),
+    {Code3, _} = polish_test_lib:send_http_request(post, [], "/keys","", ?JSON),
     ?assertEqual(?BAD_METHOD, Code3),
     ok.
 
 http_not_existent_key(_Config) ->
-    {Code, _} = polish_test_lib:send_http_request(get, "/keys/ca435", ?JSON),
+    {Code, _} = polish_test_lib:send_http_request(get, [],"/keys/ca435", ?JSON),
     ?assertEqual(?NOT_FOUND, Code),
     ok.
