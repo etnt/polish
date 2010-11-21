@@ -3,8 +3,7 @@
 
 -module(polish).
 
--export([setup_user_info/0
-         , po_lang_dir/0
+-export([po_lang_dir/0
          , auto_wash/0
 	 , print_new_old_keys/0
 	 , get_acl/0
@@ -73,13 +72,6 @@ get_status_po_files() ->
     polish_wash:get_status_po_files(CustomLCs).
 
 default_port() -> 8080.
-
-setup_user_info() ->
-    User = wf:user(),
-    Users = get_users(),
-    [L|_] = [L || {U,L} <- Users, U == User],
-    wf:session(name,  proplists:get_value(name,L)),
-    wf:session(email, proplists:get_value(email,L)).
 
 get_users() ->
     get_from_meta_file(users).
