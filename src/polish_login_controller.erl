@@ -18,7 +18,7 @@ start_openid_authentication(Req, CT) ->
     try
 	case is_user_allowed(Req) of
 	    {false, _} ->
-		{?OK, CT, [], polish_login_format:login_error(not_allowed)};
+		{?OK, CT, [], polish_login_format:login_error(not_allowed, ?JSON)};
 	    {true, ClaimedId} ->
 		URL = polish_utils:build_url(),
 		OpenIdData = generate_openid_data(ClaimedId, URL),
@@ -28,7 +28,7 @@ start_openid_authentication(Req, CT) ->
 	end
     catch
 	_:_ ->
-	    {?OK, CT, [], polish_login_format:login_error(bad_format)}
+	    {?OK, CT, [], polish_login_format:login_error(bad_format, ?JSON)}
     end.
 
 is_user_allowed(Req) ->
@@ -62,7 +62,7 @@ finish_openid_authentication(Req, CT) ->
 	{?FOUND, polish_utils:build_url(), CT, AuthId, []}
     catch
 	_:_ ->
-	    {?OK, CT, polish_login_format:login_error(error)}
+	    {?OK, CT, polish_login_format:login_error(error, ?JSON)}
     end.
 
 get_raw_path(Req) ->

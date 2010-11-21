@@ -31,16 +31,16 @@ dispatch(Req) ->
 		    Meth = clean_method(Req:get(method)),
 		    Args = {Req, ContentType, ControllerPath, Meth},
 		    run_controller(Req, Controller, [Args],
-				  polish_utils:is_user_logged(Req))
+				   polish_utils:is_user_logged(Req))
 	    end
     end.
 
 % Call the controller action here
 run_controller(Req, Controller, _Args, _UserLogged = false)
   when Controller =/= polish_login_controller ->
-    Req:respond(?FOUND, [{"Location", "/login"}], []);
-run_controller(Req, Controller, Args, _UserLogged = true) ->
-    case (catch apply(Controller, dispatch, Args)) of
+     Req:respond(?FOUND, [{"Location", "/login"}], []);
+run_controller(Req, Controller, Args, _UserLogged) ->
+     case (catch apply(Controller, dispatch, Args)) of
 	{'EXIT', Err} ->
 	    error_logger:format("~p~n", [Err]),
 	    Req:respond({?INTERNAL_SERVER_ERROR, [{?CT, "text/plain"}],
