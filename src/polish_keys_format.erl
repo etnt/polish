@@ -15,11 +15,12 @@ list(_Data0, ?JSON) ->
 list(_Data, _CT) ->
     throw(not_supported).
 
-key({Key, Translation, IsLocked}, Key, ?JSON) ->
+key({Key, Translation, IsLocked, IsMarkedAsTranslated}, Key, ?JSON) ->
     mochijson2:encode({struct, [{url, key_url(Key)},
 				{key, ?l2a(to_utf8(Key))},
 				{value, ?l2a(to_utf8(Translation))},
-				{locked, IsLocked}]});
+				{locked, IsLocked},
+				{marked_as_translated, IsMarkedAsTranslated}]});
 key(_Data, _Key, _CT) ->
     throw(not_supported).
 

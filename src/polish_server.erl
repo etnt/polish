@@ -8,7 +8,7 @@
 %% API
 -export([delete_old_locked_keys/0
 	 , get_new_old_keys/0
-	 , is_always_translated/2
+	 , is_always_translated/1
 	 , is_key_locked/1
 	 , is_key_locked_by_another_user/2
 	 , load_always_translated_keys/2
@@ -83,8 +83,8 @@ mark_as_always_translated(ID) ->
 unmark_as_always_translated(ID) ->
     gen_server:call(?MODULE, {unmark_as_always_translated, ID}).
 
-is_always_translated(LC, Key) ->
-    gen_server:call(?MODULE, {is_always_translated, LC, Key}).
+is_always_translated(ResourceID) ->
+    gen_server:call(?MODULE, {is_always_translated, ResourceID}).
 
 set_new_old_keys(NewOldKeys) ->
     gen_server:call(?MODULE, {set_new_old_keys, NewOldKeys}).
@@ -197,8 +197,8 @@ handle_call({unmark_as_always_translated, ID}, _From, State) ->
     {NewState, Reply} = do_unmark_as_always_translated(State, ID),
     {reply, Reply, NewState};
 
-handle_call({is_always_translated, LC, Key}, _From, State) ->
-    {NewState, Reply} = do_is_always_translated(State, LC, Key),
+handle_call({is_always_translated, ResourceID}, _From, State) ->
+    {NewState, Reply} = do_is_always_translated(State, ResourceID),
     {reply, Reply, NewState};
 
 handle_call({set_new_old_keys, NewOldKeys}, _From, State) ->
@@ -378,8 +378,8 @@ do_unmark_as_always_translated(State, [C1, C2 | Hash]) ->
             {State, ok}
     end.
 
-do_is_always_translated(State, LC, Key) ->
-    Res = case ets:lookup(always_translated, {LC, Key}) of
+do_is_always_translated(State, [C1, C2 | Hash]) ->
+    Res = case ets:lookup(always_translated, {[C1,C2], Hash}) of
 	      [] -> false;
 	      _  -> true
     end,

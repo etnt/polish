@@ -12,19 +12,26 @@ get_list(_Query) ->
 
 get(ResourceID, User) ->
     {K, V} = read_key(ResourceID),
-    IsLocked = case polish_server:is_key_locked(ResourceID) of
-		   true  -> true;
-		   false ->
-		       polish_server:lock_key(ResourceID, User),
-		       false
-	       end,
-    {K, V, IsLocked}.
+    IsLocked = is_key_locked(ResourceID, User),
+    IsMarkedAsTranslated = is_marked_as_translated(ResourceID),
+    {K, V, IsLocked, IsMarkedAsTranslated}.
 
 read_key(ResourceID) ->
     case polish_server:try_read_key(ResourceID) of
 	false -> throw(bad_uri);
 	Res   -> Res
     end.
+
+is_key_locked(ResourceID, User) ->
+    case polish_server:is_key_locked(ResourceID) of
+	true  -> true;
+	false ->
+	    polish_server:lock_key(ResourceID, User),
+	    false
+    end.
+
+is_marked_as_translated(ResourceID) ->
+    polish_server:is_always_translated(ResourceID).
 
 put(ResourceID, Body, User) ->
     assert_key_exists(ResourceID),
