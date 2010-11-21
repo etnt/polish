@@ -42,9 +42,10 @@ top({_Req, _CT, _Path, put}) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% /keys/keyID
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-key({_Req, CT, [ID], get}) ->
+key({Req, CT, [ID], get}) ->
+    User = polish_utils:get_user_from_request(Req),
     try
-	Data = polish_keys_resource:get(ID),
+	Data = polish_keys_resource:get(ID, User),
 	Response = polish_keys_format:key(Data, ID, CT),
 	{?OK, CT, Response}
     catch
@@ -61,8 +62,9 @@ key({_Req, _CT, _Path, delete}) ->
     {?BAD_METHOD, "text/plain", ?BAD_METHOD_MSG};
 key({Req, CT, [ID], put}) ->
     Body = Req:parse_post(),
+    User = polish_utils:get_user_from_request(Req),
     try
-	Result = polish_keys_resource:put(ID, Body),
+	Result = polish_keys_resource:put(ID, Body, User),
 	Response = polish_keys_format:put(Result, CT),
 	{?OK, CT, Response}
     catch

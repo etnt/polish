@@ -3,15 +3,25 @@
 
 -module(polish_keys_resource).
 
--export([get_list/1, get/1, put/2]).
+-export([get_list/1, get/2, put/2]).
 
 -include("polish.hrl").
 
 get_list(_Query) ->
      [LC || LC <- polish:all_custom_lcs(), LC =/= "a"].
 
-get(ID) ->
-    case polish_server:try_read_key(ID) of
+get(ResourceID, User) ->
+    {K, V} = read_key(ResourceID),
+    IsLocked = case polish_server:is_key_locked(ResourceID) of
+		   true  -> true;
+		   false ->
+		       polish_server:lock_key(ResourceID, User),
+		       false
+	       end,
+    {K, V, IsLocked}.
+
+read_key(ResourceID) ->
+    case polish_server:try_read_key(ResourceID) of
 	false -> throw(bad_uri);
 	Res   -> Res
     end.

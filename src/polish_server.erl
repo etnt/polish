@@ -9,9 +9,10 @@
 -export([delete_old_locked_keys/0
 	 , get_new_old_keys/0
 	 , is_always_translated/2
-	 , is_key_locked/2
+	 , is_key_locked/1
 	 , load_always_translated_keys/2
 	 , load_po_files/1
+	 , lock_key/2
 	 , lock_keys/2
 	 , mark_as_always_translated/1
 	 , read_key/1
@@ -54,8 +55,11 @@ read_key(ID) ->
 try_read_key(Key) ->
     gen_server:call(?MODULE, {try_read_key, Key}).
 
-lock_keys(KVs, LC) when is_atom(LC) ->
-    gen_server:call(?MODULE, {lock_keys, KVs, LC, ?l2a(wf:user())}).
+lock_key(ResourceID, User) ->
+    lock_keys([ResourceID], User).
+
+lock_keys(ResourceIDs, User) ->
+    gen_server:call(?MODULE, {lock_keys, ResourceIDs, User}).
 
 unlock_user_keys() ->
     case wf:user() of
@@ -63,10 +67,8 @@ unlock_user_keys() ->
 	U -> gen_server:call(?MODULE, {unlock_user_keys, ?l2a(U)})
     end.
 
-is_key_locked(Key, LC) when is_list(LC) ->
-    is_key_locked(Key, ?l2a(LC));
-is_key_locked(Key, LC) when is_atom(LC) ->
-    gen_server:call(?MODULE, {is_key_locked, Key, LC, ?l2a(wf:user())}).
+is_key_locked(Key) ->
+    gen_server:call(?MODULE, {is_key_locked, Key}).
 
 delete_old_locked_keys() ->
     gen_server:call(?MODULE, delete_old_locked_keys).
@@ -162,16 +164,16 @@ handle_call({try_read_key, Key}, _From, State) ->
     {NewState, Reply} = do_try_read_key(State, Key),
     {reply, Reply, NewState};
 
-handle_call({lock_keys, KVs, LC, User}, _From, State) ->
-    {NewState, Reply} = do_lock_keys(State, KVs, LC, User),
+handle_call({lock_keys, ResourceIDs, User}, _From, State) ->
+    {NewState, Reply} = do_lock_keys(State, ResourceIDs, User),
     {reply, Reply, NewState};
 
 handle_call({unlock_user_keys, User}, _From, State) ->
     {NewState, Reply} = do_unlock_user_keys(State, User),
     {reply, Reply, NewState};
 
-handle_call({is_key_locked, Key, LC, User}, _From, State) ->
-    {NewState, Reply} = do_is_key_locked(State, Key, LC, User),
+handle_call({is_key_locked, ResourceID}, _From, State) ->
+    {NewState, Reply} = do_is_key_locked(State, ResourceID),
     {reply, Reply, NewState};
 
 handle_call(delete_old_locked_keys, _From, State) ->
@@ -290,18 +292,17 @@ do_read_key(State, [C1, C2 | Hash]) ->
 do_try_read_key(State, [C1, C2 | Hash]) ->
     {State, try_read_key([C1, C2], Hash)}.
 
-do_lock_keys(State, KVs, LC, User) ->
-    Res = lists:foldl(
-	    fun({Key, _Val} = KV, Acc) ->
-		    case do_is_key_locked(State, Key, LC, User) of
-			{State, true}  -> Acc;
-			{State, false} ->
-			    {Mega, Sec, _} = erlang:now(),
-			    Time = Mega * 100000 + Sec,
-			    ets:insert(locked_keys, {{Key, LC}, {User, Time}}),
-			    [KV | Acc]
-		    end
-	    end, [], KVs),
+do_lock_keys(State, ResourceIDs, User) ->
+    F = fun(ResourceID) ->
+		case do_is_key_locked(State, ResourceID) of
+		    {State, true}  -> ok;
+		    {State, false} ->
+			{Mega, Sec, _} = erlang:now(),
+			Time = Mega * 100000 + Sec,
+			ets:insert(locked_keys, {ResourceID, {User, Time}})
+		end
+	end,
+    Res = lists:foreach(F, ResourceIDs),
     {State, Res}.
 
 do_unlock_user_keys(State, User) ->
@@ -309,10 +310,10 @@ do_unlock_user_keys(State, User) ->
 				   U =:= User],
     {State, result}.
 
-do_is_key_locked(State, Key, LC, User) ->
-    Res = case ets:lookup(locked_keys, {Key, LC}) of
-	      []               -> false;
-	      [{_K, {U, _T}}]  -> User =/= U
+do_is_key_locked(State, ResourceID) ->
+    Res = case ets:lookup(locked_keys, ResourceID) of
+	      []  -> false;
+	      [_] -> true
 	  end,
     {State, Res}.
 
