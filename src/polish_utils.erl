@@ -8,6 +8,7 @@
 
 -export([build_info_log/4
 	 , build_url/0
+	 , url_decode/1
 	 , generate_key_identifier/2
 	 , get_language_name/1
 	 , get_user_from_cookies/1
@@ -167,3 +168,17 @@ get_user_from_cookies(Cookies) ->
 		Name  -> Name
 	    end
     end.
+
+url_decode([$%, Hi, Lo | Tail]) ->
+    Hex = hex_to_integer([Hi, Lo]),
+    [Hex | url_decode(Tail)];
+url_decode([H|T]) when is_integer(H) ->
+    [H |url_decode(T)];
+url_decode([]) ->
+    [];
+%% deep lists
+url_decode([H|T]) when is_list(H) ->
+    [url_decode(H) | url_decode(T)].
+
+hex_to_integer(Hex) ->
+    erlang:list_to_integer(Hex, 16).
