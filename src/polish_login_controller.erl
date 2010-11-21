@@ -32,7 +32,7 @@ start_openid_authentication(Req, CT) ->
     end.
 
 is_user_allowed(Req) ->
-    ClaimedId = eopenid_lib:http_path_norm(?lkup(claimed_id, Req:parse_qs())),
+    ClaimedId = eopenid_lib:http_path_norm(?lkup("claimed_id", Req:parse_qs())),
     {lists:member(ClaimedId, polish:get_acl()), ClaimedId}.
 
 generate_openid_data(ClaimedId, URL) ->

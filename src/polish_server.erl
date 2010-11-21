@@ -93,10 +93,10 @@ get_new_old_keys() ->
     gen_server:call(?MODULE, get_new_old_keys).
 
 write_user_auth(ID, Data) ->
-    gen_server:call(?MODULE, write_user_auth, ID, Data).
+    gen_server:call(?MODULE, {write_user_auth, ID, Data}).
 
 read_user_auth(ID) ->
-    gen_server:call(?MODULE, read_user_auth, ID).
+    gen_server:call(?MODULE, {read_user_auth, ID}).
 
 
 %%--------------------------------------------------------------------
@@ -393,11 +393,11 @@ do_get_new_old_keys(State) ->
     {State, get(new_old_keys)}.
 
 do_write_user_auth(State, ID, Data) ->
-    ets:insert(?MODULE, {ID, Data}),
+    ets:insert(sessions, {ID, Data}),
     {State, ok}.
 
 do_read_user_auth(State, ID) ->
-    case ets:lookup(?MODULE, ID) of
+    case ets:lookup(sessions, ID) of
 	[{ID, Data}] -> {State, Data};
 	_            -> {State, false}
     end.
