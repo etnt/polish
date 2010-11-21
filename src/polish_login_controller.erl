@@ -59,7 +59,7 @@ finish_openid_authentication(Req, CT) ->
 	SavedData = polish_server:read_user_auth(AuthId),
 	true = eopenid_v1:verify_signed_keys(RawPath, SavedData),
 	write_user_data(AuthId, SavedData),
-	{?FOUND, polish_utils:build_url(), CT, [], []}
+	{?FOUND, polish_utils:build_url(), CT, AuthId, []}
     catch
 	_:_ ->
 	    {?OK, CT, polish_login_format:login_error(error)}

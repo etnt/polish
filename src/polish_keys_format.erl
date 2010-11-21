@@ -29,6 +29,10 @@ key_url(Key) ->
 put(ok, ?JSON) ->
     mochijson2:encode({struct, [{result, ok}]});
 put({error, Err}, ?JSON) ->
-    mochijson2:encode({struct, [{result, error}, {reason, ?l2a(Err)}]});
+    ErrAtom = case is_atom(Err) of
+		  true  -> Err;
+		  false -> ?l2a(Err)
+	      end,
+    mochijson2:encode({struct, [{result, error}, {reason, ErrAtom}]});
 put(_Data, _CT) ->
     throw(not_supported).

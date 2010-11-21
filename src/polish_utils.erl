@@ -6,7 +6,7 @@
 -include("polish.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
--export([build_info_log/3
+-export([build_info_log/4
 	 , build_url/0
 	 , generate_key_identifier/2
 	 , get_language_name/1
@@ -147,14 +147,9 @@ restore_whitespace_test() ->
     {_, Text, _} = trim_whitespace(Orig),
     ?assertEqual(Orig, restore_whitespace(Orig, Text)).
 
-build_info_log(LC, User, L) ->
-    LCa = ?a2l(LC),
-    Str = "User " ++ User ++ " exported a new file for " ++ LCa ++ " language. "
-	"The changes added are the following: ~n",
-    lists:foldl(
-      fun({K,V}, AccStr) ->
-	      AccStr ++ "Key: " ++ K ++ "~nValue: " ++ V ++ "~n~n"
-      end, Str, L) ++ "~n~n".
+build_info_log(LC, User, Action, What) ->
+    "User: " ++ User ++ "~n" ++ "Language: " ++ ?a2l(LC) ++ "~n"
+	"Action: " ++ ?a2l(Action) ++ "~n" ++ What ++ "~n~n~n".
 
 is_user_logged(Req) ->
     case get_user_from_request(Req) of

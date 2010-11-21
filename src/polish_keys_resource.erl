@@ -3,7 +3,7 @@
 
 -module(polish_keys_resource).
 
--export([get_list/1, get/2, put/2]).
+-export([get_list/1, get/2, put/3]).
 
 -include("polish.hrl").
 
@@ -26,26 +26,42 @@ read_key(ResourceID) ->
 	Res   -> Res
     end.
 
-put(ID, Body) ->
-    case maybe_save_translation(ID, Body) of
-	false -> maybe_mark_as_always_translated(ID, Body);
-	Res   -> Res
+put(ResourceID, Body, User) ->
+    assert_key_exists(ResourceID),
+    case polish_server:is_key_locked_by_another_user(ResourceID, User) of
+	true  -> {error, locked_key};
+	false -> do_put(ResourceID, Body, User)
     end.
 
-maybe_save_translation(ID, Body) ->
+assert_key_exists(ResourceID) ->
+    read_key(ResourceID).
+
+do_put(ResourceID, Body, User) ->
+    case maybe_save_translation(ResourceID, Body, User) of
+	false -> maybe_mark_as_always_translated(ResourceID, Body, User);
+	Res   -> Res
+    end,
+    polish_server:unlock_user_keys(User).
+
+maybe_save_translation(ID, Body, User) ->
     case lists:keyfind("translation", 1, Body) of
 	false            -> false;
-	{_, Translation} -> save_translation(ID, Translation)
+	{_, Translation} -> save_translation(ID, Translation, User)
     end.
 
-maybe_mark_as_always_translated(ID, Body) ->
+maybe_mark_as_always_translated([LC1,LC2|_] = ID, Body, User) ->
+    {K, _} = read_key(ID),
     case lists:keyfind("mark_as_always_translated", 1, Body) of
 	false        -> throw(bad_request);
-	{_, "true"}  -> polish_server:mark_as_always_translated(ID);
-	{_, "false"} -> polish_server:unmark_as_always_translated(ID)
+	{_, "true"}  ->
+	    polish_server:mark_as_always_translated(ID),
+	    log_save_translation([LC1,LC2], User, mark_translated, K);
+	{_, "false"} ->
+	    polish_server:unmark_as_always_translated(ID),
+	    log_save_translation([LC1,LC2], User, unmark_translated, K)
     end.
 
-save_translation([LC1, LC2|_] = ID, Translation) ->
+save_translation([LC1, LC2|_] = ID, Translation, User) ->
     {Key, _V} = ?MODULE:get(ID),
     case validate_translation(Key, Translation) of
 	{error, _} = Err ->
@@ -53,7 +69,8 @@ save_translation([LC1, LC2|_] = ID, Translation) ->
 	ValidatedTranslation  ->
 	    polish_server:write_key(ID, ValidatedTranslation),
 	    polish_wash:write_po_file([LC1, LC2]),
-	    log_save_translation([LC1,LC2], Key, ValidatedTranslation),
+	    log_save_translation([LC1,LC2], User, save,
+				 {Key, ValidatedTranslation}),
 	    ok
     end.
 
@@ -66,6 +83,15 @@ validate_translation(Key, Translation0) ->
 	{false, Err} -> {error, Err}
     end.
 
-log_save_translation(LC, Key, Translation) ->
-    Str = polish_utils:build_info_log(?l2a(LC), "", [{Key, Translation}]),
+log_save_translation(LC, User, Action, What) ->
+    WhatStr = case Action of
+		  save ->
+		      {K,V} = What,
+		      "Key: " ++ K ++ "~nTranslation: " ++ V;
+		  mark_translated ->
+		      "Key: " ++ What;
+		  unmark_translated ->
+		      "Key: " ++ What
+	      end,
+    Str = polish_utils:build_info_log(?l2a(LC), User, Action, WhatStr),
     error_logger:info_msg(Str).

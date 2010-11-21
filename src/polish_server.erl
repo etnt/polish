@@ -10,6 +10,7 @@
 	 , get_new_old_keys/0
 	 , is_always_translated/2
 	 , is_key_locked/1
+	 , is_key_locked_by_another_user/2
 	 , load_always_translated_keys/2
 	 , load_po_files/1
 	 , lock_key/2
@@ -20,7 +21,7 @@
 	 , read_po_file/1
 	 , set_new_old_keys/1
 	 , try_read_key/1
-	 , unlock_user_keys/0
+	 , unlock_user_keys/1
 	 , unmark_as_always_translated/1
 	 , write_key/2
 	 , write_user_auth/2
@@ -61,14 +62,14 @@ lock_key(ResourceID, User) ->
 lock_keys(ResourceIDs, User) ->
     gen_server:call(?MODULE, {lock_keys, ResourceIDs, User}).
 
-unlock_user_keys() ->
-    case wf:user() of
-	undefined -> ok;
-	U -> gen_server:call(?MODULE, {unlock_user_keys, ?l2a(U)})
-    end.
+unlock_user_keys(User) ->
+    gen_server:call(?MODULE, {unlock_user_keys, User}).
 
 is_key_locked(Key) ->
     gen_server:call(?MODULE, {is_key_locked, Key}).
+
+is_key_locked_by_another_user(ResourceID, User) ->
+    gen_server:call(?MODULE, {is_key_locked_by_another_user, ResourceID, User}).
 
 delete_old_locked_keys() ->
     gen_server:call(?MODULE, delete_old_locked_keys).
@@ -174,6 +175,10 @@ handle_call({unlock_user_keys, User}, _From, State) ->
 
 handle_call({is_key_locked, ResourceID}, _From, State) ->
     {NewState, Reply} = do_is_key_locked(State, ResourceID),
+    {reply, Reply, NewState};
+
+handle_call({is_key_locked_by_another_user, ResourceID, User}, _From, State) ->
+    {NewState, Reply} = do_is_key_locked_by_another_user(State, ResourceID, User),
     {reply, Reply, NewState};
 
 handle_call(delete_old_locked_keys, _From, State) ->
@@ -314,6 +319,14 @@ do_is_key_locked(State, ResourceID) ->
     Res = case ets:lookup(locked_keys, ResourceID) of
 	      []  -> false;
 	      [_] -> true
+	  end,
+    {State, Res}.
+
+do_is_key_locked_by_another_user(State, ResourceID, User) ->
+    Res = case ets:lookup(locked_keys, ResourceID) of
+	      []                            -> false;
+	      [{ResourceID, {User, _Time}}] -> false;
+	      [_]                           -> true
 	  end,
     {State, Res}.
 
