@@ -1,15 +1,15 @@
 [submodule "dep/nitrogen"]
 	path = dep/nitrogen
-	url = http://github.com/jordi-chacon/nitrogen.git
+	url = git://github.com/jordi-chacon/nitrogen.git
 [submodule "dep/elogger"]
 	path = dep/elogger
-	url = http://github.com/etnt/elogger.git
+	url = git://github.com/etnt/elogger.git
 [submodule "dep/eopenid"]
 	path = dep/eopenid
-	url = http://github.com/etnt/eopenid.git
+	url = git://github.com/etnt/eopenid.git
 [submodule "dep/gettext"]
 	path = dep/gettext
-	url = http://github.com/etnt/gettext.git
+	url = git://github.com/etnt/gettext.git
 [submodule "dep/trane"]
 	path = dep/trane
-	url = http://github.com/massemanet/trane.git
+	url = git://github.com/massemanet/trane.git
