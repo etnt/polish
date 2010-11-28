@@ -16,12 +16,13 @@ dispatch({Req, CT, _Path, _Meth}) ->
 
 start_openid_authentication(Req, CT) ->
     try
-	case is_user_allowed(Req) of
-	    {false, _} ->
-		{?OK, CT, [], polish_login_format:login_error(not_allowed, ?JSON)};
-	    {true, ClaimedId} ->
-		URL = polish_utils:build_url(),
-		OpenIdData = generate_openid_data(ClaimedId, URL),
+	URL = polish_utils:build_url(),
+	ClaimedId = get_claimed_id(Req),
+	OpenIdData = generate_openid_data(ClaimedId, URL),
+	case is_user_allowed(ClaimedId) of
+	    false ->
+		{?OK,CT,[],polish_login_format:login_error(not_allowed, ?JSON)};
+	    true ->
 		OpenIdURL = generate_openid_url(OpenIdData),
 		write_openid_data(OpenIdData),
 		{?FOUND, OpenIdURL, ?HTML++";"++?CHARSET, [], []}
@@ -31,9 +32,11 @@ start_openid_authentication(Req, CT) ->
 	    {?OK, CT, [], polish_login_format:login_error(bad_format, ?JSON)}
     end.
 
-is_user_allowed(Req) ->
-    ClaimedId = eopenid_lib:http_path_norm(?lkup("claimed_id", Req:parse_qs())),
-    {lists:member(ClaimedId, polish:get_acl()), ClaimedId}.
+get_claimed_id(Req) ->
+    eopenid_lib:http_path_norm(?lkup("claimed_id", Req:parse_qs())).
+
+is_user_allowed(ClaimedId) ->
+    lists:member(ClaimedId, polish:get_acl()).
 
 generate_openid_data(ClaimedId, URL) ->
     Data0 = eopenid_lib:foldf(
