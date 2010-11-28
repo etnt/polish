@@ -7,6 +7,7 @@
 
 %% API
 -export([delete_old_locked_keys/0
+	 , delete_user_auth/1
 	 , get_new_old_keys/0
 	 , is_always_translated/1
 	 , is_key_locked/1
@@ -97,6 +98,9 @@ write_user_auth(ID, Data) ->
 
 read_user_auth(ID) ->
     gen_server:call(?MODULE, {read_user_auth, ID}).
+
+delete_user_auth(ID) ->
+    gen_server:call(?MODULE, {delete_user_auth, ID}).
 
 
 %%--------------------------------------------------------------------
@@ -215,6 +219,10 @@ handle_call({write_user_auth, ID, Data}, _From, State) ->
 
 handle_call({read_user_auth, ID}, _From, State) ->
     {NewState, Reply} = do_read_user_auth(State, ID),
+    {reply, Reply, NewState};
+
+handle_call({delete_user_auth, ID}, _From, State) ->
+    {NewState, Reply} = do_delete_user_auth(State, ID),
     {reply, Reply, NewState};
 
 handle_call(_Request, _From, State) ->
@@ -401,6 +409,10 @@ do_read_user_auth(State, ID) ->
 	[{ID, Data}] -> {State, Data};
 	_            -> {State, false}
     end.
+
+do_delete_user_auth(State, ID) ->
+    ets:delete(sessions, ID),
+    {State, ok}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

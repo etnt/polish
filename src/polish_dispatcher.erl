@@ -40,7 +40,7 @@ run_controller(Req, Controller, _Args, _UserLogged = false)
   when Controller =/= polish_login_controller ->
      Req:respond(?FOUND, [{"Location", "/login"}], []);
 run_controller(Req, Controller, Args, _UserLogged) ->
-     case (catch apply(Controller, dispatch, Args)) of
+    case (catch apply(Controller, dispatch, Args)) of
 	{'EXIT', Err} ->
 	    error_logger:format("~p~n", [Err]),
 	    Req:respond({?INTERNAL_SERVER_ERROR, [{?CT, "text/plain"}],

@@ -8,10 +8,10 @@
 -include("polish.hrl").
 
 dispatch({Req, CT, _Path, _Meth}) ->
-    case lists:keyfind(action, 1, Req:parse_qs()) of
-	false              -> start_openid_authentication(Req, CT);
-	{action, "auth"}   -> finish_openid_authentication(Req, CT);
-	{action, "logout"} -> ok
+    case lists:keyfind("action", 1, Req:parse_qs()) of
+	false                -> start_openid_authentication(Req, CT);
+	{"action", "auth"}   -> finish_openid_authentication(Req, CT);
+	{"action", "logout"} -> ok
     end.
 
 start_openid_authentication(Req, CT) ->
@@ -60,9 +60,10 @@ finish_openid_authentication(Req, CT) ->
 	RawPath = get_raw_path(Req),
 	AuthId = get_openid_auth_id(Req),
 	SavedData = polish_server:read_user_auth(AuthId),
+	polish_server:delete_user_auth(AuthId),
 	true = eopenid_v1:verify_signed_keys(RawPath, SavedData),
-	write_user_data(AuthId, SavedData),
-	{?FOUND, polish_utils:build_url(), CT, AuthId, []}
+	NewAuthId = write_user_data(AuthId, SavedData),
+	{?FOUND, polish_utils:build_url(), CT, NewAuthId, []}
     catch
 	_:_ ->
 	    {?OK, CT, polish_login_format:login_error(error, ?JSON)}
@@ -73,10 +74,11 @@ get_raw_path(Req) ->
     RawPath.
 
 get_openid_auth_id(Req) ->
-    ?lkup(openid.assoc_handle, Req:parse_qs()).
+    ?lkup("openid.assoc_handle", Req:parse_qs()).
 
-write_user_data(AuthId, Data) ->
+write_user_data(AuthId0, Data) ->
+    AuthId = [C || C <- AuthId0, C =/= ${, C =/= $}, C =/= $=],
     User = ?lkup("openid.claimed_id", Data),
-    {User, [{name, Name}, _]} = ?lkup(User, polish:get_users()),
+    [{name, Name}, _] = ?lkup(User, polish:get_users()),
     polish_server:write_user_auth(AuthId, Name),
-    ok.
+    AuthId.
