@@ -4,7 +4,9 @@
 -export([send_http_request/4
 	 , send_http_request/5
 	 , send_http_request/6
-	 , assert_fields_from_response/2]).
+	 , assert_fields_from_response/2
+	 , write_fake_login_data/0
+	 , clean_fake_login_data/0]).
 
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("../include/polish.hrl").
@@ -64,3 +66,18 @@ assert_field_from_response(FieldName, ExpectedValue, Response) ->
     FieldNameBin = ?l2b(FieldName),
     ?assertEqual({FieldNameBin, ExpectedValue},
 		 lists:keyfind(FieldNameBin, 1, Response)).
+
+write_fake_login_data() ->
+    AuthId = "{HMAC-SHA1}{4ce7ff3b}{chZ2eA==}",
+    Data = [{"openid.assoc_handle", AuthId},
+	    {"openid.claimed_id", "http://jordi-chacon.myopenid.com/"},
+	    {"openid.mac_key", <<91,188,209,112,42,145,162,81,9,111,127,179,180,
+				 237,117,0,79,174,75,155>>},
+	    {"openid.return_to","http://192.168.10.249:8282/auth"},
+	    {"openid.server","http://www.myopenid.com/server"},
+	    {"openid.trust_root","http://192.168.10.249:8282"},
+	    {"openid2.provider","http://www.myopenid.com/server"}],
+    polish_server:write_user_auth(AuthId, Data).
+
+clean_fake_login_data() ->
+    polish_server:delete_user_auth("HMAC-SHA14ce7ff3bchZ2eA").
