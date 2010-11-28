@@ -9,6 +9,7 @@
 	 , get_acl/0
 	 , get_default_lang/0
 	 , get_org_name/0
+	 , get_users/0
          , gettext_dir/0
          , meta_filename/1
          , all_custom_lcs/0
