@@ -11,6 +11,7 @@ suite() ->
 
 all() ->
     [start_authentication
+     , bad_authentication_user_not_allowed
     ].
 
 
@@ -21,8 +22,6 @@ init_per_suite(Config) ->
     polish_test_lib:start_polish_for_test(),
     Config.
 
-%% init_per_testcase(http_get_key, Config) ->
-%%     [{key, "jag heter POlish"}, {translation, "em dic POlish"}|Config];
 init_per_testcase(_TestCase, Config) ->
     Config.
 
@@ -61,3 +60,16 @@ check_assoc_handle_in_url(Url) ->
 					  [ungreedy]),
     AuthId = lists:sublist(Url, Start+1, Length),
     ?assertMatch([_,_,_,_,_,_],  polish_server:read_user_auth(AuthId)).
+
+bad_authentication_user_not_allowed(_Config) ->
+    ClaimedId = "nadia.myopenid.com",
+    {Code, Headers, ResponseJSON} = polish_test_lib:send_http_request(
+    				       get, [{autoredirect, false}],
+				       "/login?claimed_id=" ++ ClaimedId,
+    				       ?JSON, headers),
+    ?assertEqual(?OK, Code),
+    ?assertEqual(none, proplists:lookup("location", Headers)),
+    {struct, Response} = mochijson2:decode(ResponseJSON),
+    polish_test_lib:assert_fields_from_response(
+      [{"login", "error"}, {"reason", "user not allowed"}], Response),
+    ok.
