@@ -12,6 +12,7 @@ suite() ->
 all() ->
     [start_authentication
      , bad_authentication_user_not_allowed
+     , bad_authentication_wrong_openid_format
     ].
 
 
@@ -72,4 +73,17 @@ bad_authentication_user_not_allowed(_Config) ->
     {struct, Response} = mochijson2:decode(ResponseJSON),
     polish_test_lib:assert_fields_from_response(
       [{"login", "error"}, {"reason", "user not allowed"}], Response),
+    ok.
+
+bad_authentication_wrong_openid_format(_Config) ->
+    ClaimedId = "jordi-chacon",
+    {Code, Headers, ResponseJSON} = polish_test_lib:send_http_request(
+    				       get, [{autoredirect, false}],
+				       "/login?claimed_id=" ++ ClaimedId,
+    				       ?JSON, headers),
+    ?assertEqual(?OK, Code),
+    ?assertEqual(none, proplists:lookup("location", Headers)),
+    {struct, Response} = mochijson2:decode(ResponseJSON),
+    polish_test_lib:assert_fields_from_response(
+      [{"login", "error"}, {"reason", "wrong openid format"}], Response),
     ok.
