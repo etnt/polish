@@ -4,8 +4,7 @@
 
 -module(polish_po).
 
--export([is_correct_translation/2
-	 , get_entries/1
+-export([  get_entries/1
 	 , get_stats/1
         ]).
 
@@ -44,12 +43,6 @@ get_stats(LC) ->
   KVs = polish_server:read_po_file(LC),
   Untrans = get_amount_untranslated_keys(KVs, ?l2a(LC)),
   {length(KVs), Untrans}.
-
-is_correct_translation(Key, Val) ->
-  Validators = [gettext_validate_bad_ftxt, gettext_validate_bad_stxt,
-		gettext_validate_bad_case, gettext_validate_bad_html,
-		gettext_validate_bad_punct, gettext_validate_bad_ws],
-  run_validators(Key, Val, Validators).
 
 
 
@@ -152,26 +145,6 @@ escape_regexp([$( | RegExp], Acc) -> escape_regexp(RegExp, [$(,$\\ | Acc]);
 escape_regexp([$) | RegExp], Acc) -> escape_regexp(RegExp, [$),$\\ | Acc]);
 escape_regexp([Char | RegExp], Acc) -> escape_regexp(RegExp, [Char | Acc]);
 escape_regexp([], Acc) -> lists:reverse(Acc).
-
-
-
-% check_correctness
-%------------------------------------------------------------------------------
-run_validators(_Key, _Val, []) ->
-  true;
-run_validators(Key, Val, [Validator|T]) ->
-  case run_validator(Validator, Key, Val) of
-    ok           -> run_validators(Key, Val, T);
-    {error, Msg} -> {false, Msg}
-  end.
-
-run_validator(Module, K, V) ->
-  case Module:check({K, V}, polish_server, []) of
-    [] -> ok;
-    Err when element(1, hd(Err)) =:= 'ERROR' orelse
-	     element(1, hd(Err)) =:= 'Warning' ->
-      {error, element(2, hd(Err))}
-  end.
 
 
 % get_stats
