@@ -51,9 +51,14 @@ do_put(ResourceID, Body, User) ->
     polish_server:unlock_user_keys(User).
 
 maybe_save_translation(ID, Body, User) ->
-    case lists:keyfind("translation", 1, Body) of
-	false            -> false;
-	{_, Translation} -> save_translation(ID, Translation, User)
+    case {lists:keyfind("translation", 1, Body),
+	  lists:keyfind("bypass_validators", 1, Body)} of
+	{{_, Translation}, {_, ByPass}} ->
+	    save_translation(ID, ?l2a(ByPass), Translation, User);
+	{{_, Translation}, false} ->
+	    save_translation(ID, false, Translation, User);
+	_ ->
+	    false
     end.
 
 maybe_mark_as_always_translated([LC1,LC2|_] = ID, Body, User) ->
@@ -68,9 +73,10 @@ maybe_mark_as_always_translated([LC1,LC2|_] = ID, Body, User) ->
 	    log_save_translation([LC1,LC2], User, unmark_translated, K)
     end.
 
-save_translation([LC1, LC2|_] = ID, Translation, User) ->
+save_translation([LC1, LC2|_] = ID, ByPassValidators, Translation0, User) ->
     {Key, _V} = ?MODULE:get(ID),
-    case validate_translation(Key, Translation) of
+    Translation = format_translation(Key, Translation0),
+    case validate_translation(Key, Translation, ByPassValidators) of
 	{error, _} = Err ->
 	    Err;
 	ValidatedTranslation  ->
@@ -81,10 +87,14 @@ save_translation([LC1, LC2|_] = ID, Translation, User) ->
 	    ok
     end.
 
-validate_translation(Key, Translation0) ->
-    Translation = polish_utils:to_latin1(
-		    polish_utils:restore_whitespace(
-		      Key, polish_utils:trim_whitespace(Translation0))),
+format_translation(Key, Translation) ->
+    polish_utils:to_latin1(
+      polish_utils:restore_whitespace(
+	Key, polish_utils:trim_whitespace(Translation))).
+
+validate_translation(_Key, Translation, _ByPassValidator = true) ->
+    Translation;
+validate_translation(Key, Translation, _ByPassValidator = false) ->
     case polish_po:is_correct_translation(Key, Translation) of
 	true         -> Translation;
 	{false, Err} -> {error, Err}
