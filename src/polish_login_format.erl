@@ -1,3 +1,4 @@
+%%% -*- erlang-indent-level: 2 -*-
 %%% @author Jordi Chacon <jordi.chacon@klarna.com>
 %%% @copyright (C) 2010, Jordi Chacon
 
@@ -10,14 +11,14 @@
 
 
 login(?JSON) ->
-    ok.
+  ok.
 
 login_error(Reason, ?JSON) ->
-    mochijson2:encode({struct, [{login, error},{reason,?l2a(reason(Reason))}]}).
+  mochijson2:encode({struct, [{login, error},{reason,?l2a(reason(Reason))}]}).
 
 reason(not_allowed) ->
-    "user not allowed";
+  "user not allowed";
 reason(bad_format) ->
-    "wrong openid format";
+  "wrong openid format";
 reason(error) ->
-    "login error".
+  "login error".
