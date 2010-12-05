@@ -43,19 +43,23 @@ generate_complete_query(Query) ->
   lists:ukeymerge(1, Query1, DefaultQuery).
 
 get_default_query() ->
-  [ {"lang", polish:get_default_lang()}
-  , {"offset", "0"}
-  , {"translated", "false"}
-  , {"untranslated", "true"}
-  , {"search_in_key", "true"}
-  , {"search_in_value", "false"}
-  , {"match_type", "any"}
-  , {"string_search", ".*"}].
+  [ {"lang",                   polish:get_default_lang()}
+  , {"offset",                 "0"}
+  , {"translated",             "false"}
+  , {"untranslated",           "true"}
+  , {"search_in_key",          "true"}
+  , {"search_in_value",        "false"}
+  , {"match_type",             "any"}
+  , {"string_search",          ".*"}
+  , {"locked_keys",            "false"}
+  , {"always_translated_keys", "false"}].
 
 do_get_list(Query) ->
   KVs = get_partially_matching_keys(Query),
   Keys = get_matching_keys(KVs, Query),
-  polish_server:lock_keys(Keys, ?l2a(?lkup("lang", Query))),
+  LC = ?lkup("lang", Query),
+  polish_server:lock_keys([LC ++ K || {{K, _}, _, _} <- Keys],
+			  ?l2a(?lkup("lang", Query))),
   Keys.
 
 get_partially_matching_keys(Query) ->
@@ -78,37 +82,49 @@ get_partially_matching_keys(LC, F) ->
 
 -define(RESULTS_LIMIT, 20).
 get_matching_keys(KVs, Query) ->
+  [LC, SearchInKey, SearchInValue, MatchType, LockedKeys, AlwaysTranslatedKeys]
+    = [?l2a(?lkup(Key, Query))
+       || Key <- ["lang", "search_in_key", "search_in_value", "match_type",
+		  "locked_keys", "always_translated_keys"]],
   Offset = ?l2i(?lkup("offset", Query)),
-  LC = ?l2a(?lkup("lang", Query)),
-  SearchInKey = ?l2a(?lkup("search_in_key", Query)),
-  SearchInValue = ?l2a(?lkup("search_in_value", Query)),
-  MatchType = ?l2a(?lkup("match_type", Query)),
   StringSearch = ?lkup("string_search", Query),
-  get_matching_keys(KVs, Offset, ?RESULTS_LIMIT, LC,
-		       {StringSearch, SearchInKey, SearchInValue, MatchType}).
+  get_matching_keys(
+    KVs, Offset, ?RESULTS_LIMIT, LC, LockedKeys, AlwaysTranslatedKeys,
+    {StringSearch, SearchInKey, SearchInValue, MatchType}).
 
-get_matching_keys([], _, _, _, _) ->
+get_matching_keys([], _Offset, _Limit, _LC, _LK, _ATK, _SearchQuery) ->
   [];
-get_matching_keys(T, 1, N, LC, S) ->
-  get_matching_keys(T, N, LC, S);
-get_matching_keys([_H|T], Offset, N, LC, S) ->
-  get_matching_keys(T, Offset - 1, N, LC, S).
+get_matching_keys(KVs, 1, Limit, LC, LK, ATK, SearchQuery) ->
+  do_get_matching_keys(KVs, Limit, LC, LK, ATK, SearchQuery, []);
+get_matching_keys([_H|KVs], Offset, Limit, LC, LK, ATK, SearchQuery) ->
+  get_matching_keys(KVs, Offset - 1, Limit, LC, LK, ATK, SearchQuery).
 
-get_matching_keys([{K,V} = H|T], N, LC, Search) when N > 0 ->
-  case (polish_server:is_key_locked(K, LC) orelse
-	polish_server:is_always_translated(LC, K)) of
-    true                            ->
-      get_matching_keys(T, N, LC, Search);
-    false when Search =:= no_search ->
-      [H|get_matching_keys(T, N-1, LC, Search)];
-    false ->
+do_get_matching_keys([{K,V} = H|T], N, LC, GetLockedKeys,
+		     GetAlwaysTransKeys, Search, Acc) when N > 0 ->
+  case is_key_matching_locking_and_always_trans(K, LC, GetLockedKeys,
+						GetAlwaysTransKeys) of
+    {false, _, _} ->
+      do_get_matching_keys(T, N, LC, GetLockedKeys,
+			   GetAlwaysTransKeys, Search, Acc);
+    {true, IsLocked, IsAlwaysTrans}  ->
       case match_entry({K, V}, Search) of
-	nomatch -> get_matching_keys(T, N, LC, Search);
-	match   -> [H|get_matching_keys(T, N-1, LC, Search)]
+	nomatch -> do_get_matching_keys(T, N, LC, GetLockedKeys,
+					GetAlwaysTransKeys, Search, Acc);
+	match   -> do_get_matching_keys(T, N-1, LC, GetLockedKeys,
+					GetAlwaysTransKeys, Search,
+					[{H, IsLocked, IsAlwaysTrans}|Acc])
       end
   end;
-get_matching_keys(_, N, _LC, _S) when N =< 0   -> [];
-get_matching_keys([], _, _LC, _S)              -> [].
+do_get_matching_keys(_, N, _LC, _LK, _ATK, _S, Acc) when N =< 0 -> Acc;
+do_get_matching_keys([], _, _LC, _LK, _ATK, _S, Acc)            -> Acc.
+
+is_key_matching_locking_and_always_trans(K, LC, GetLockedKeys,
+					 GetAlwaysTransKeys) ->
+  IsLocked = polish_server:is_key_locked(?a2l(LC) ++ K),
+  IsAlwaysTrans = polish_server:is_always_translated(?a2l(LC) ++ K),
+  {not (IsLocked andalso not GetLockedKeys)
+   orelse (IsAlwaysTrans andalso not GetAlwaysTransKeys),
+   IsLocked, IsAlwaysTrans}.
 
 match_entry({K, _V}, {Str, true = _Key, false = _Value, exact = _MatchType}) ->
   run_literal(K, Str);
