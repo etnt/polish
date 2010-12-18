@@ -10,6 +10,7 @@
 -export([build_info_log/4
 	 , build_url/0
 	 , url_decode/1
+	 , url_encode/1
 	 , generate_key_identifier/2
 	 , get_language_name/1
 	 , get_user_from_cookies/1
@@ -181,5 +182,37 @@ url_decode([]) ->
 url_decode([H|T]) when is_list(H) ->
   [url_decode(H) | url_decode(T)].
 
+url_encode([H|T]) ->
+  if
+    H >= $a, $z >= H -> [H|url_encode(T)];
+    H >= $A, $Z >= H -> [H|url_encode(T)];
+    H >= $0, $9 >= H -> [H|url_encode(T)];
+    H == $_; H == $.; H == $- ->
+      [H|url_encode(T)];
+    true ->
+      case integer_to_hex(H) of
+	[X, Y] -> [$%, X, Y | url_encode(T)];
+	[X]    -> [$%, $0, X | url_encode(T)]
+      end
+  end;
+url_encode([]) ->
+  [].
+
 hex_to_integer(Hex) ->
   erlang:list_to_integer(Hex, 16).
+
+integer_to_hex(I) ->
+    case catch erlang:integer_to_list(I, 16) of
+        {'EXIT', _} ->
+            old_integer_to_hex(I);
+        Int ->
+            Int
+    end.
+
+old_integer_to_hex(I) when I<10 ->
+    integer_to_list(I);
+old_integer_to_hex(I) when I<16 ->
+    [I-10+$A];
+old_integer_to_hex(I) when I>=16 ->
+    N = trunc(I/16),
+    old_integer_to_hex(N) ++ old_integer_to_hex(I rem 16).
