@@ -36,10 +36,10 @@ dispatch(Req) ->
       end
   end.
 
-						% Call the controller action here
+% Call the controller action here
 run_controller(Req, Controller, _Args, _UserLogged = false)
   when Controller =/= polish_login_controller ->
-  Req:respond(?FOUND, [{"Location", "/login"}], []);
+  Req:respond({?FOUND, [{"Location", "/login"}], []});
 run_controller(Req, Controller, Args, _UserLogged) ->
   case (catch apply(Controller, dispatch, Args)) of
     {'EXIT', Err} ->
@@ -53,10 +53,15 @@ run_controller(Req, Controller, Args, _UserLogged) ->
     {Status, ContentType, CookieV, Data} ->
       Headers = [{?CT, ContentType},
 		 mochiweb_cookies:cookie(auth, CookieV, [])],
+      Req:respond({Status, Headers, Data});
+    {Status, ContentType, Data} ->
+      {"auth", CookieV} = lists:keyfind("auth", 1, Req:parse_cookie()),
+      Headers = [{?CT, ContentType},
+		 mochiweb_cookies:cookie(auth, CookieV, [])],
       Req:respond({Status, Headers, Data})
   end.
 
-						% Parses the path and returns {top_controller, rest}
+% Parses the path and returns {top_controller, rest}
 parse_path(Path) ->
   CleanedPath = clean_path(Path),
   case string:tokens(CleanedPath, "/") of
