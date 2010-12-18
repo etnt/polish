@@ -162,9 +162,9 @@ is_user_logged(Req) ->
 
 get_user_from_cookies(false)   -> not_logged;
 get_user_from_cookies(Cookies) ->
-  case lists:keyfind(auth, 1, Cookies) of
-    false          -> not_logged;
-    {auth, AuthId} ->
+  case lists:keyfind("auth", 1, Cookies) of
+    false            -> not_logged;
+    {"auth", AuthId} ->
       case polish_server:read_user_auth(AuthId) of
 	false -> not_logged;
 	Name  -> Name
