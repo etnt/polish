@@ -1,14 +1,22 @@
 %%% @author Jordi Chacon <jordi.chacon@klarna.com>
 %%% @copyright (C) 2010, Jordi Chacon
 -module(polish_test_lib).
--export([send_http_request/4
-	 , send_http_request/5
-	 , send_http_request/6
-	 , assert_fields_from_response/2
-	 , write_fake_login_data/1
-	 , get_fake_redirect_url/1
-	 , fake_login/1
-	 , clean_fake_login_data/0]).
+-export([ send_http_request/3
+	, assert_fields_from_response/2
+	, write_fake_data_start_auth/1
+	, get_fake_redirect_url/1
+	, fake_login/1
+	, fake_logout/0
+	, clean_fake_login_data/0]).
+
+-record(preq, { method
+	      , url
+	      , options
+	      , accept
+	      , cookie
+	      , body
+	      , result
+	      }).
 
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("../include/polish.hrl").
@@ -29,21 +37,51 @@ get_polish_path() ->
 	   end, string:tokens(os:cmd("pwd"), "/")),
   "/" ++ string:join(PWD0++["polish"], "/").
 
-send_http_request(Method, HTTPOptions, SubURL, Accept) ->
-  send_http_request(Method, HTTPOptions, SubURL, Accept, basic).
+send_http_request(Method, URL, OtherInfo) ->
+  Rec = build_request_record(Method, URL, OtherInfo),
+  send_http_request(Rec).
 
-send_http_request(Method, HTTPOptions, SubURL, Accept, What)
-  when Method =:= get orelse Method =:= delete ->
-  Request = {polish_utils:build_url() ++ SubURL, [{"Accept", Accept}]},
-  do_send_http_request(Method, HTTPOptions, Request, What);
-send_http_request(Method, HTTPOptions, SubURL, Accept, What)
-  when Method =:= put orelse Method =:= post ->
-  send_http_request(Method, HTTPOptions, SubURL, [], Accept, What).
+build_request_record(Method, URL, OtherInfo) ->
+  Rec = #preq{ method  = Method
+	     , url     = URL
+	     , options = []
+	     , cookie  = []
+	     , body    = []
+	     , result  = basic
+	     , accept  = ?JSON},
+  fill_record(Rec, OtherInfo).
 
-send_http_request(Method, HTTPOptions, SubURL, Body, Accept, What) ->
-  Request = {polish_utils:build_url() ++ SubURL, [{"Accept", Accept}],
-	     "application/x-www-form-urlencoded", Body},
-  do_send_http_request(Method, HTTPOptions, Request, What).
+fill_record(Rec, [{body, Body} | OtherInfo]) ->
+  fill_record(Rec#preq{body = Body}, OtherInfo);
+fill_record(Rec, [{options, Options} | OtherInfo]) ->
+  fill_record(Rec#preq{options = Options}, OtherInfo);
+fill_record(Rec, [{cookie, Cookie} | OtherInfo]) ->
+  fill_record(Rec#preq{cookie = Cookie}, OtherInfo);
+fill_record(Rec, [{result, Result} | OtherInfo]) ->
+  fill_record(Rec#preq{result = Result}, OtherInfo);
+fill_record(Rec, [{accept, Accept} | OtherInfo]) ->
+  fill_record(Rec#preq{accept = Accept}, OtherInfo);
+fill_record(Rec, []) ->
+  Rec.
+
+send_http_request(Record) ->
+  #preq{ method  = Method
+       , url     = URL
+       , options = Options
+       , accept  = Accept
+       , cookie  = Cookie
+       , body    = Body
+       , result  = Result} = Record,
+  Request = case Method =:= get orelse Method =:= delete of
+	      false ->
+		{polish_utils:build_url() ++ URL,
+		 [{"Accept", Accept}, {"Cookie", Cookie}],
+		 "application/x-www-form-urlencoded", Body};
+	      true ->
+		{polish_utils:build_url() ++ URL,
+		 [{"Accept", Accept}, {"Cookie", Cookie}]}
+	    end,
+  do_send_http_request(Method, Options, Request, Result).
 
 do_send_http_request(Method, HTTPOptions, Request, What) ->
   {ok, {{_, Code, _}, Headers, Body}} = http:request(Method, Request,
