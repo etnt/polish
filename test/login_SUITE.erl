@@ -10,12 +10,11 @@ suite() ->
   [].
 
 all() ->
-  [start_authentication
-   , bad_authentication_user_not_allowed
-   , bad_authentication_wrong_openid_format
-   , finish_authentication
-  ].
-
+ [ start_authentication
+ , bad_authentication_user_not_allowed
+ , bad_authentication_wrong_openid_format
+ , finish_authentication
+ ].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% I N I T S
@@ -26,7 +25,7 @@ init_per_suite(Config) ->
 
 init_per_testcase(finish_authentication, Config) ->
   UserId = "http://jordi-chacon.myopenid.com/",
-  polish_test_lib:write_fake_login_data(UserId),
+  polish_test_lib:write_fake_data_start_auth(UserId),
   [{user_id, UserId} | Config];
 init_per_testcase(_TestCase, Config) ->
   Config.
@@ -48,10 +47,10 @@ end_per_testcase(_TestCase, _Config) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 start_authentication(_Config) ->
   ClaimedId = "jordi-chacon.myopenid.com",
-  {Code, Headers, _ResponseJSON} = polish_test_lib:send_http_request(
-				     get, [{autoredirect, false}],
-				     "/login?claimed_id=" ++ ClaimedId,
-				     ?JSON, headers),
+  {Code, Headers, _ResponseJSON} =
+    polish_test_lib:send_http_request(
+      get, "/login?claimed_id=" ++ ClaimedId,
+      [{options, [{autoredirect, false}]}, {result, headers}]),
   ?assertEqual(?FOUND, Code),
   Url = polish_utils:url_decode(?lkup("location", Headers)),
   check_identity_in_url(Url, ClaimedId),
@@ -73,9 +72,9 @@ check_assoc_handle_in_url(Url) ->
 finish_authentication(Config) ->
   UserId = ?lkup(user_id, Config),
   RedirectURL = polish_test_lib:get_fake_redirect_url(UserId),
-  {Code, Headers, _ResponseJSON} = polish_test_lib:send_http_request(
-				     get, [{autoredirect, false}],
-				     RedirectURL, ?JSON, headers),
+  {Code, Headers, _ResponseJSON} =
+    polish_test_lib:send_http_request(
+      get, RedirectURL, [{options, [{autoredirect,false}]}, {result, headers}]),
   ?assertEqual(?FOUND, Code),
   ?assertEqual(polish_utils:build_url(),
 	       polish_utils:url_decode(?lkup("location", Headers))),
@@ -85,10 +84,10 @@ finish_authentication(Config) ->
 
 bad_authentication_user_not_allowed(_Config) ->
   ClaimedId = "nadia.myopenid.com",
-  {Code, Headers, ResponseJSON} = polish_test_lib:send_http_request(
-				    get, [{autoredirect, false}],
-				    "/login?claimed_id=" ++ ClaimedId,
-				    ?JSON, headers),
+  {Code, Headers, ResponseJSON} =
+    polish_test_lib:send_http_request(
+      get, "/login?claimed_id=" ++ ClaimedId,
+      [{options, [{autoredirect, false}]}, {result, headers}]),
   ?assertEqual(?OK, Code),
   ?assertEqual(none, proplists:lookup("location", Headers)),
   {struct, Response} = mochijson2:decode(ResponseJSON),
@@ -98,10 +97,10 @@ bad_authentication_user_not_allowed(_Config) ->
 
 bad_authentication_wrong_openid_format(_Config) ->
   ClaimedId = "jordi-chacon",
-  {Code, Headers, ResponseJSON} = polish_test_lib:send_http_request(
-				    get, [{autoredirect, false}],
-				    "/login?claimed_id=" ++ ClaimedId,
-				    ?JSON, headers),
+  {Code, Headers, ResponseJSON} =
+    polish_test_lib:send_http_request(
+      get, "/login?claimed_id=" ++ ClaimedId,
+      [{options, [{autoredirect, false}]}, {result, headers}]),
   ?assertEqual(?OK, Code),
   ?assertEqual(none, proplists:lookup("location", Headers)),
   {struct, Response} = mochijson2:decode(ResponseJSON),
