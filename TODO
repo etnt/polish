@@ -1,4 +1,14 @@
-- Create guidelines for developers
-- Create guidelines for translators and put them in the polish site
-- Create guidelines for translators to create an account in polish
-- Mark always as translated
+- To test:
+  - /keys/key
+     * fix get key
+     * 'put' not existing key
+     * 'put' in a key (save translation)
+     * save translation that fails on validators and match the error
+     * save translation that fails on validators and save again bypassing validator
+     * mark key as always translated
+     * unmark key as always translated
+     * locking of keys
+
+  - /keys
+     * normal request
+     * search keys
