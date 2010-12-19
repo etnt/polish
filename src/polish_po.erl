@@ -30,7 +30,8 @@ get_stats(LC) ->
 get_amount_untranslated_keys(KVs, LCa) ->
   lists:foldl(
     fun({K, K}, Acc) ->
-	case polish_server:is_always_translated(LCa, K) of
+	case polish_server:is_always_translated(
+	       polish_utils:generate_key_identifier(K, ?a2l(LCa))) of
 	  true  -> Acc;
 	  false -> Acc + 1
 	end;
