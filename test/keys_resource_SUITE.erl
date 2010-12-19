@@ -85,7 +85,10 @@ http_bad_method_keys(Config) ->
 
 http_not_existent_key(Config) ->
   Cookie = ?lkup(cookie, Config),
-  {Code, _} = polish_test_lib:send_http_request(
+  {Code1, _} = polish_test_lib:send_http_request(
 		get, "/keys/ca435", [{cookie, Cookie}]),
-  ?assertEqual(?NOT_FOUND, Code),
+  ?assertEqual(?NOT_FOUND, Code1),
+  {Code2, _} = polish_test_lib:send_http_request(
+		put, "/keys/ca435", [{cookie, Cookie}]),
+  ?assertEqual(?NOT_FOUND, Code2),
   ok.
