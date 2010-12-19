@@ -14,6 +14,7 @@ all() ->
    , http_bad_method_key
    , http_bad_method_keys
    , http_not_existent_key
+   , http_put_key
   ].
 
 
@@ -28,6 +29,8 @@ init_per_suite(Config) ->
 
 init_per_testcase(http_get_key, Config) ->
   [{key, "jag heter POlish"}, {translation, "em dic POlish"}|Config];
+init_per_testcase(http_put_key, Config) ->
+  [{key, "jag heter POlish"}|Config];
 init_per_testcase(_TestCase, Config) ->
   Config.
 
@@ -92,3 +95,28 @@ http_not_existent_key(Config) ->
 		put, "/keys/ca435", [{cookie, Cookie}]),
   ?assertEqual(?NOT_FOUND, Code2),
   ok.
+
+http_put_key(Config) ->
+  Key = ?lkup(key, Config),
+  Cookie = ?lkup(cookie, Config),
+  ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
+  {_Code, Response} = do_get_request_on_key(Cookie, ResourceID),
+  Translation = ?lkup("value", Response),
+  NewTranslation = Translation ++ "abc",
+  Body = "translation="++polish_utils:url_encode(NewTranslation),
+  {Code2, _ResponseJSON} = polish_test_lib:send_http_request(
+			   put, "/keys/"++ResourceID,
+			   [{cookie, Cookie}, {body, Body}]),
+  ?assertEqual(?OK, Code2),
+  PoFile = gettext:parse_po(polish:po_lang_dir() ++ "custom/ca/gettext.po"),
+  ?assertEqual(NewTranslation, ?lkup(Key, PoFile)),
+  {_Code3, Response2} = do_get_request_on_key(Cookie, ResourceID),
+  polish_test_lib:assert_fields_from_response(
+    [{"value", NewTranslation}], Response2),
+  ok.
+
+do_get_request_on_key(Cookie, ResourceID) ->
+  {Code, ResponseJSON} = polish_test_lib:send_http_request(
+			   get, "/keys/"++ResourceID, [{cookie, Cookie}]),
+  {struct, Response} = mochijson2:decode(ResponseJSON),
+  {Code, Response}.
