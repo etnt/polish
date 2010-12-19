@@ -53,9 +53,11 @@ http_get_key(Config) ->
 			   get, "/keys/"++ResourceID, [{cookie, Cookie}]),
   ?assertEqual(?OK, Code),
   {struct, Response} = mochijson2:decode(ResponseJSON),
+  ?assertEqual(5, length(Response)),
   polish_test_lib:assert_fields_from_response(
     [{"url", polish_utils:build_url()++"/keys/"++ResourceID},
-     {"key", Key}, {"value", ExpectedTranslation}], Response),
+     {"key", Key}, {"value", ExpectedTranslation}, {"locked", false},
+     {"marked_as_translated", false}], Response),
   ok.
 
 http_bad_method_key(Config) ->

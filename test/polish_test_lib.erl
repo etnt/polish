@@ -92,7 +92,7 @@ do_send_http_request(Method, HTTPOptions, Request, What) ->
   end.
 
 assert_fields_from_response([{FieldName, ExpectedValue} | T], Response)
-  when is_integer(ExpectedValue) ->
+  when is_integer(ExpectedValue) orelse is_atom(ExpectedValue) ->
   assert_field_from_response(FieldName, ExpectedValue, Response),
   assert_fields_from_response(T, Response);
 assert_fields_from_response([{FieldName, ExpectedValue} | T], Response)
