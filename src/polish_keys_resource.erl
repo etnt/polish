@@ -201,11 +201,12 @@ assert_key_exists(ResourceID) ->
   read_key(ResourceID).
 
 do_put(ResourceID, Body, User) ->
-  case maybe_save_translation(ResourceID, Body, User) of
-    false -> maybe_mark_as_always_translated(ResourceID, Body, User);
-    Res   -> Res
-  end,
-  polish_server:unlock_user_keys(User).
+  Res = case maybe_save_translation(ResourceID, Body, User) of
+	  false  -> maybe_mark_as_always_translated(ResourceID, Body, User);
+	  Result -> Result
+	end,
+  polish_server:unlock_user_keys(User),
+  Res.
 
 maybe_save_translation(ID, Body, User) ->
   case {lists:keyfind("translation", 1, Body),
@@ -231,7 +232,7 @@ maybe_mark_as_always_translated([LC1,LC2|_] = ID, Body, User) ->
   end.
 
 save_translation([LC1, LC2|_] = ID, ByPassValidators, Translation0, User) ->
-  {Key, _V} = ?MODULE:get(ID),
+  {Key, _V} = read_key(ID),
   Translation = format_translation(Key, Translation0),
   case validate_translation(Key, Translation, ByPassValidators) of
     {error, _} = Err ->
