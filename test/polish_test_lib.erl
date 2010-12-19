@@ -7,7 +7,8 @@
 	, get_fake_redirect_url/1
 	, fake_login/1
 	, fake_logout/0
-	, clean_fake_login_data/0]).
+	, clean_fake_login_data/0
+	, get_polish_path/0]).
 
 -record(preq, { method
 	      , url

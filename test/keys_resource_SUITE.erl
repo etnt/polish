@@ -30,6 +30,8 @@ init_per_suite(Config) ->
 init_per_testcase(http_get_key, Config) ->
   [{key, "jag heter POlish"}, {translation, "em dic POlish"}|Config];
 init_per_testcase(http_put_key, Config) ->
+  Path = polish_test_lib:get_polish_path() ++ "/priv/lang_custom/ca/",
+  os:cmd("cp " ++ Path ++ "gettext.po " ++ Path ++ "gettext.po.bup"),
   [{key, "jag heter POlish"}|Config];
 init_per_testcase(_TestCase, Config) ->
   Config.
@@ -41,6 +43,10 @@ end_per_suite(_Config) ->
   polish_test_lib:fake_logout(),
   ok.
 
+end_per_testcase(http_put_key, _Config) ->
+  Path = polish_test_lib:get_polish_path() ++ "/priv/lang_custom/ca/",
+  os:cmd("mv " ++ Path ++ "gettext.po.bup " ++ Path ++ "gettext.po"),
+  ok;
 end_per_testcase(_TestCase, _Config) ->
   ok.
 
