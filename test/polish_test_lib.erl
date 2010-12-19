@@ -70,15 +70,15 @@ assert_field_from_response(FieldName, ExpectedValue, Response) ->
 	       lists:keyfind(FieldNameBin, 1, Response)).
 
 fake_login(UserId) ->
-  write_fake_login_data(UserId),
-  RedirectURL = get_fake_redirect_url(UserId),
-  {Code, _Headers, _ResponseJSON} = polish_test_lib:send_http_request(
-				      get, [{autoredirect, false}],
-				      RedirectURL, ?JSON, headers),
-  ?assertEqual(?FOUND, Code),
-  "auth=HMAC-SHA14ce7ff3bchZ2eA; Version=1".
+  AuthId = "HMAC-SHA14ce7ff3bchZ2eA",
+  [{name, Name}, _] = ?lkup(UserId, polish:get_users()),
+  polish_server:write_user_auth(AuthId, Name),
+  "auth=" ++ AuthId.
 
-write_fake_login_data(UserId) ->
+fake_logout() ->
+  polish_server:delete_user_auth("HMAC-SHA14ce7ff3bchZ2eA").
+
+write_fake_data_start_auth(UserId) ->
   AuthId = "{HMAC-SHA1}{4ce7ff3b}{chZ2eA==}",
   Data = [{"openid.assoc_handle", AuthId},
 	  {"openid.claimed_id", UserId},
