@@ -106,16 +106,20 @@ http_put_key(Config) ->
   Key = ?lkup(key, Config),
   Cookie = ?lkup(cookie, Config),
   ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
+  %% get the current translation
   {_Code, Response} = do_get_request_on_key(Cookie, ResourceID),
-  Translation = ?lkup("value", Response),
+  Translation = ?b2l(?lkup(<<"value">>, Response)),
+  %% save a new translation and assert OK
   NewTranslation = Translation ++ "abc",
   Body = "translation="++polish_utils:url_encode(NewTranslation),
   {Code2, _ResponseJSON} = polish_test_lib:send_http_request(
 			   put, "/keys/"++ResourceID,
 			   [{cookie, Cookie}, {body, Body}]),
   ?assertEqual(?OK, Code2),
+  %% check that the po file contains the new translation
   PoFile = gettext:parse_po(polish:po_lang_dir() ++ "custom/ca/gettext.po"),
   ?assertEqual(NewTranslation, ?lkup(Key, PoFile)),
+  %% get the key and assert the translation is the new one
   {_Code3, Response2} = do_get_request_on_key(Cookie, ResourceID),
   polish_test_lib:assert_fields_from_response(
     [{"value", NewTranslation}], Response2),
