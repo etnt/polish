@@ -43,7 +43,7 @@ run_controller(Req, Controller, _Args, _UserLogged = false)
 run_controller(Req, Controller, Args, _UserLogged) ->
   case (catch apply(Controller, dispatch, Args)) of
     {'EXIT', Err} ->
-      error_logger:format("~p~n", [Err]),
+      log_error(Err),
       Req:respond({?INTERNAL_SERVER_ERROR, [{?CT, "text/plain"}],
 		   ?INTERNAL_SERVER_ERROR_MSG});
     {Status, Location, ContentType, Cookie, Data} ->
@@ -91,4 +91,14 @@ parse_accept(Headers) ->
   case Encs of
     [] -> not_supported;
     _  -> hd(Encs)
+  end.
+
+%% Ugly hack: we want to show the error in the common test logs
+%% when a crash has happened while running a testcase. But we want
+%% to use normal logging when we are not testing... so this ugly
+%% hacks achieves that :)
+log_error(Err) ->
+  case whereis(ct_util_server) of
+    undefined -> error_logger:format("~p~n", [Err]);
+    _Pid      -> ct:log("~p~n", [Err])
   end.
