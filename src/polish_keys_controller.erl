@@ -21,9 +21,10 @@ dispatch({_Req, _CT, Path, _Meth} = Args) ->
 %% /keys
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 top({Req, CT, _Path, get}) ->
+  User = polish_utils:get_user_from_cookies(Req:parse_cookie()),
+  Query = Req:parse_qs(),
   try
-    Query = Req:parse_qs(),
-    Data = polish_keys_resource:get_list(Query),
+    Data = polish_keys_resource:get_list(Query, User),
     Response = polish_keys_format:list(Data, CT),
     {?OK, CT, Response}
   catch
