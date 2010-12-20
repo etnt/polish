@@ -12,9 +12,11 @@ dispatch({Req, CT, _Path, _Meth}) ->
   case lists:keyfind("action", 1, Req:parse_qs()) of
     false                -> start_openid_authentication(Req, CT);
     {"action", "auth"}   -> finish_openid_authentication(Req, CT);
-    {"action", "logout"} -> ok
+    {"action", "logout"} -> logout(Req, CT)
   end.
 
+% start authentication
+%------------------------------------------------------------------------------
 start_openid_authentication(Req, CT) ->
   try
     URL = polish_utils:build_url(),
@@ -26,7 +28,7 @@ start_openid_authentication(Req, CT) ->
       true ->
 	OpenIdURL = generate_openid_url(OpenIdData),
 	write_openid_data(OpenIdData),
-	{?FOUND, OpenIdURL, ?HTML++";"++?CHARSET, [], []}
+	 {?FOUND, OpenIdURL, ?HTML++";"++?CHARSET, [], []}
     end
   catch
     _:_ ->
@@ -56,6 +58,9 @@ write_openid_data(Data) ->
   AuthId = eopenid_lib:out("openid.assoc_handle", Data),
   polish_server:write_user_auth(AuthId, Data).
 
+
+% finish authentication
+%------------------------------------------------------------------------------
 finish_openid_authentication(Req, CT) ->
   try
     RawPath = get_raw_path(Req),
@@ -83,3 +88,11 @@ write_user_data(AuthId0, Data) ->
   [{name, Name}, _] = ?lkup(User, polish:get_users()),
   polish_server:write_user_auth(AuthId, Name),
   AuthId.
+
+
+% logout
+%------------------------------------------------------------------------------
+logout(Req, _CT) ->
+  {"auth", AuthId} = lists:keyfind("auth", 1, Req:parse_cookie()),
+  polish_server:delete_user_auth(AuthId),
+  {?FOUND, "/", "text/plain", [], "ok"}.
