@@ -4,7 +4,7 @@
 
 -module(polish_keys_resource).
 
--export([get_list/1, get/2, put/3]).
+-export([get_list/2, get/2, put/3]).
 
 -include("polish.hrl").
 
@@ -12,10 +12,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  A P I
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-get_list([]) ->
+get_list([], _User) ->
   [];
-get_list(Query) ->
-  do_get_list(generate_complete_query(Query)).
+get_list(Query, User) ->
+  polish_server:unlock_user_keys(User),
+  do_get_list(generate_complete_query(Query), User).
 
 get(ResourceID, User) ->
   {K, V} = read_key(ResourceID),
@@ -54,12 +55,13 @@ get_default_query() ->
   , {"locked_keys",            "false"}
   , {"always_translated_keys", "false"}].
 
-do_get_list(Query) ->
+do_get_list(Query, User) ->
   KVs = get_partially_matching_keys(Query),
   Keys = get_matching_keys(KVs, Query),
   LC = ?lkup("lang", Query),
-  polish_server:lock_keys([LC ++ K || {{K, _}, _, _} <- Keys],
-			  ?l2a(?lkup("lang", Query))),
+  polish_server:lock_keys(
+    [polish_utils:generate_key_identifier(K, LC) || {{K,_},_,_,_} <- Keys],
+    User),
   Keys.
 
 get_partially_matching_keys(Query) ->
@@ -94,7 +96,7 @@ get_matching_keys(KVs, Query) ->
 
 get_matching_keys([], _Offset, _Limit, _LC, _LK, _ATK, _SearchQuery) ->
   [];
-get_matching_keys(KVs, 1, Limit, LC, LK, ATK, SearchQuery) ->
+get_matching_keys(KVs, 0, Limit, LC, LK, ATK, SearchQuery) ->
   do_get_matching_keys(KVs, Limit, LC, LK, ATK, SearchQuery, []);
 get_matching_keys([_H|KVs], Offset, Limit, LC, LK, ATK, SearchQuery) ->
   get_matching_keys(KVs, Offset - 1, Limit, LC, LK, ATK, SearchQuery).
@@ -112,7 +114,7 @@ do_get_matching_keys([{K,V} = H|T], N, LC, GetLockedKeys,
 					GetAlwaysTransKeys, Search, Acc);
 	match   -> do_get_matching_keys(T, N-1, LC, GetLockedKeys,
 					GetAlwaysTransKeys, Search,
-					[{H, IsLocked, IsAlwaysTrans}|Acc])
+					[{H, LC, IsLocked, IsAlwaysTrans}|Acc])
       end
   end;
 do_get_matching_keys(_, N, _LC, _LK, _ATK, _S, Acc) when N =< 0 -> Acc;
@@ -120,10 +122,10 @@ do_get_matching_keys([], _, _LC, _LK, _ATK, _S, Acc)            -> Acc.
 
 is_key_matching_locking_and_always_trans(K, LC, GetLockedKeys,
 					 GetAlwaysTransKeys) ->
-  IsLocked = polish_server:is_key_locked(?a2l(LC) ++ K),
-  IsAlwaysTrans = polish_server:is_always_translated(?a2l(LC) ++ K),
-  {not (IsLocked andalso not GetLockedKeys)
-   orelse (IsAlwaysTrans andalso not GetAlwaysTransKeys),
+  IsLocked = polish_server:is_key_locked(?a2l(LC), K),
+  IsAlwaysTrans = polish_server:is_always_translated(?a2l(LC), K),
+  {(GetLockedKeys orelse not IsLocked) andalso
+   (GetAlwaysTransKeys orelse not IsAlwaysTrans),
    IsLocked, IsAlwaysTrans}.
 
 match_entry({K, _V}, {Str, true = _Key, false = _Value, exact = _MatchType}) ->
@@ -159,7 +161,10 @@ run_literal(S1, S2) ->
 run_re(header_info, _RegExp) ->
   nomatch;
 run_re(V, RegExp0) ->
-  RegExp = escape_regexp(RegExp0),
+  RegExp = case RegExp0 of
+	     ".*" -> ".*";
+	     _    -> escape_regexp(RegExp0)
+	   end,
   case re:run(V, RegExp) of
     nomatch -> nomatch;
     _       -> match
