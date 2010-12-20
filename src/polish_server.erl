@@ -377,10 +377,10 @@ do_unmark_as_always_translated(State, [C1, C2 | Hash]) ->
   {K, _} = element(2, hd(ets:lookup(?MODULE, {[C1, C2], Hash}))),
   ets:delete(always_translated, {?l2a([C1,C2]), K}),
   case file:consult(polish:meta_filename([C1,C2])) of
-    {ok, List0} ->
+    {ok, List} ->
       {ok, Fd} = file:open(polish:meta_filename([C1, C2]), [write]),
-      List = lists:keydelete(K, 2, List0),
-      [add_always_translated_key_to_meta_file(Key,Fd) || {_,Key} <- List],
+      [add_always_translated_key_to_meta_file(Key,Fd) || {_,Key} <- List,
+							 Key =/= K],
       file:close(Fd),
       {State, ok};
     _ ->
