@@ -225,10 +225,10 @@ maybe_mark_as_always_translated([LC1,LC2|_] = ID, Body, User) ->
     false        -> throw(bad_request);
     {_, "true"}  ->
       polish_server:mark_as_always_translated(ID),
-      log_save_translation([LC1,LC2], User, mark_translated, K);
+      log_save_translation([LC1,LC2], User, mark_always_translated, K);
     {_, "false"} ->
       polish_server:unmark_as_always_translated(ID),
-      log_save_translation([LC1,LC2], User, unmark_translated, K)
+      log_save_translation([LC1,LC2], User, unmark_always_translated, K)
   end.
 
 save_translation([LC1, LC2|_] = ID, ByPassValidators, Translation0, User) ->
@@ -285,9 +285,9 @@ log_save_translation(LC, User, Action, What) ->
 	      save ->
 		{K,V} = What,
 		"Key: " ++ K ++ "~nTranslation: " ++ V;
-	      mark_translated ->
+	      mark_always_translated ->
 		"Key: " ++ What;
-	      unmark_translated ->
+	      unmark_always_translated ->
 		"Key: " ++ What
 	    end,
   Str = polish_utils:build_info_log(?l2a(LC), User, Action, WhatStr),
