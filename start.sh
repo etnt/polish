@@ -6,6 +6,7 @@ cd `dirname $0`
 ask_replace_keys=true
 
 if [ $# -ge 1 -a $1 = "test" ]; then
+    rm -rf results/ct_run*
     mkdir -p results
     if [ $# -eq 1 ]; then
 	run_test -dir test/ -logdir results/ \
@@ -22,6 +23,7 @@ if [ $# -ge 1 -a $1 = "test" ]; then
     fi
     mv test/*beam ebin/
 elif [ $# -eq 1 -a $1 = "coverage" ]; then
+    rm -rf results/ct_run*
     mkdir -p results
     cp ebin/*beam src/
     run_test -dir test/ -cover priv/coverspec -logdir results/ \
