@@ -11,7 +11,9 @@
 	 , delete_user_auth/1
 	 , get_new_old_keys/0
 	 , is_always_translated/1
+	 , is_always_translated/2
 	 , is_key_locked/1
+	 , is_key_locked/2
 	 , is_key_locked_by_another_user/2
 	 , load_always_translated_keys/2
 	 , load_po_files/1
@@ -70,6 +72,9 @@ unlock_user_keys(User) ->
 is_key_locked(Key) ->
   gen_server:call(?MODULE, {is_key_locked, Key}).
 
+is_key_locked(LC, Key) ->
+  is_key_locked(polish_utils:generate_key_identifier(Key, LC)).
+
 is_key_locked_by_another_user(ResourceID, User) ->
   gen_server:call(?MODULE, {is_key_locked_by_another_user, ResourceID, User}).
 
@@ -87,6 +92,9 @@ unmark_as_always_translated(ID) ->
 
 is_always_translated(ResourceID) ->
   gen_server:call(?MODULE, {is_always_translated, ResourceID}).
+
+is_always_translated(LC, Key) ->
+  is_always_translated(polish_utils:generate_key_identifier(Key, LC)).
 
 set_new_old_keys(NewOldKeys) ->
   gen_server:call(?MODULE, {set_new_old_keys, NewOldKeys}).
