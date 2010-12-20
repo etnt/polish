@@ -41,7 +41,7 @@ put(ResourceID, Body, User) ->
 generate_complete_query(Query) ->
   DefaultQuery = get_default_query(),
   Query1 = [{K, V} || {K, V} <- Query, proplists:is_defined(K, DefaultQuery)],
-  lists:ukeymerge(1, Query1, DefaultQuery).
+  lists:ukeymerge(1, lists:sort(Query1), lists:sort(DefaultQuery)).
 
 get_default_query() ->
   [ {"lang",                   polish:get_default_lang()}
