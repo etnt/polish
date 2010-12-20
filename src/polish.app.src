@@ -1,19 +1,37 @@
 {application, polish, 
  [
   {description,  "polish - Web app. for managing PO-file translations."},
-  {vsn, "%VSN%"},
+  {vsn, "1.0"},
 
   % The Module and Args used to start this application.
   {mod, { polish_app, []} },
 
   % All modules used by the application.
   {modules,
-   [%MODULES%]},
+   [ polish_app
+   , polish_sup
+   , polish
+   , polish_utils
+   , polish_deps
+   , polish_server
+   , polish_wash
+   , polish_dispatcher
+   , polish_keys_controller
+   , polish_keys_resource
+   , polish_keys_format
+   , polish_languages_controller
+   , polish_languages_resource
+   , polish_languages_format
+   , polish_login_controller
+   , polish_login_format
+   , crone
+   , polish_cron_server
+   ]},
 
   % configuration parameters similar to those in the config file specified on the command line
   {env, [{ip, "0.0.0.0"}
          ,{hostname, "localhost"}
-         ,{port, 8282}	
+         ,{port, 8282}
 	 ,{doc_root, "./www"}
 
          % Assumes: ${po_lang_dir}/custom/${LC}/gettext.po
