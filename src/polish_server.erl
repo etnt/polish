@@ -388,7 +388,8 @@ do_unmark_as_always_translated(State, [C1, C2 | Hash]) ->
   end.
 
 do_is_always_translated(State, [C1, C2 | Hash]) ->
-  Res = case ets:lookup(always_translated, {[C1,C2], Hash}) of
+  {K, _} = element(2, hd(ets:lookup(?MODULE, {[C1, C2], Hash}))),
+  Res = case ets:lookup(always_translated, {?l2a([C1,C2]), K}) of
 	  [] -> false;
 	  _  -> true
 	end,
