@@ -46,6 +46,7 @@ end_per_suite(_Config) ->
 end_per_testcase(http_put_key, _Config) ->
   Path = polish_test_lib:get_polish_path() ++ "/priv/lang/custom/ca/",
   os:cmd("mv " ++ Path ++ "gettext.po.bup " ++ Path ++ "gettext.po"),
+  os:cmd("rm " ++ Path ++ "gettext.po__*"),
   ok;
 end_per_testcase(_TestCase, _Config) ->
   ok.
