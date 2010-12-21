@@ -18,21 +18,29 @@ dispatch({Req, CT, _Path, _Meth}) ->
 % start authentication
 %------------------------------------------------------------------------------
 start_openid_authentication(Req, CT) ->
+  URL = polish_utils:build_url(),
+  ClaimedId = get_claimed_id(Req),
   try
-    URL = polish_utils:build_url(),
-    ClaimedId = get_claimed_id(Req),
+    %% stop prints to shell: when a user enters a wrong formatted openid
+    %% username, lots of useless stuff is printed to the shell because
+    %% http:request in eopenid fails
+    error_logger:tty(false),
     OpenIdData = generate_openid_data(ClaimedId, URL),
+    error_logger:tty(true),
     case is_user_allowed(ClaimedId) of
       false ->
-	{?OK,CT,[],polish_login_format:login_error(not_allowed, ?JSON)};
+	{?OK, CT, polish_login_format:login_error(not_allowed, CT), []};
       true ->
 	OpenIdURL = generate_openid_url(OpenIdData),
 	write_openid_data(OpenIdData),
-	 {?FOUND, OpenIdURL, ?HTML++";"++?CHARSET, [], []}
+	{?FOUND, ?HTML++";"++?CHARSET, [], [{"Location", OpenIdURL}]}
     end
   catch
     _:_ ->
-      {?OK, CT, [], polish_login_format:login_error(bad_format, ?JSON)}
+      error_logger:tty(true),
+      error_logger:info_msg("Someone tried to login with a wrong formatted "
+			    "openid username:~n " ++ ClaimedId ++ "~n~n"),
+      {?OK, CT, polish_login_format:login_error(bad_format, CT), []}
   end.
 
 get_claimed_id(Req) ->
@@ -46,7 +54,7 @@ generate_openid_data(ClaimedId, URL) ->
 	    [eopenid_lib:in("openid.return_to", URL++"/login?action=auth"),
 	     eopenid_lib:in("openid.trust_root", URL)
 	    ], eopenid_lib:new()),
-  {ok, Data1} = eopenid_v1:discover(ClaimedId, Data0),
+  {ok, Data1} = eopenid_v1:discover(ClaimedId, Data0, mochiweb),
   {ok, Data2} = eopenid_v1:associate(Data1),
   Data2.
 
@@ -69,10 +77,11 @@ finish_openid_authentication(Req, CT) ->
     polish_server:delete_user_auth(AuthId),
     true = eopenid_v1:verify_signed_keys(RawPath, SavedData),
     NewAuthId = write_user_data(AuthId, SavedData),
-    {?FOUND, "/", CT, NewAuthId, []}
+    Cookie = mochiweb_cookies:cookie(auth, NewAuthId, []),
+    {?FOUND, CT, NewAuthId, [{"Location", "/"}, Cookie]}
   catch
     _:_ ->
-      {?OK, CT, polish_login_format:login_error(error, ?JSON)}
+      {?OK, CT, polish_login_format:login_error(error, CT), []}
   end.
 
 get_raw_path(Req) ->
@@ -96,4 +105,5 @@ write_user_data(AuthId0, Data) ->
 logout(Req, _CT) ->
   {"auth", AuthId} = lists:keyfind("auth", 1, Req:parse_cookie()),
   polish_server:delete_user_auth(AuthId),
-  {?FOUND, "/", "text/plain", [], "ok"}.
+  Cookie = mochiweb_cookies:cookie(auth, "", []),
+  {?FOUND, "text/plain", "ok", [{"Location", "/"}, Cookie]}.
