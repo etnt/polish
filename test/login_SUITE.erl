@@ -76,9 +76,8 @@ finish_authentication(Config) ->
     polish_test_lib:send_http_request(
       get, RedirectURL, [{options, [{autoredirect,false}]}, {result, headers}]),
   ?assertEqual(?FOUND, Code),
-  ?assertEqual(polish_utils:build_url(),
-	       polish_utils:url_decode(?lkup("location", Headers))),
-  ?assertEqual("auth=HMAC-SHA14ce7ff3bchZ2eA; Version=1",
+  ?assertEqual("/", polish_utils:url_decode(?lkup("location", Headers))),
+  ?assertEqual("auth=HMAC-SHA14ce7ff3bchZ2; Version=1",
 	       ?lkup("set-cookie", Headers)),
   ok.
 
