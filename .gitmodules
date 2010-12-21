@@ -10,3 +10,6 @@
 [submodule "dep/mochiweb"]
 	path = dep/mochiweb
 	url = git://github.com/mochi/mochiweb.git
+[submodule "dep/erlydtl"]
+	path = dep/erlydtl
+	url = https://github.com/evanmiller/erlydtl.git
