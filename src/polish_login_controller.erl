@@ -69,7 +69,7 @@ finish_openid_authentication(Req, CT) ->
     polish_server:delete_user_auth(AuthId),
     true = eopenid_v1:verify_signed_keys(RawPath, SavedData),
     NewAuthId = write_user_data(AuthId, SavedData),
-    {?FOUND, polish_utils:build_url(), CT, NewAuthId, []}
+    {?FOUND, "/", CT, NewAuthId, []}
   catch
     _:_ ->
       {?OK, CT, polish_login_format:login_error(error, ?JSON)}
@@ -83,7 +83,7 @@ get_openid_auth_id(Req) ->
   ?lkup("openid.assoc_handle", Req:parse_qs()).
 
 write_user_data(AuthId0, Data) ->
-  AuthId = [C || C <- AuthId0, C =/= ${, C =/= $}, C =/= $=],
+  AuthId = string:substr([C || C <- AuthId0, C =/= ${, C =/= $}], 1, 21),
   User = ?lkup("openid.claimed_id", Data),
   [{name, Name}, _] = ?lkup(User, polish:get_users()),
   polish_server:write_user_auth(AuthId, Name),
