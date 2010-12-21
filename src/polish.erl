@@ -28,6 +28,7 @@
          , l2a/1
          , a2l/1
 	 , compile_templates/0
+	 , get_polish_path/0
         ]).
 
 -import(polish_deps,[get_env/2]).
@@ -127,9 +128,18 @@ a2l(A) when is_atom(A) -> atom_to_list(A);
 a2l(L) when is_list(L) -> L.
 
 compile_templates() ->
-  Templates = string:tokens(os:cmd("ls templates/*_dtl.html"), "\n"),
+  Path = get_polish_path() ++ "/",
+  Templates = string:tokens(os:cmd("ls " ++Path++ "templates/*_dtl.html"),"\n"),
   [erlydtl:compile(Template, template_name(Template), [{out_dir, "ebin/"}])
    || Template <- Templates].
 
-template_name("templates/" ++ Template) ->
+template_name(Template0) ->
+  Template = lists:last(string:tokens(Template0, "/")),
   ?l2a(hd(string:tokens(Template, "."))).
+
+get_polish_path() ->
+  PWD0 = lists:takewhile(
+	   fun("polish") -> false;
+	      (_)        -> true
+	   end, string:tokens(os:cmd("pwd"), "/")),
+  "/" ++ string:join(PWD0++["polish"], "/").

@@ -8,7 +8,7 @@
 	, fake_login/1
 	, fake_logout/0
 	, clean_fake_login_data/0
-	, get_polish_path/0]).
+	]).
 
 -record(preq, { method
 	      , url
@@ -23,20 +23,13 @@
 -include_lib("../include/polish.hrl").
 
 start_polish_for_test() ->
-  PWD = get_polish_path(),
+  PWD = polish:get_polish_path(),
   application:load(polish),
   application:set_env(polish, po_lang_dir, PWD++"/priv/lang/"),
   application:set_env(polish, ask_replace_keys, false),
   application:set_env(polish, error_logger_mf_file, PWD++"/logs/polish"),
   application:set_env(polish, port, 8283),
   application:start(polish).
-
-get_polish_path() ->
-  PWD0 = lists:takewhile(
-	   fun("polish") -> false;
-	      (_)        -> true
-	   end, string:tokens(os:cmd("pwd"), "/")),
-  "/" ++ string:join(PWD0++["polish"], "/").
 
 send_http_request(Method, URL, OtherInfo) ->
   Rec = build_request_record(Method, URL, OtherInfo),
