@@ -43,20 +43,15 @@ run_controller(Req, Controller, Args, _UserLogged) ->
       log_error(Err),
       Req:respond({?INTERNAL_SERVER_ERROR, [{?CT, "text/plain"}],
 		   ?INTERNAL_SERVER_ERROR_MSG});
-    {Status, Location, ContentType, Cookie, Data} ->
-      Headers = [{"Location", Location}, {?CT, ContentType},
-		 mochiweb_cookies:cookie(auth, Cookie, [])],
+    {Status, ContentType, Data, ExtraHeaders} ->
+      Headers = [{?CT, ContentType}] ++ ExtraHeaders,
       Req:respond({Status, Headers, Data});
-    {Status, ContentType, CookieV, Data} ->
-      Headers = [{?CT, ContentType},
-		 mochiweb_cookies:cookie(auth, CookieV, [])],
-      Req:respond({Status, Headers, Data});
-    {Status, ContentType, Data} when is_integer(Status) ->
+    {Status, ContentType, Data} ->
       {"auth", CookieV} = lists:keyfind("auth", 1, Req:parse_cookie()),
       Headers = [{?CT, ContentType},
 		 mochiweb_cookies:cookie(auth, CookieV, [])],
       Req:respond({Status, Headers, Data});
-    {File, Dir, Headers} ->
+    {file, {File, Dir, Headers}} ->
       Req:serve_file(File, Dir, Headers)
   end.
 
