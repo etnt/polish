@@ -87,6 +87,7 @@ write_user_data(AuthId0, Data) ->
   User = ?lkup("openid.claimed_id", Data),
   [{name, Name}, _] = ?lkup(User, polish:get_users()),
   polish_server:write_user_auth(AuthId, Name),
+  error_logger:info_msg("User " ++ Name ++ " logged in.~n~n"),
   AuthId.
 
 
