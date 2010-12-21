@@ -29,54 +29,55 @@ div.header {
     background: #C4C4C4 url(/images/login-page-bg.jpg) no-repeat 50% 0%;
 }
 
-#login-form { 
-    width: 406px; 
-    margin: 171px auto 0; 
-}
-	
-#login-form legend { 
-    display: none; 
+#login-form {
+    width: 406px;
+    margin: 171px auto 0;
 }
 
-#login-form fieldset { 
-    border: 0; 
+#login-form legend {
+    display: none;
+}
+
+#login-form fieldset {
+    border: 0;
 }
 
 .error_login {
-    padding-right: 47px;
     font-size: 14px;
     font-weight: bold;
     color: #c44;
 }
-	
-.login_label { 
+
+.login_label {
     background: url(/images/openid.png) no-repeat 100% 0%;
-    width: 80px; 
-    text-align: right; 
-    float: left; 
-    margin: 0 10px 0 0; 
-    padding: 9px 35px 0 0; 
-    font-size: 16px; 
+    width: 80px;
+    text-align: right;
+    float: left;
+    margin: 0 10px 0 0;
+    padding: 9px 35px 0 0;
+    font-size: 16px;
 }
-	
-#login-form input { 
-    width: 220px; 
-    display: block; 
-    padding: 4px; 
-    margin: 0 0 10px 0; 
+
+#login-form .claimed_id {
+    width: 220px;
+    display: block;
+    padding: 4px;
+    margin: 0 0 4px 0;
     font-size: 18px;
-    color: #3a3a3a; 
+    color: #3a3a3a;
     font-family: Georgia, serif;
 }
 
-#login-form .button {
-    margin: -15px 0 0 256px;
-    width: 100px;
+.button {
+    padding: 4px;
+    font-size: 14px;
+    color: #3a3a3a;
+    font-family: Georgia, serif;
 }
 
 
 /***** STYLE *****/
-body { 
+body {
     font-family: "Lucida Grande","Segoe UI","Trebuchet MS",Tahoma,Helvetica,Arial,sans-serif; 
     font-size: 13px;
     line-height: 1.5385em;

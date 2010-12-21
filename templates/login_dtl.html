@@ -15,17 +15,20 @@
   <body id="login_body">
     <form id="login-form" action="/login" method="get">
       <fieldset>
-	<label class="login_label" for="login">OpenID</label>
-	<input type="text" class="claimed_id textbox" name="claimed_id"/>
-	{% if error %}
-	<div style="display:block; margin-bottom: 29px;">
-	  <div style="float:right">
-	    <a class="error_login"> {{ reason }} </a>
+	<div style="display:block; padding-right: 47px">
+	  <label class="login_label" for="login">OpenID</label>
+	  <input type="text" class="claimed_id textbox" name="claimed_id"/>
+	  <div style="float: right">
+	    {% if error %}
+	    <div style="">
+	      <a class="error_login"> {{ reason }} </a>
+	    </div>
+	    {% endif %}
+	    <div style="float: right;">
+	      <input type="submit" class="button" value="Login"/>
+	    </div>
 	  </div>
 	</div>
-	{% endif %}
-	<br/>
-	<input type="submit" class="button" value="Login"/>
       </fieldset>
     </form>
   </body>
