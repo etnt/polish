@@ -27,6 +27,7 @@
          , i2l/1
          , l2a/1
          , a2l/1
+	 , compile_templates/0
         ]).
 
 -import(polish_deps,[get_env/2]).
@@ -124,3 +125,10 @@ l2a(A) when is_atom(A) -> A.
 
 a2l(A) when is_atom(A) -> atom_to_list(A);
 a2l(L) when is_list(L) -> L.
+
+compile_templates() ->
+  Templates = string:tokens(os:cmd("ls templates/*_dtl.html"), "\n"),
+  [erlydtl:compile(Template, template_name(Template)) || Template <- Templates].
+
+template_name("templates/" ++ Template) ->
+  ?l2a(hd(string:tokens(Template, "."))).

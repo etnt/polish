@@ -20,6 +20,7 @@ start(_, _) ->
   load_always_translated_keys(),
   maybe_replace_keys_or_auto_wash(),
   load_po_files(),
+  polish:compile_templates(),
   Res.
 
 
