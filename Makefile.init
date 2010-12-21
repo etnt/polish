@@ -19,6 +19,7 @@ setup:
 	-(cd dep/elogger; make)
 	-(cd dep/eopenid; make)
 	-(cd dep/gettext; make)
+	-(cd dep/erlydtl; make)
 	-chmod +x ./start.sh
 
 ebin/%.app: src/%.app.src vsn.mk

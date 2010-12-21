@@ -11,15 +11,15 @@ if [ $# -ge 1 -a $1 = "test" ]; then
     if [ $# -eq 1 ]; then
 	run_test -dir test/ -logdir results/ \
 	    -pa $(pwd)/ebin $(pwd)/${MOCHIWEB_EBIN} $(pwd)/${GETTEXT_EBIN} \
-	    $(pwd)/${EOPENID_EBIN} $(pwd)/${ELOGGER_EBIN}
+	    $(pwd)/${EOPENID_EBIN} $(pwd)/${ELOGGER_EBIN} $(pwd)/${ERLYDTL_EBIN}
     elif [ $# -eq 2 ]; then
 	run_test -suite $2 -logdir results/ \
 	    -pa $(pwd)/ebin $(pwd)/${MOCHIWEB_EBIN} $(pwd)/${GETTEXT_EBIN} \
-	    $(pwd)/${EOPENID_EBIN} $(pwd)/${ELOGGER_EBIN}
+	    $(pwd)/${EOPENID_EBIN} $(pwd)/${ELOGGER_EBIN} $(pwd)/${ERLYDTL_EBIN}
     elif [ $# -eq 3 ]; then
 	run_test -suite $2 -case $3 -logdir results/ \
 	    -pa $(pwd)/ebin $(pwd)/${MOCHIWEB_EBIN} $(pwd)/${GETTEXT_EBIN} \
-	    $(pwd)/${EOPENID_EBIN} $(pwd)/${ELOGGER_EBIN}
+	    $(pwd)/${EOPENID_EBIN} $(pwd)/${ELOGGER_EBIN} $(pwd)/${ERLYDTL_EBIN}
     fi
     mv test/*beam ebin/
 elif [ $# -eq 1 -a $1 = "coverage" ]; then
@@ -28,7 +28,7 @@ elif [ $# -eq 1 -a $1 = "coverage" ]; then
     cp ebin/*beam src/
     run_test -dir test/ -cover priv/coverspec -logdir results/ \
 	-pa $(pwd)/ebin $(pwd)/${MOCHIWEB_EBIN} $(pwd)/${GETTEXT_EBIN} \
-	$(pwd)/${EOPENID_EBIN} $(pwd)/${ELOGGER_EBIN}
+	$(pwd)/${EOPENID_EBIN} $(pwd)/${ELOGGER_EBIN} $(pwd)/${ERLYDTL_EBIN}
     mv test/*beam ebin/
     rm src/*beam
 else
@@ -57,7 +57,7 @@ else
     erl \
 	-polish po_lang_dir $po_lang_dir ask_replace_keys $ask_replace_keys \
 	-sname ${NAME} \
-	-pa ./ebin ${MOCHIWEB_EBIN} ${GETTEXT_EBIN} ${EOPENID_EBIN} ${ELOGGER_EBIN} \
+	-pa ./ebin ${MOCHIWEB_EBIN} ${GETTEXT_EBIN} ${EOPENID_EBIN} ${ELOGGER_EBIN} $(pwd)/${ERLYDTL_EBIN} \
 	-eval "application:start(polish)"
 fi
 
