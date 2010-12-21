@@ -29,6 +29,8 @@ start_openid_authentication(Req, CT) ->
     error_logger:tty(true),
     case is_user_allowed(ClaimedId) of
       false ->
+	error_logger:info_msg("Unallowed user " ++ClaimedId++ " tried to login."
+			      "~n~n"),
 	{?OK, CT, polish_login_format:login_error(not_allowed, CT), []};
       true ->
 	OpenIdURL = generate_openid_url(OpenIdData),
