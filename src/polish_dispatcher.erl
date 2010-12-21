@@ -18,14 +18,6 @@ dispatch(Req) ->
       Req:serve_file(Img, "www/images/");
     "/js/" ++ JSFile ->
       Req:serve_file(JSFile, "www/js/");
-    "/" ->
-      case polish_utils:is_user_logged(Req) of
-	%% specify no-cache, otherwise the redirect won't work later
-	false ->
-	  Req:serve_file("login.html", "www/", [{"Cache-Control", "no-cache"}]);
-	true  ->
-	  Req:serve_file("index.html", "www/", [{"Cache-Control", "no-cache"}])
-      end;
     _ ->
       case parse_accept(Req:get(headers)) of
 	not_supported ->
@@ -42,7 +34,8 @@ dispatch(Req) ->
 
 % Call the controller action here
 run_controller(Req, Controller, _Args, _UserLogged = false)
-  when Controller =/= polish_login_controller ->
+  when Controller =/= polish_login_controller andalso
+       Controller =/= polish_index_controller ->
   Req:respond({?FOUND, [{"Location", "/"}], []});
 run_controller(Req, Controller, Args, _UserLogged) ->
   case (catch apply(Controller, dispatch, Args)) of
@@ -58,21 +51,21 @@ run_controller(Req, Controller, Args, _UserLogged) ->
       Headers = [{?CT, ContentType},
 		 mochiweb_cookies:cookie(auth, CookieV, [])],
       Req:respond({Status, Headers, Data});
-    {Status, ContentType, Data} ->
+    {Status, ContentType, Data} when is_integer(Status) ->
       {"auth", CookieV} = lists:keyfind("auth", 1, Req:parse_cookie()),
       Headers = [{?CT, ContentType},
 		 mochiweb_cookies:cookie(auth, CookieV, [])],
-      Req:respond({Status, Headers, Data})
+      Req:respond({Status, Headers, Data});
+    {File, Dir, Headers} ->
+      Req:serve_file(File, Dir, Headers)
   end.
 
 % Parses the path and returns {top_controller, rest}
 parse_path(Path) ->
   CleanedPath = clean_path(Path),
   case string:tokens(CleanedPath, "/") of
-    [] ->
-      {index, no_path};
-    [Top|Rest] ->
-      {?l2a("polish_" ++ Top ++ "_controller"), Rest}
+    []         -> {polish_index_controller, no_path};
+    [Top|Rest] -> {?l2a("polish_" ++ Top ++ "_controller"), Rest}
   end.
 
 clean_path(Path) ->
