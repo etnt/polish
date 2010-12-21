@@ -128,7 +128,8 @@ a2l(L) when is_list(L) -> L.
 
 compile_templates() ->
   Templates = string:tokens(os:cmd("ls templates/*_dtl.html"), "\n"),
-  [erlydtl:compile(Template, template_name(Template)) || Template <- Templates].
+  [erlydtl:compile(Template, template_name(Template), [{out_dir, "ebin/"}])
+   || Template <- Templates].
 
 template_name("templates/" ++ Template) ->
   ?l2a(hd(string:tokens(Template, "."))).
