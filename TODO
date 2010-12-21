@@ -12,3 +12,15 @@
   - /keys
      * normal request
      * search keys
+
+  - polish_wash
+
+TODO:
+- implement dynamic index page
+- implement /keys dynamic page
+- redirect to previous url after login (when the user was going to a resource but
+  he wasn't logged in)
+- implement subscription to a group of keys: gen_server whose state is the list of
+  keys to be translated and their state. The developer should be able to get that state
+- refactor of modules polish, polish_utils, polish_app
+- rethink polish_server, how data is stored, and refactor it
