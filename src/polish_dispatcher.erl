@@ -12,16 +12,20 @@ dispatch(Req) ->
   case Path of
     "/favicon.ico" ->
       Req:respond({200, [{?CT, "text/html"}], ""});
-    "/style.css" ->
-      Req:serve_file("style.css", "priv/");
+    "/css/" ++ CSSFile ->
+      Req:serve_file(CSSFile, "www/css/");
     "/images/" ++ Img ->
-      Req:serve_file(Img, "priv/images/");
+      Req:serve_file(Img, "www/images/");
+    "/js/" ++ JSFile ->
+      Req:serve_file(JSFile, "www/js/");
     "/" ->
-      Req:serve_file("index.html", "priv/");
-    "/js.js" ->
-      Req:serve_file("js.js", "priv/");
-    "/jquery-1.4.2.min.js" ->
-      Req:serve_file("jquery-1.4.2.min.js", "priv/");
+      case polish_utils:is_user_logged(Req) of
+	%% specify no-cache, otherwise the redirect won't work later
+	false ->
+	  Req:serve_file("login.html", "www/", [{"Cache-Control", "no-cache"}]);
+	true  ->
+	  Req:serve_file("index.html", "www/", [{"Cache-Control", "no-cache"}])
+      end;
     _ ->
       case parse_accept(Req:get(headers)) of
 	not_supported ->
@@ -39,7 +43,7 @@ dispatch(Req) ->
 % Call the controller action here
 run_controller(Req, Controller, _Args, _UserLogged = false)
   when Controller =/= polish_login_controller ->
-  Req:respond({?FOUND, [{"Location", "/login"}], []});
+  Req:respond({?FOUND, [{"Location", "/"}], []});
 run_controller(Req, Controller, Args, _UserLogged) ->
   case (catch apply(Controller, dispatch, Args)) of
     {'EXIT', Err} ->
