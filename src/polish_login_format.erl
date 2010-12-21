@@ -14,7 +14,10 @@ login(?JSON) ->
   ok.
 
 login_error(Reason, ?JSON) ->
-  mochijson2:encode({struct, [{login, error},{reason,?l2a(reason(Reason))}]}).
+  mochijson2:encode({struct, [{login, error},{reason,?l2a(reason(Reason))}]});
+login_error(Reason, _) ->
+  {ok, HTML} = login_dtl:render([{error, true}, {reason, reason(Reason)}]),
+  HTML.
 
 reason(not_allowed) ->
   "user not allowed";

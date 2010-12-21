@@ -43,13 +43,8 @@ div.header {
 }
 
 .error_login {
-    background: url('');
-    width: 80px; 
-    text-align: right; 
-    float: right; 
-    margin: 3px 13px 0 0; 
-    padding: 0 37px 0 0; 
-    font-size: 16px;
+    padding-right: 47px;
+    font-size: 14px;
     font-weight: bold;
     color: #c44;
 }

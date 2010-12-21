@@ -17,6 +17,13 @@
       <fieldset>
 	<label class="login_label" for="login">OpenID</label>
 	<input type="text" class="claimed_id textbox" name="claimed_id"/>
+	{% if error %}
+	<div style="display:block; margin-bottom: 29px;">
+	  <div style="float:right">
+	    <a class="error_login"> {{ reason }} </a>
+	  </div>
+	</div>
+	{% endif %}
 	<br/>
 	<input type="submit" class="button" value="Login"/>
       </fieldset>
