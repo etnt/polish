@@ -10,11 +10,11 @@ suite() ->
   [].
 
 all() ->
-  [http_get_languages,
-   http_get_language,
-   http_bad_method_languages,
-   http_bad_method_language,
-   http_not_existent_language].
+  [get_languages,
+   get_language,
+   bad_method_languages,
+   bad_method_language,
+   not_existent_language].
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -42,7 +42,7 @@ end_per_testcase(_TestCase, _Config) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% T E S T   C A S E S
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-http_get_languages(Config) ->
+get_languages(Config) ->
   Cookie = ?lkup(cookie, Config),
   {Code, ResponseJSON} = polish_test_lib:send_http_request(
 			   get, "/languages", [{cookie, Cookie}]),
@@ -59,17 +59,17 @@ http_get_languages(Config) ->
     [{"url", URL++"/es"}, {"name", "Spanish"}], Es),
   ok.
 
-http_get_language(Config) ->
+get_language(Config) ->
   Cookie = ?lkup(cookie, Config),
   {Code, ResponseJSON} = polish_test_lib:send_http_request(
 			   get, "/languages/ca", [{cookie, Cookie}]),
   ?assertEqual(?OK, Code),
   {struct, Response} = mochijson2:decode(ResponseJSON),
   polish_test_lib:assert_fields_from_response(
-    [{"total", 5}, {"untrans", 1}], Response),
+    [{"total", 5}, {"untrans", 0}], Response),
   ok.
 
-http_bad_method_languages(Config) ->
+bad_method_languages(Config) ->
   Cookie = ?lkup(cookie, Config),
   {Code1, _} = polish_test_lib:send_http_request(
 		 delete, "/languages", [{cookie, Cookie}]),
@@ -82,7 +82,7 @@ http_bad_method_languages(Config) ->
   ?assertEqual(?BAD_METHOD, Code3),
   ok.
 
-http_bad_method_language(Config) ->
+bad_method_language(Config) ->
   Cookie = ?lkup(cookie, Config),
   {Code1, _} = polish_test_lib:send_http_request(
 		 delete, "/languages/ca", [{cookie, Cookie}]),
@@ -95,7 +95,7 @@ http_bad_method_language(Config) ->
   ?assertEqual(?BAD_METHOD, Code3),
   ok.
 
-http_not_existent_language(Config) ->
+not_existent_language(Config) ->
   Cookie = ?lkup(cookie, Config),
   {Code, _} = polish_test_lib:send_http_request(
 		get, "/languages/nn", [{cookie, Cookie}]),

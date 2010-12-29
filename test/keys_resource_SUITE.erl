@@ -10,11 +10,11 @@ suite() ->
   [].
 
 all() ->
-  [http_get_key
-   , http_bad_method_key
-   , http_bad_method_keys
-   , http_not_existent_key
-   , http_put_key
+  [ get_key
+  , bad_method_key
+  , bad_method_keys
+  , not_existent_key
+  , put_key
   ].
 
 
@@ -27,9 +27,9 @@ init_per_suite(Config) ->
   Cookie = polish_test_lib:fake_login(UserId),
   [{cookie, Cookie}, {user_id, UserId} | Config].
 
-init_per_testcase(http_get_key, Config) ->
+init_per_testcase(get_key, Config) ->
   [{key, "jag heter POlish"}, {translation, "em dic POlish"}|Config];
-init_per_testcase(http_put_key, Config) ->
+init_per_testcase(put_key, Config) ->
   Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
   os:cmd("cp " ++ Path ++ "gettext.po " ++ Path ++ "gettext.po.bup"),
   [{key, "jag heter POlish"}|Config];
@@ -43,7 +43,7 @@ end_per_suite(_Config) ->
   polish_test_lib:fake_logout(),
   ok.
 
-end_per_testcase(http_put_key, _Config) ->
+end_per_testcase(put_key, _Config) ->
   Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
   os:cmd("mv " ++ Path ++ "gettext.po.bup " ++ Path ++ "gettext.po"),
   os:cmd("rm " ++ Path ++ "gettext.po__*"),
@@ -54,7 +54,7 @@ end_per_testcase(_TestCase, _Config) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% T E S T   C A S E S
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-http_get_key(Config) ->
+get_key(Config) ->
   Key = ?lkup(key, Config),
   Cookie = ?lkup(cookie, Config),
   ExpectedTranslation = ?lkup(translation, Config),
@@ -70,7 +70,7 @@ http_get_key(Config) ->
      {"marked_as_translated", "false"}], Response),
   ok.
 
-http_bad_method_key(Config) ->
+bad_method_key(Config) ->
   Cookie = ?lkup(cookie, Config),
   {Code1, _} = polish_test_lib:send_http_request(
 		 delete, "/keys/ca1", [{cookie, Cookie}]),
@@ -80,7 +80,7 @@ http_bad_method_key(Config) ->
   ?assertEqual(?BAD_METHOD, Code2),
   ok.
 
-http_bad_method_keys(Config) ->
+bad_method_keys(Config) ->
   Cookie = ?lkup(cookie, Config),
   {Code1, _} = polish_test_lib:send_http_request(
 		 delete, "/keys", [{cookie, Cookie}]),
@@ -93,7 +93,7 @@ http_bad_method_keys(Config) ->
   ?assertEqual(?BAD_METHOD, Code3),
   ok.
 
-http_not_existent_key(Config) ->
+not_existent_key(Config) ->
   Cookie = ?lkup(cookie, Config),
   {Code1, _} = polish_test_lib:send_http_request(
 		get, "/keys/ca435", [{cookie, Cookie}]),
@@ -103,7 +103,7 @@ http_not_existent_key(Config) ->
   ?assertEqual(?NOT_FOUND, Code2),
   ok.
 
-http_put_key(Config) ->
+put_key(Config) ->
   Key = ?lkup(key, Config),
   Cookie = ?lkup(cookie, Config),
   ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
