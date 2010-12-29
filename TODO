@@ -1,8 +1,5 @@
 - To test:
   - /keys/key
-     * fix get key
-     * 'put' not existing key
-     * 'put' in a key (save translation)
      * save translation that fails on validators and match the error
      * save translation that fails on validators and save again bypassing validator
      * mark key as always translated
