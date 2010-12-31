@@ -229,7 +229,7 @@ read_and_check_po_file(LC) ->
       sort_po_file(LC),
       read_and_check_po_file(LC);
     {duplicated, D} = Duplicated ->
-      error_logger:info_msg(polish:i2l(length(D))++" duplicated keys "
+      error_logger:info_msg(?i2l(length(D))++" duplicated keys "
 			    "in "++LC++".~n~n"),
       Duplicated;
     ok ->

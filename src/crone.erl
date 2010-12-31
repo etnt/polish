@@ -156,7 +156,7 @@ loop_task(Duration, Task, Job) ->
 
 %% Interruptable sleeper
 isleep(Secs, Task, Job) when Secs > 0 ->
-    N = polish:gnow(),
+    N = polish_utils:gnow(),
     do_isleep(N, Secs, Task, Job);
 isleep(_Secs, _Task, Job) ->
     Job.
@@ -164,7 +164,7 @@ isleep(_Secs, _Task, Job) ->
 do_isleep(N, Secs, Task, Job) ->
     receive
 	{_From, timechange} ->
-	    Later = polish:gnow(),
+	    Later = polish_utils:gnow(),
 	    Remain = Secs - (Later - N),
 	    if Remain =< 0 ->
 		    Job;
@@ -172,16 +172,16 @@ do_isleep(N, Secs, Task, Job) ->
 		    {remain, Remain, Job}
 	    end;
 	{From, remain} ->
-	    Later = polish:gnow(),
+	    Later = polish_utils:gnow(),
 	    Remain = Secs - (Later - N),
 	    From ! {self(), Remain, Task},
 	    {remain, Remain, Job};
 	{_From, {steptime, StepSecs}} ->
-	    Later = polish:gnow(),
+	    Later = polish_utils:gnow(),
 	    Remain = Secs - (Later - N),
 	    {remain, Remain - StepSecs, Job};
 	{'EXIT', Job, _} ->
-	    Later = polish:gnow(),
+	    Later = polish_utils:gnow(),
 	    Remain = Secs - (Later - N),
 	    {remain, Remain, undefined};
 	{_From, trigger} ->
@@ -196,7 +196,7 @@ do_isleep(N, Secs, Task, Job) ->
 %% @doc Returns the current time, in seconds past midnight.
 
 current_time() ->
-  {H,M,S} = polish:time(),
+  {H,M,S} = polish_utils:time(),
   S + M * 60 + H * 3600.
 
 %% @spec until_next_time(task()) -> seconds()
@@ -210,7 +210,7 @@ until_next_time(Task) ->
       until_next_daytime(Period);
     {weekly, DoW, Period} ->
       OnDay = resolve_dow(DoW),
-      Today = calendar:day_of_the_week(polish:date()),
+      Today = calendar:day_of_the_week(polish_utils:date()),
       case Today of
         OnDay ->
 	  until_next_daytime_or_days_from_now(Period, 7);
@@ -220,7 +220,7 @@ until_next_time(Task) ->
 	  until_days_from_now(Period, (OnDay+7) - Today)
       end;
     {monthly, DoM, Period} ->
-      {ThisYear, ThisMonth, Today} = polish:date(),
+      {ThisYear, ThisMonth, Today} = polish_utils:date(),
       {NextYear, NextMonth} = case ThisMonth of
         12 -> {ThisYear + 1, 1};
 	_  -> {ThisYear, ThisMonth + 1}

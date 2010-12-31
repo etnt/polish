@@ -25,6 +25,9 @@
 	 , to_utf8/1
 	 , trim_whitespace/1
          , year2str/0
+	 , gnow/0
+	 , date/0
+	 , time/0
         ]).
 
 
@@ -32,7 +35,7 @@ get_language_name(undefined) -> "";
 get_language_name(LC)        -> gettext_iso639:lc2lang(LC).
 
 year2str() ->
-  {Y,_,_} = date(),
+  {Y,_,_} = erlang:date(),
   ?i2l(Y).
 
 rfc3339() ->
@@ -216,3 +219,15 @@ old_integer_to_hex(I) when I<16 ->
 old_integer_to_hex(I) when I>=16 ->
     N = trunc(I/16),
     old_integer_to_hex(N) ++ old_integer_to_hex(I rem 16).
+
+gnow() ->
+  calendar:datetime_to_gregorian_seconds(calendar:local_time()).
+
+local_time() ->
+  calendar:gregorian_seconds_to_datetime(gnow()).
+
+time() ->
+  element(2, local_time()).
+
+date() ->
+  element(1, local_time()).
