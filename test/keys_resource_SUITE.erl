@@ -16,6 +16,7 @@ all() ->
   , not_existent_key
   , put_key
   , mark_key_as_always_translated
+  , unmark_key_as_always_translated
   ].
 
 
@@ -40,6 +41,12 @@ init_per_testcase(mark_key_as_always_translated, Config) ->
   Key = "Hej POlish",
   ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
   [{key, Key}, {resource_id, ResourceID} | Config];
+init_per_testcase(unmark_key_as_always_translated, Config) ->
+  Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
+  os:cmd("cp " ++ Path ++ "gettext.po.meta " ++ Path ++ "meta.bup"),
+  Key = "POlish",
+  ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
+  [{key, Key}, {resource_id, ResourceID} | Config];
 init_per_testcase(_TestCase, Config) ->
   Config.
 
@@ -55,7 +62,8 @@ end_per_testcase(put_key, _Config) ->
   os:cmd("mv " ++ Path ++ "gettext.po.bup " ++ Path ++ "gettext.po"),
   os:cmd("rm " ++ Path ++ "gettext.po__*"),
   ok;
-end_per_testcase(mark_key_as_always_translated, _Config) ->
+end_per_testcase(TC, _Config) when TC =:= mark_key_as_always_translated orelse
+				   TC =:= unmark_key_as_always_translated ->
   Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
   os:cmd("mv " ++ Path ++ "meta.bup " ++ Path ++ "gettext.po.meta"),
   os:cmd("rm " ++ Path ++ "gettext.po__*"),
@@ -159,6 +167,29 @@ mark_key_as_always_translated(Config) ->
   {_Code3, Response2} = do_get_request_on_key(Cookie, ResourceID),
   polish_test_lib:assert_fields_from_response(
     [{"marked_as_translated", "true"}], Response2),
+  ok.
+
+unmark_key_as_always_translated(Config) ->
+  Key = ?lkup(key, Config),
+  Cookie = ?lkup(cookie, Config),
+  ResourceID = ?lkup(resource_id, Config),
+  %% check that the key is marked as always translated in the meta file
+  MetaFile = polish:get_polish_path() ++ "/priv/lang/custom/ca/gettext.po.meta",
+  {ok, List} = file:consult(MetaFile),
+  ?assertEqual(true, lists:member({always_translated, Key}, List)),
+  %% unmark the key as always translated
+  Body = "mark_as_always_translated=false",
+  {Code2, _ResponseJSON} = polish_test_lib:send_http_request(
+			   put, "/keys/"++ResourceID,
+			   [{cookie, Cookie}, {body, Body}]),
+  ?assertEqual(?OK, Code2),
+  %% check that the key is not marked as always translated in the meta file
+  {ok, List2} = file:consult(MetaFile),
+  ?assertEqual(false, lists:member({always_translated, Key}, List2)),
+  %% get the key and assert not marked as always translated
+  {_Code3, Response2} = do_get_request_on_key(Cookie, ResourceID),
+  polish_test_lib:assert_fields_from_response(
+    [{"marked_as_translated", "false"}], Response2),
   ok.
 
 do_get_request_on_key(Cookie, ResourceID) ->
