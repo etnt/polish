@@ -22,21 +22,21 @@ all() ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 init_per_suite(Config) ->
   polish_test_lib:start_polish_for_test(),
+  Config.
+
+init_per_testcase(_TestCase, Config) ->
   UserId = "http://jordi-chacon.myopenid.com/",
   Cookie = polish_test_lib:fake_login(UserId),
   [{cookie, Cookie}, {user_id, UserId} | Config].
-
-init_per_testcase(_TestCase, Config) ->
-  Config.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% E N D S
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 end_per_suite(_Config) ->
-  polish_test_lib:fake_logout(),
   ok.
 
 end_per_testcase(_TestCase, _Config) ->
+  polish_test_lib:cleanup(),
   ok.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

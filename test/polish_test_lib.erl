@@ -8,6 +8,7 @@
 	, fake_login/1
 	, fake_logout/0
 	, clean_fake_login_data/0
+	, cleanup/0
 	]).
 
 -record(preq, { method
@@ -30,6 +31,12 @@ start_polish_for_test() ->
   application:set_env(polish, error_logger_mf_file, PWD++"/logs/polish"),
   application:set_env(polish, port, 8283),
   application:start(polish).
+
+cleanup() ->
+  supervisor:terminate_child(polish_sup, polish_server),
+  supervisor:restart_child(polish_sup, polish_server),
+  polish:start(),
+  ok.
 
 send_http_request(Method, URL, OtherInfo) ->
   Rec = build_request_record(Method, URL, OtherInfo),

@@ -25,50 +25,64 @@ all() ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 init_per_suite(Config) ->
   polish_test_lib:start_polish_for_test(),
-  UserId = "http://jordi-chacon.myopenid.com/",
-  Cookie = polish_test_lib:fake_login(UserId),
-  [{cookie, Cookie}, {user_id, UserId} | Config].
+  Config.
 
 init_per_testcase(get_key, Config) ->
-  [{key, "jag heter POlish"}, {translation, "em dic POlish"}|Config];
+  UserId = "http://jordi-chacon.myopenid.com/",
+  Cookie = polish_test_lib:fake_login(UserId),
+  [{key, "jag heter POlish"}, {translation, "em dic POlish"},
+   {cookie, Cookie}, {user_id, UserId}|Config];
 init_per_testcase(put_key, Config) ->
+  UserId = "http://jordi-chacon.myopenid.com/",
+  Cookie = polish_test_lib:fake_login(UserId),
   Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
   os:cmd("cp " ++ Path ++ "gettext.po " ++ Path ++ "gettext.po.bup"),
-  [{key, "jag heter POlish"}|Config];
+  [{key, "jag heter POlish"}, {cookie, Cookie}, {user_id, UserId}|Config];
 init_per_testcase(mark_key_as_always_translated, Config) ->
+  UserId = "http://jordi-chacon.myopenid.com/",
+  Cookie = polish_test_lib:fake_login(UserId),
   Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
   os:cmd("cp " ++ Path ++ "gettext.po.meta " ++ Path ++ "meta.bup"),
   Key = "Hej POlish",
   ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
-  [{key, Key}, {resource_id, ResourceID} | Config];
+  [{key, Key}, {resource_id, ResourceID},
+   {cookie, Cookie}, {user_id, UserId}| Config];
 init_per_testcase(unmark_key_as_always_translated, Config) ->
+  UserId = "http://jordi-chacon.myopenid.com/",
+  Cookie = polish_test_lib:fake_login(UserId),
   Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
   os:cmd("cp " ++ Path ++ "gettext.po.meta " ++ Path ++ "meta.bup"),
   Key = "POlish",
   ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
-  [{key, Key}, {resource_id, ResourceID} | Config];
+  [{key, Key}, {resource_id, ResourceID},
+   {cookie, Cookie}, {user_id, UserId} | Config];
 init_per_testcase(_TestCase, Config) ->
-  Config.
+  UserId = "http://jordi-chacon.myopenid.com/",
+  Cookie = polish_test_lib:fake_login(UserId),
+  [{cookie, Cookie}, {user_id, UserId} | Config].
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% E N D S
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 end_per_suite(_Config) ->
-  polish_test_lib:fake_logout(),
   ok.
 
 end_per_testcase(put_key, _Config) ->
   Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
   os:cmd("mv " ++ Path ++ "gettext.po.bup " ++ Path ++ "gettext.po"),
   os:cmd("rm " ++ Path ++ "gettext.po__*"),
+  polish_test_lib:cleanup(),
   ok;
 end_per_testcase(TC, _Config) when TC =:= mark_key_as_always_translated orelse
 				   TC =:= unmark_key_as_always_translated ->
   Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
   os:cmd("mv " ++ Path ++ "meta.bup " ++ Path ++ "gettext.po.meta"),
   os:cmd("rm " ++ Path ++ "gettext.po__*"),
+  polish_test_lib:cleanup(),
   ok;
 end_per_testcase(_TestCase, _Config) ->
+  polish_test_lib:cleanup(),
   ok.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
