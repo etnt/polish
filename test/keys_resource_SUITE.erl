@@ -89,10 +89,8 @@ end_per_testcase(_TestCase, _Config) ->
 %% T E S T   C A S E S
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 get_key(Config) ->
-  Key = ?lkup(key, Config),
-  Cookie = ?lkup(cookie, Config),
-  ExpectedTranslation = ?lkup(translation, Config),
-  ResourceID = ?lkup(resource_id, Config),
+  [Key, Cookie, ExpectedTranslation, ResourceID] =
+    polish_test_lib:config_lkup([key, cookie, translation,resource_id], Config),
   {Code, ResponseJSON} = polish_test_lib:send_http_request(
 			   get, "/keys/"++ResourceID, [{cookie, Cookie}]),
   ?assertEqual(?OK, Code),
@@ -138,9 +136,8 @@ not_existent_key(Config) ->
   ok.
 
 put_key(Config) ->
-  Key = ?lkup(key, Config),
-  Cookie = ?lkup(cookie, Config),
-  ResourceID = ?lkup(resource_id, Config),
+  [Key, Cookie, ResourceID] =
+    polish_test_lib:config_lkup([key, cookie, resource_id], Config),
   %% get the current translation
   {_Code, Response} = do_get_request_on_key(Cookie, ResourceID),
   Translation = ?b2l(?lkup(<<"value">>, Response)),
@@ -161,9 +158,8 @@ put_key(Config) ->
   ok.
 
 mark_key_as_always_translated(Config) ->
-  Key = ?lkup(key, Config),
-  Cookie = ?lkup(cookie, Config),
-  ResourceID = ?lkup(resource_id, Config),
+  [Key, Cookie, ResourceID] =
+    polish_test_lib:config_lkup([key, cookie, resource_id], Config),
   %% check that the key is not marked as always translated in the meta file
   MetaFile = polish:get_polish_path() ++ "/priv/lang/custom/ca/gettext.po.meta",
   {ok, List} = file:consult(MetaFile),
@@ -184,9 +180,8 @@ mark_key_as_always_translated(Config) ->
   ok.
 
 unmark_key_as_always_translated(Config) ->
-  Key = ?lkup(key, Config),
-  Cookie = ?lkup(cookie, Config),
-  ResourceID = ?lkup(resource_id, Config),
+  [Key, Cookie, ResourceID] =
+    polish_test_lib:config_lkup([key, cookie, resource_id], Config),
   %% check that the key is marked as always translated in the meta file
   MetaFile = polish:get_polish_path() ++ "/priv/lang/custom/ca/gettext.po.meta",
   {ok, List} = file:consult(MetaFile),

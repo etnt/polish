@@ -9,6 +9,7 @@
 	, fake_logout/0
 	, clean_fake_login_data/0
 	, cleanup/0
+	, config_lkup/2
 	]).
 
 -record(preq, { method
@@ -142,3 +143,6 @@ get_fake_redirect_url(UserId0) ->
     "8.10.249%3A8282%2Fauth&openid.sig=2l%2BSVA4gD7Faa16RzWY6VBvdk%2F"
     "U%3D&openid.signed=assoc_handle%2Cidentity%2Cmode%2Cop_endpoint%"
     "2Cresponse_nonce%2Creturn_to%2Csigned".
+
+config_lkup(Keys, Config) ->
+  [?lkup(Key, Config) || Key <- Keys].
