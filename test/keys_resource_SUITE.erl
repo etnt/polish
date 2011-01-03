@@ -28,39 +28,31 @@ init_per_suite(Config) ->
   Config.
 
 init_per_testcase(get_key, Config) ->
-  UserId = "http://jordi-chacon.myopenid.com/",
-  Cookie = polish_test_lib:fake_login(UserId),
-  [{key, "jag heter POlish"}, {translation, "em dic POlish"},
-   {cookie, Cookie}, {user_id, UserId}|Config];
+  common_init() ++
+    [{key, "jag heter POlish"}, {translation, "em dic POlish"} | Config];
 init_per_testcase(put_key, Config) ->
-  UserId = "http://jordi-chacon.myopenid.com/",
-  Cookie = polish_test_lib:fake_login(UserId),
   Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
   os:cmd("cp " ++ Path ++ "gettext.po " ++ Path ++ "gettext.po.bup"),
-  [{key, "jag heter POlish"}, {cookie, Cookie}, {user_id, UserId}|Config];
+  common_init() ++ [{key, "jag heter POlish"}|Config];
 init_per_testcase(mark_key_as_always_translated, Config) ->
-  UserId = "http://jordi-chacon.myopenid.com/",
-  Cookie = polish_test_lib:fake_login(UserId),
   Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
   os:cmd("cp " ++ Path ++ "gettext.po.meta " ++ Path ++ "meta.bup"),
   Key = "Hej POlish",
   ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
-  [{key, Key}, {resource_id, ResourceID},
-   {cookie, Cookie}, {user_id, UserId}| Config];
+  common_init() ++ [{key, Key}, {resource_id, ResourceID} | Config];
 init_per_testcase(unmark_key_as_always_translated, Config) ->
-  UserId = "http://jordi-chacon.myopenid.com/",
-  Cookie = polish_test_lib:fake_login(UserId),
   Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
   os:cmd("cp " ++ Path ++ "gettext.po.meta " ++ Path ++ "meta.bup"),
   Key = "POlish",
   ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
-  [{key, Key}, {resource_id, ResourceID},
-   {cookie, Cookie}, {user_id, UserId} | Config];
+  common_init() ++ [{key, Key}, {resource_id, ResourceID} | Config];
 init_per_testcase(_TestCase, Config) ->
+  common_init() ++ Config.
+
+common_init() ->
   UserId = "http://jordi-chacon.myopenid.com/",
   Cookie = polish_test_lib:fake_login(UserId),
-  [{cookie, Cookie}, {user_id, UserId} | Config].
-
+  [{cookie, Cookie}, {user_id, UserId}].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% E N D S
