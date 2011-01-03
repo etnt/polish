@@ -201,8 +201,40 @@ unmark_key_as_always_translated(Config) ->
     [{"marked_as_translated", "false"}], Response2),
   ok.
 
-put_key_bad_translation(_Config) ->
+put_key_bad_translation(Config) ->
+  [Key, Cookie, ResourceID] =
+    polish_test_lib:config_lkup([key, cookie, resource_id], Config),
+  %% get the current translation
+  {_Code, Response} = do_get_request_on_key(Cookie, ResourceID),
+  Translation = ?b2l(?lkup(<<"value">>, Response)),
+  %% save a bad translation (bad punct) and assert error
+  assert_bad_translation(ResourceID, Cookie, Translation ++ "abc.", bad_punct),
+  %% save a bad translation (bad case) and assert error
+  assert_bad_translation(ResourceID, Cookie, "A " ++ Translation, bad_case),
+  %% check that the po file contains the old translation
+  PoFile = gettext:parse_po(polish:po_lang_dir() ++ "custom/ca/gettext.po"),
+  ?assertEqual(Translation, ?lkup(Key, PoFile)),
+  %% get the key and assert the translation is the old one
+  {_Code2, Response2} = do_get_request_on_key(Cookie, ResourceID),
+  polish_test_lib:assert_fields_from_response(
+    [{"value", Translation}], Response2),
   ok.
+
+assert_bad_translation(ResourceID, Cookie, NewTranslation, Reason) ->
+  Body = "translation="++polish_utils:url_encode(NewTranslation),
+  {Code, ResponseJSON} = polish_test_lib:send_http_request(
+			   put, "/keys/"++ResourceID,
+			   [{cookie, Cookie}, {body, Body}]),
+  ?assertEqual(?OK, Code),
+  {struct, Response} = mochijson2:decode(ResponseJSON),
+  polish_test_lib:assert_fields_from_response(
+    [{"result", "error"}, {"reason", get_reason(Reason)}],
+    Response).
+
+get_reason(bad_punct) ->
+  "Trailing punctuation is missmatched.";
+get_reason(bad_case) ->
+  "Text starts with different case.".
 
 do_get_request_on_key(Cookie, ResourceID) ->
   {Code, ResponseJSON} = polish_test_lib:send_http_request(
