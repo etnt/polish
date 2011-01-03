@@ -17,6 +17,7 @@ all() ->
   , put_key
   , mark_key_as_always_translated
   , unmark_key_as_always_translated
+  , put_key_bad_translation
   ].
 
 
@@ -28,24 +29,19 @@ init_per_suite(Config) ->
   Config.
 
 init_per_testcase(get_key, Config) ->
-  common_init() ++
-    [{key, "jag heter POlish"}, {translation, "em dic POlish"} | Config];
+  common_init() ++ key_init("jag heter POlish") ++
+    [{translation, "em dic POlish"} | Config];
 init_per_testcase(put_key, Config) ->
-  Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
-  os:cmd("cp " ++ Path ++ "gettext.po " ++ Path ++ "gettext.po.bup"),
-  common_init() ++ [{key, "jag heter POlish"}|Config];
+  backup_po(),
+  common_init() ++ key_init("jag heter POlish") ++ Config;
 init_per_testcase(mark_key_as_always_translated, Config) ->
-  Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
-  os:cmd("cp " ++ Path ++ "gettext.po.meta " ++ Path ++ "meta.bup"),
-  Key = "Hej POlish",
-  ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
-  common_init() ++ [{key, Key}, {resource_id, ResourceID} | Config];
+  backup_meta(),
+  common_init() ++ key_init("Hej POlish") ++ Config;
 init_per_testcase(unmark_key_as_always_translated, Config) ->
-  Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
-  os:cmd("cp " ++ Path ++ "gettext.po.meta " ++ Path ++ "meta.bup"),
-  Key = "POlish",
-  ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
-  common_init() ++ [{key, Key}, {resource_id, ResourceID} | Config];
+  backup_meta(),
+  common_init() ++ key_init("POlish") ++ Config;
+init_per_testcase(put_key_bad_translation, Config) ->
+  common_init() ++ key_init("jag heter POlish") ++ Config;
 init_per_testcase(_TestCase, Config) ->
   common_init() ++ Config.
 
@@ -53,6 +49,18 @@ common_init() ->
   UserId = "http://jordi-chacon.myopenid.com/",
   Cookie = polish_test_lib:fake_login(UserId),
   [{cookie, Cookie}, {user_id, UserId}].
+
+key_init(Key) ->
+  ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
+  [{key, Key}, {resource_id, ResourceID}].
+
+backup_po() ->
+  Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
+  os:cmd("cp " ++ Path ++ "gettext.po " ++ Path ++ "gettext.po.bup").
+
+backup_meta() ->
+  Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
+  os:cmd("cp " ++ Path ++ "gettext.po.meta " ++ Path ++ "meta.bup").
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% E N D S
@@ -84,7 +92,7 @@ get_key(Config) ->
   Key = ?lkup(key, Config),
   Cookie = ?lkup(cookie, Config),
   ExpectedTranslation = ?lkup(translation, Config),
-  ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
+  ResourceID = ?lkup(resource_id, Config),
   {Code, ResponseJSON} = polish_test_lib:send_http_request(
 			   get, "/keys/"++ResourceID, [{cookie, Cookie}]),
   ?assertEqual(?OK, Code),
@@ -132,7 +140,7 @@ not_existent_key(Config) ->
 put_key(Config) ->
   Key = ?lkup(key, Config),
   Cookie = ?lkup(cookie, Config),
-  ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
+  ResourceID = ?lkup(resource_id, Config),
   %% get the current translation
   {_Code, Response} = do_get_request_on_key(Cookie, ResourceID),
   Translation = ?b2l(?lkup(<<"value">>, Response)),
@@ -196,6 +204,9 @@ unmark_key_as_always_translated(Config) ->
   {_Code3, Response2} = do_get_request_on_key(Cookie, ResourceID),
   polish_test_lib:assert_fields_from_response(
     [{"marked_as_translated", "false"}], Response2),
+  ok.
+
+put_key_bad_translation(_Config) ->
   ok.
 
 do_get_request_on_key(Cookie, ResourceID) ->
