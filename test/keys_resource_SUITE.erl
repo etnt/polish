@@ -18,6 +18,7 @@ all() ->
   , mark_key_as_always_translated
   , unmark_key_as_always_translated
   , put_key_bad_translation
+  , put_key_bad_translation_bypass_validators
   ].
 
 
@@ -41,6 +42,9 @@ init_per_testcase(unmark_key_as_always_translated, Config) ->
   backup_meta(),
   common_init() ++ key_init("POlish") ++ Config;
 init_per_testcase(put_key_bad_translation, Config) ->
+  common_init() ++ key_init("jag heter POlish") ++ Config;
+init_per_testcase(put_key_bad_translation_bypass_validators, Config) ->
+  backup_po(),
   common_init() ++ key_init("jag heter POlish") ++ Config;
 init_per_testcase(_TestCase, Config) ->
   common_init() ++ Config.
@@ -68,7 +72,9 @@ backup_meta() ->
 end_per_suite(_Config) ->
   ok.
 
-end_per_testcase(put_key, _Config) ->
+end_per_testcase(TC, _Config)
+  when TC =:= put_key orelse
+       TC =:= put_key_bad_translation_bypass_validators ->
   Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
   os:cmd("mv " ++ Path ++ "gettext.po.bup " ++ Path ++ "gettext.po"),
   os:cmd("rm " ++ Path ++ "gettext.po__*"),
@@ -218,6 +224,33 @@ put_key_bad_translation(Config) ->
   {_Code2, Response2} = do_get_request_on_key(Cookie, ResourceID),
   polish_test_lib:assert_fields_from_response(
     [{"value", Translation}], Response2),
+  ok.
+
+put_key_bad_translation_bypass_validators(Config) ->
+  [Key, Cookie, ResourceID] =
+    polish_test_lib:config_lkup([key, cookie, resource_id], Config),
+  %% get the current translation
+  {_Code, Response} = do_get_request_on_key(Cookie, ResourceID),
+  Translation = ?b2l(?lkup(<<"value">>, Response)),
+  %% save a bad translation (bad punct) and assert error
+  NewTranslation = Translation ++ "abc.",
+  assert_bad_translation(ResourceID, Cookie, NewTranslation, bad_punct),
+  %% save a bad translation (bad punct) bypassing validator and assert ok
+  Body = "translation="++polish_utils:url_encode(NewTranslation) ++
+    "&bypass_validators=true",
+  {Code, ResponseJSON} = polish_test_lib:send_http_request(
+			   put, "/keys/"++ResourceID,
+			   [{cookie, Cookie}, {body, Body}]),
+  ?assertEqual(?OK, Code),
+  {struct, Response2} = mochijson2:decode(ResponseJSON),
+  polish_test_lib:assert_fields_from_response([{"result", "ok"}], Response2),
+  %% check that the po file contains the new translation
+  PoFile = gettext:parse_po(polish:po_lang_dir() ++ "custom/ca/gettext.po"),
+  ?assertEqual(NewTranslation, ?lkup(Key, PoFile)),
+  %% get the key and assert the translation is the new one
+  {_Code2, Response3} = do_get_request_on_key(Cookie, ResourceID),
+  polish_test_lib:assert_fields_from_response(
+    [{"value", NewTranslation}], Response3),
   ok.
 
 assert_bad_translation(ResourceID, Cookie, NewTranslation, Reason) ->
