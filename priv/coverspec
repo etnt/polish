@@ -1,2 +1,4 @@
 {level, overview}.
 {incl_dirs, ["src"]}.
+{excl_mods, ["crone", "keys_resource_SUITE", "languages_resource_SUITE",
+	     "login_SUITE", "polish_test_lib"]}.
