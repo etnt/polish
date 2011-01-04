@@ -12,7 +12,6 @@
    , polish_sup
    , polish
    , polish_utils
-   , polish_deps
    , polish_server
    , polish_wash
    , polish_dispatcher

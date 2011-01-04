@@ -74,8 +74,8 @@ print_email_to_translators(NewKeys) ->
 	    "--------------------~n~n~n~n~n").
 
 build_url() ->
-  Hostname = polish_deps:get_env(hostname, "localhost"),
-  Port = ?i2l(polish_deps:get_env(port, 8000)),
+  Hostname = polish:get_env(hostname, "localhost"),
+  Port = ?i2l(polish:get_env(port, 8000)),
   "http://" ++ Hostname ++ ":" ++ Port.
 
 print_new_old_keys({New, Old}) ->

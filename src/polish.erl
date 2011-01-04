@@ -21,6 +21,7 @@
         , meta_filename/1
         , hostname/0
 	, get_polish_path/0
+	, get_env/2
         ]).
 
 -include("polish.hrl").
@@ -46,10 +47,10 @@ load_always_translated_keys([]) ->
   ok.
 
 maybe_replace_keys_or_auto_wash() ->
-  case polish_deps:get_env(ask_replace_keys, true) of
+  case get_env(ask_replace_keys, true) of
     true  -> print_new_old_keys();
     false ->
-      case polish_deps:get_env(auto_wash, false) of
+      case get_env(auto_wash, false) of
 	true  -> update_po_files();
 	false -> ok
       end
@@ -98,8 +99,14 @@ get_status_po_files() ->
 %% get various info from the system
 %%------------------------------------------------------------------------------
 
+get_env(Key, Default) ->
+  case application:get_env(polish, Key) of
+    {ok, Value} -> Value;
+    _           -> Default
+  end.
+
 po_lang_dir() ->
-  polish_deps:get_env(po_lang_dir, "/tmp").
+  get_env(po_lang_dir, "/tmp").
 
 all_custom_lcs() ->
   LCdirs = os:cmd("(cd " ++ po_lang_dir() ++ "; ls custom)"),
@@ -121,7 +128,7 @@ get_org_name() ->
   get_from_meta_file(org_name).
 
 get_from_meta_file(Field) ->
-  PoDir = polish_deps:get_env(po_lang_dir, "/tmp"),
+  PoDir = get_env(po_lang_dir, "/tmp"),
   case file:consult(PoDir ++ "/polish.meta") of
     {ok, List} ->
       case proplists:get_value(Field, List) of
