@@ -1,9 +1,5 @@
 - To test:
   - /keys/key
-     * save translation that fails on validators and match the error
-     * save translation that fails on validators and save again bypassing validator
-     * mark key as always translated
-     * unmark key as always translated
      * locking of keys
 
   - /keys
