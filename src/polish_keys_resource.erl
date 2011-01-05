@@ -19,6 +19,7 @@ get_list(Query, User) ->
   do_get_list(generate_complete_query(Query), User).
 
 get(ResourceID, User) ->
+  polish_server:unlock_user_keys(User),
   {K, V} = read_key(ResourceID),
   IsLocked = is_key_locked(ResourceID, User),
   IsMarkedAsTranslated = is_marked_as_translated(ResourceID),
