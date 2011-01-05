@@ -1,7 +1,4 @@
 - To test:
-  - /keys/key
-     * locking of keys
-
   - /keys
      * normal request
      * search keys
@@ -15,5 +12,5 @@ TODO:
   he wasn't logged in)
 - implement subscription to a group of keys: gen_server whose state is the list of
   keys to be translated and their state. The developer should be able to get that state
-- refactor of modules polish, polish_utils, polish_app
+- refactor polish_utils
 - rethink polish_server, how data is stored, and refactor it
