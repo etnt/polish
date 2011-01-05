@@ -19,6 +19,7 @@ all() ->
   , unmark_key_as_always_translated
   , put_key_bad_translation
   , put_key_bad_translation_bypass_validators
+  , lock_keys
   ].
 
 
@@ -46,6 +47,11 @@ init_per_testcase(put_key_bad_translation, Config) ->
 init_per_testcase(put_key_bad_translation_bypass_validators, Config) ->
   backup_po(),
   common_init() ++ key_init("jag heter POlish") ++ Config;
+init_per_testcase(lock_keys, Config) ->
+  backup_po(),
+  Cookie2 = polish_test_lib:fake_login2("http://etnt.myopenid.com/"),
+  common_init() ++ key_init("jag heter POlish") ++ [{cookie2, Cookie2}] ++
+    key_init(key2, resource_id2, "Hej POlish") ++ Config;
 init_per_testcase(_TestCase, Config) ->
   common_init() ++ Config.
 
@@ -55,8 +61,11 @@ common_init() ->
   [{cookie, Cookie}, {user_id, UserId}].
 
 key_init(Key) ->
+  key_init(key, resource_id, Key).
+
+key_init(K1, K2, Key) ->
   ResourceID = polish_utils:generate_key_identifier(Key, "ca"),
-  [{key, Key}, {resource_id, ResourceID}].
+  [{K1, Key}, {K2, ResourceID}].
 
 backup_po() ->
   Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
@@ -74,7 +83,8 @@ end_per_suite(_Config) ->
 
 end_per_testcase(TC, _Config)
   when TC =:= put_key orelse
-       TC =:= put_key_bad_translation_bypass_validators ->
+       TC =:= put_key_bad_translation_bypass_validators orelse
+       TC =:= lock_keys ->
   Path = polish:get_polish_path() ++ "/priv/lang/custom/ca/",
   os:cmd("mv " ++ Path ++ "gettext.po.bup " ++ Path ++ "gettext.po"),
   os:cmd("rm " ++ Path ++ "gettext.po__*"),
@@ -253,13 +263,56 @@ put_key_bad_translation_bypass_validators(Config) ->
     [{"value", NewTranslation}], Response3),
   ok.
 
+lock_keys(Config) ->
+  [Cookie, Cookie2, Key, ResourceID, ResourceID2] =
+    polish_test_lib:config_lkup(
+      [cookie, cookie2, key, resource_id, resource_id2], Config),
+  %% get the key with user1 (this action locks it)
+  {_, Response} = do_get_request_on_key(Cookie, ResourceID),
+  polish_test_lib:assert_fields_from_response([{"locked", "false"}], Response),
+  Translation = ?b2l(?lkup(<<"value">>, Response)),
+  %% get the key with user2 and assert key is locked
+  {_, Response2} = do_get_request_on_key(Cookie2, ResourceID),
+  polish_test_lib:assert_fields_from_response([{"locked", "true"}], Response2),
+  %% try to save a new translation with user2 and get a 'locked_key' error
+  NewTranslation = Translation ++ "abc",
+  Response3 = save_translation(ResourceID, Cookie2, NewTranslation),
+  polish_test_lib:assert_fields_from_response(
+    [{"result", "error"}, {"reason", "locked_key"}], Response3),
+  %% user1 unlocks key by saving a translation
+  NewTranslation2 = Translation ++ "aaaa",
+  save_translation(ResourceID, Cookie, NewTranslation2),
+  %% assert new translation from user1 has been saved
+  PoFile = gettext:parse_po(polish:po_lang_dir() ++ "custom/ca/gettext.po"),
+  ?assertEqual(NewTranslation2, ?lkup(Key, PoFile)),
+  %% user2 tries to save a new translation now and it works
+  NewTranslation3 = Translation ++ "bbbb",
+  Response4 = save_translation(ResourceID, Cookie2, NewTranslation3),
+  polish_test_lib:assert_fields_from_response([{"result", "ok"}], Response4),
+  %% assert new translation from user2 has been saved
+  PoFile2 = gettext:parse_po(polish:po_lang_dir() ++ "custom/ca/gettext.po"),
+  ?assertEqual(NewTranslation3, ?lkup(Key, PoFile2)),
+
+  %% user1 locks the key again
+  {_, Response6} = do_get_request_on_key(Cookie, ResourceID),
+  polish_test_lib:assert_fields_from_response([{"locked", "false"}], Response6),
+  %% user2 tries to get the key and assert key is locked
+  {_, Response7} = do_get_request_on_key(Cookie2, ResourceID),
+  polish_test_lib:assert_fields_from_response([{"locked", "true"}], Response7),
+  %% user2 unlocks the key by doing a get on another key
+  {_, Response8} = do_get_request_on_key(Cookie, ResourceID2),
+  polish_test_lib:assert_fields_from_response([{"locked", "false"}], Response8),
+  %% user2 tries to get the key and assert key is not locked
+  {_, Response9} = do_get_request_on_key(Cookie2, ResourceID),
+  polish_test_lib:assert_fields_from_response([{"locked", "false"}], Response9),
+  ok.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% U T I L S
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 assert_bad_translation(ResourceID, Cookie, NewTranslation, Reason) ->
-  Body = "translation="++polish_utils:url_encode(NewTranslation),
-  {Code, ResponseJSON} = polish_test_lib:send_http_request(
-			   put, "/keys/"++ResourceID,
-			   [{cookie, Cookie}, {body, Body}]),
-  ?assertEqual(?OK, Code),
-  {struct, Response} = mochijson2:decode(ResponseJSON),
+  Response = save_translation(ResourceID, Cookie, NewTranslation),
   polish_test_lib:assert_fields_from_response(
     [{"result", "error"}, {"reason", get_reason(Reason)}],
     Response).
@@ -274,3 +327,12 @@ do_get_request_on_key(Cookie, ResourceID) ->
 			   get, "/keys/"++ResourceID, [{cookie, Cookie}]),
   {struct, Response} = mochijson2:decode(ResponseJSON),
   {Code, Response}.
+
+save_translation(ResourceID, Cookie, NewTranslation) ->
+  Body = "translation="++polish_utils:url_encode(NewTranslation),
+  {Code, ResponseJSON} = polish_test_lib:send_http_request(
+			   put, "/keys/"++ResourceID,
+			   [{cookie, Cookie}, {body, Body}]),
+  ?assertEqual(?OK, Code),
+  {struct, Response} = mochijson2:decode(ResponseJSON),
+  Response.

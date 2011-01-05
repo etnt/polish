@@ -6,6 +6,7 @@
 	, write_fake_data_start_auth/1
 	, get_fake_redirect_url/1
 	, fake_login/1
+	, fake_login2/1
 	, fake_logout/0
 	, clean_fake_login_data/0
 	, cleanup/0
@@ -111,6 +112,12 @@ assert_field_from_response(FieldName, ExpectedValue, Response) ->
 
 fake_login(UserId) ->
   AuthId = "HMAC-SHA14ce7ff3bchZ2eA",
+  [{name, Name}, _] = ?lkup(UserId, polish:get_users()),
+  polish_server:write_user_auth(AuthId, Name),
+  "auth=" ++ AuthId.
+
+fake_login2(UserId) ->
+  AuthId = "HMAC-SHA14ce7ff3bchZ2BB",
   [{name, Name}, _] = ?lkup(UserId, polish:get_users()),
   polish_server:write_user_auth(AuthId, Name),
   "auth=" ++ AuthId.
