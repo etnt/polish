@@ -159,14 +159,9 @@ put_key(Config) ->
   Translation = ?b2l(?lkup(<<"value">>, Response)),
   %% save a new translation and assert OK
   NewTranslation = Translation ++ "abc",
-  Body = "translation="++polish_utils:url_encode(NewTranslation),
-  {Code2, _ResponseJSON} = polish_test_lib:send_http_request(
-			   put, "/keys/"++ResourceID,
-			   [{cookie, Cookie}, {body, Body}]),
-  ?assertEqual(?OK, Code2),
+  save_translation(ResourceID, Cookie, NewTranslation),
   %% check that the po file contains the new translation
-  PoFile = gettext:parse_po(polish:po_lang_dir() ++ "custom/ca/gettext.po"),
-  ?assertEqual(NewTranslation, ?lkup(Key, PoFile)),
+  assert_key_translation_in_pofile(Key, NewTranslation),
   %% get the key and assert the translation is the new one
   {_Code3, Response2} = do_get_request_on_key(Cookie, ResourceID),
   polish_test_lib:assert_fields_from_response(
@@ -228,8 +223,7 @@ put_key_bad_translation(Config) ->
   %% save a bad translation (bad case) and assert error
   assert_bad_translation(ResourceID, Cookie, "A " ++ Translation, bad_case),
   %% check that the po file contains the old translation
-  PoFile = gettext:parse_po(polish:po_lang_dir() ++ "custom/ca/gettext.po"),
-  ?assertEqual(Translation, ?lkup(Key, PoFile)),
+  assert_key_translation_in_pofile(Key, Translation),
   %% get the key and assert the translation is the old one
   {_Code2, Response2} = do_get_request_on_key(Cookie, ResourceID),
   polish_test_lib:assert_fields_from_response(
@@ -255,8 +249,7 @@ put_key_bad_translation_bypass_validators(Config) ->
   {struct, Response2} = mochijson2:decode(ResponseJSON),
   polish_test_lib:assert_fields_from_response([{"result", "ok"}], Response2),
   %% check that the po file contains the new translation
-  PoFile = gettext:parse_po(polish:po_lang_dir() ++ "custom/ca/gettext.po"),
-  ?assertEqual(NewTranslation, ?lkup(Key, PoFile)),
+  assert_key_translation_in_pofile(Key, NewTranslation),
   %% get the key and assert the translation is the new one
   {_Code2, Response3} = do_get_request_on_key(Cookie, ResourceID),
   polish_test_lib:assert_fields_from_response(
@@ -283,15 +276,13 @@ lock_keys(Config) ->
   NewTranslation2 = Translation ++ "aaaa",
   save_translation(ResourceID, Cookie, NewTranslation2),
   %% assert new translation from user1 has been saved
-  PoFile = gettext:parse_po(polish:po_lang_dir() ++ "custom/ca/gettext.po"),
-  ?assertEqual(NewTranslation2, ?lkup(Key, PoFile)),
+  assert_key_translation_in_pofile(Key, NewTranslation2),
   %% user2 tries to save a new translation now and it works
   NewTranslation3 = Translation ++ "bbbb",
   Response4 = save_translation(ResourceID, Cookie2, NewTranslation3),
   polish_test_lib:assert_fields_from_response([{"result", "ok"}], Response4),
   %% assert new translation from user2 has been saved
-  PoFile2 = gettext:parse_po(polish:po_lang_dir() ++ "custom/ca/gettext.po"),
-  ?assertEqual(NewTranslation3, ?lkup(Key, PoFile2)),
+  assert_key_translation_in_pofile(Key, NewTranslation3),
 
   %% user1 locks the key again
   {_, Response6} = do_get_request_on_key(Cookie, ResourceID),
@@ -336,3 +327,7 @@ save_translation(ResourceID, Cookie, NewTranslation) ->
   ?assertEqual(?OK, Code),
   {struct, Response} = mochijson2:decode(ResponseJSON),
   Response.
+
+assert_key_translation_in_pofile(Key, Translation) ->
+  PoFile = gettext:parse_po(polish:po_lang_dir() ++ "custom/ca/gettext.po"),
+  ?assertEqual(Translation, ?lkup(Key, PoFile)).
