@@ -23,6 +23,7 @@ all() ->
   , search_basic
   , search_translated
   , search_untranslated
+  , search_offset
   ].
 
 
@@ -328,6 +329,24 @@ search_untranslated(Config) ->
   ?assertEqual(true, length(Untranslated) > 0),
   [?assertEqual(true, ?lkup(<<"key">>, Key) =:= ?lkup(<<"translation">>, Key))
 	   || {struct, Key} <- Untranslated],
+  ok.
+
+search_offset(Config) ->
+  Cookie = ?lkup(cookie, Config),
+  %% get translated keys
+  Response1 = do_get_request_on_keys(Cookie, "lang=ca&translated=true"),
+  ?assertEqual(true, length(Response1) > 2),
+  %% get translated keys with offset 1 and assert result has one key less
+  Response2 = do_get_request_on_keys(Cookie,"lang=ca&translated=true&offset=1"),
+  ?assertEqual(true, length(Response2) + 1 =:= length(Response1)),
+  %% get translated keys with offset 2 and assert result has two keys less
+  Response3 = do_get_request_on_keys(Cookie,"lang=ca&translated=true&offset=2"),
+  ?assertEqual(true, length(Response3) + 2 =:= length(Response1)),
+  %% use too much offset and assert result is empty
+  TooBigOffset = ?i2l(length(Response1) + 1),
+  Response4 = do_get_request_on_keys(Cookie,"lang=ca&translated=true&offset="
+				     ++ TooBigOffset),
+  ?assertEqual(0, length(Response4)),
   ok.
 
 
