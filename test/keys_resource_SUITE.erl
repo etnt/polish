@@ -21,6 +21,8 @@ all() ->
   , put_key_bad_translation_bypass_validators
   , lock_keys
   , search_basic
+  , search_translated
+  , search_untranslated
   ].
 
 
@@ -308,6 +310,24 @@ search_basic(Config) ->
   %% get spanish keys. 3 of them are untranslated
   Response2 = do_get_request_on_keys(Cookie, "lang=es"),
   ?assertEqual(3, length(Response2)),
+  ok.
+
+search_translated(Config) ->
+  Cookie = ?lkup(cookie, Config),
+  %% search translated keys and assert they are actually translated
+  Translated = do_get_request_on_keys(Cookie, "lang=ca&translated=true"),
+  ?assertEqual(true, length(Translated) > 0),
+  [?assertEqual(true, ?lkup(<<"key">>, Key) =/= ?lkup(<<"translation">>, Key))
+	   || {struct, Key} <- Translated],
+  ok.
+
+search_untranslated(Config) ->
+  Cookie = ?lkup(cookie, Config),
+  %% search untranslated keys and assert they are actually untranslated
+  Untranslated = do_get_request_on_keys(Cookie, "lang=es&untranslated=true"),
+  ?assertEqual(true, length(Untranslated) > 0),
+  [?assertEqual(true, ?lkup(<<"key">>, Key) =:= ?lkup(<<"translation">>, Key))
+	   || {struct, Key} <- Untranslated],
   ok.
 
 
