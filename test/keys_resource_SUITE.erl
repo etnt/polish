@@ -20,6 +20,7 @@ all() ->
   , put_key_bad_translation
   , put_key_bad_translation_bypass_validators
   , lock_keys
+  , search_basic
   ].
 
 
@@ -298,6 +299,17 @@ lock_keys(Config) ->
   polish_test_lib:assert_fields_from_response([{"locked", "false"}], Response9),
   ok.
 
+search_basic(Config) ->
+  Cookie = ?lkup(cookie, Config),
+  %% get catalan keys. All of them are translated or marked as always trans,
+  %% so we get an empty list
+  Response1 = do_get_request_on_keys(Cookie, "lang=ca"),
+  ?assertEqual([], Response1),
+  %% get spanish keys. 3 of them are untranslated
+  Response2 = do_get_request_on_keys(Cookie, "lang=es"),
+  ?assertEqual(3, length(Response2)),
+  ok.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% U T I L S
@@ -318,6 +330,12 @@ do_get_request_on_key(Cookie, ResourceID) ->
 			   get, "/keys/"++ResourceID, [{cookie, Cookie}]),
   {struct, Response} = mochijson2:decode(ResponseJSON),
   {Code, Response}.
+
+do_get_request_on_keys(Cookie, Query) ->
+  {Code, ResponseJSON} = polish_test_lib:send_http_request(
+			   get, "/keys?" ++ Query, [{cookie, Cookie}]),
+  ?assertEqual(?OK, Code),
+  mochijson2:decode(ResponseJSON).
 
 save_translation(ResourceID, Cookie, NewTranslation) ->
   Body = "translation="++polish_utils:url_encode(NewTranslation),
