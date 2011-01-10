@@ -24,6 +24,7 @@ all() ->
   , search_translated
   , search_untranslated
   , search_offset
+  , search_string
   ].
 
 
@@ -347,6 +348,41 @@ search_offset(Config) ->
   Response4 = do_get_request_on_keys(Cookie,"lang=ca&translated=true&offset="
 				     ++ TooBigOffset),
   ?assertEqual(0, length(Response4)),
+  ok.
+
+search_string(Config) ->
+  Cookie = ?lkup(cookie, Config),
+  %% search all translated keys that contain 'Hej'. By default it searches
+  %% only in keys, not in translations. There should be 1 match
+  Query = "lang=ca&translated=true&match_type=any&string_search=Hej",
+  Response1 = do_get_request_on_keys(Cookie, Query),
+  ?assertEqual(1, length(Response1)),
+  %% do the same search specifying now search_in_key=true
+  Query2 = "lang=ca&translated=true&match_type=any"
+    "&string_search=Hej&search_in_key=true",
+  Response2 = do_get_request_on_keys(Cookie, Query2),
+  ?assertEqual(1, length(Response2)),
+  %% search 'Hola' in the translations. There should be 1 match
+  Query3 = "lang=ca&translated=true&match_type=any"
+    "&string_search=Hola&search_in_key=false&search_in_value=true",
+  Response3 = do_get_request_on_keys(Cookie, Query3),
+  ?assertEqual(1, length(Response3)),
+  %% Search weird string and match 0
+  Query4 = "lang=ca&translated=true&match_type=any&string_search=asdf",
+  Response4 = do_get_request_on_keys(Cookie, Query4),
+  ?assertEqual(0, length(Response4)),
+  %% Search with match_type exact 'Hej POlish' and match 1
+  Query5 = "lang=ca&translated=true&&string_search=" ++
+    polish_utils:url_encode("Hej POlish") ++
+    "&search_in_key=true&match_type=exact",
+  Response5 = do_get_request_on_keys(Cookie, Query5),
+  ?assertEqual(1, length(Response5)),
+  %% Search with match_type exact 'Hej POlis' and match 0
+  Query6 = "lang=ca&translated=true&&string_search=" ++
+    polish_utils:url_encode("Hej POlis") ++
+    "&search_in_key=true&match_type=exact",
+  Response6 = do_get_request_on_keys(Cookie, Query6),
+  ?assertEqual(0, length(Response6)),
   ok.
 
 
